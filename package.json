@@ -1,0 +1,59 @@
+{
+  "name": "agentic-node-ts-starter",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.0.0",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --check .",
+    "format:write": "prettier --write .",
+    "test": "vitest run --reporter=verbose --coverage",
+    "test:watch": "vitest",
+    "coverage:report": "vitest run --coverage && pnpm exec c8 report --reporter=text-summary",
+    "verify": "pnpm typecheck && pnpm lint && pnpm format && pnpm test",
+    "sbom": "pnpm sbom:spdx && pnpm sbom:cyclonedx",
+    "sbom:spdx": "npm sbom --spdx > .sbom/sbom.spdx.json",
+    "sbom:cyclonedx": "pnpm exec @cyclonedx/cyclonedx-npm --output-format json --output-file .sbom/sbom.cdx.json",
+    "prepare": "husky install",
+    "release": "changeset version && pnpm build",
+    "release:tag": "git add -A && git commit -m \"chore(release): version packages\" && git tag -a v$(node -p \"require('./package.json').version\") -m \"Release\"",
+    "agent:task": "node scripts/agentic-task-runner.js --spec specs/SPEC.md --plan specs/PLAN.md",
+    "precommit": "lint-staged"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,json,md,yml,yaml}": [
+      "prettier --write"
+    ],
+    "*.{ts,tsx,js}": [
+      "eslint --fix"
+    ]
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.7",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "@vitest/coverage-c8": "^2.0.5",
+    "@cyclonedx/cyclonedx-npm": "^1.20.0",
+    "c8": "^9.1.0",
+    "eslint": "^9.9.0",
+    "eslint-config-prettier": "^9.1.0",
+    "husky": "^9.0.10",
+    "lint-staged": "^15.2.10",
+    "prettier": "^3.3.3",
+    "typescript": "^5.5.4",
+    "vitest": "^2.0.5",
+    "fast-check": "^3.18.0",
+    "@fast-check/vitest": "^0.1.0",
+    "@changesets/cli": "^2.27.9"
+  }
+}
