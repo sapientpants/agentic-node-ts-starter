@@ -41,7 +41,7 @@
     "@commitlint/cli": "19.8.1",
     "@commitlint/config-conventional": "19.8.1",
     "@cyclonedx/cdxgen": "11.6.0",
-    "@fast-check/vitest": "^0.1.6",
+    "@fast-check/vitest": "^0.2.2",
     "@types/node": "^20.19.11",
     "@typescript-eslint/eslint-plugin": "^8.40.0",
     "@typescript-eslint/parser": "^8.40.0",
