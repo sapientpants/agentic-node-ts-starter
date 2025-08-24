@@ -12,8 +12,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `pnpm lint` - Run ESLint
 - `pnpm lint:fix` - Auto-fix linting issues
 - `pnpm format` - Check Prettier formatting
-- `pnpm format:write` - Apply Prettier formatting
-- `pnpm verify` - Run all checks (typecheck, lint, format, test)
+- `pnpm format:fix` - Apply Prettier formatting
+- `pnpm verify` - Run all checks (audit, typecheck, lint, format, test)
 
 ### Testing
 
@@ -24,9 +24,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Release & Security
 
-- `pnpm sbom` - Generate SBOM files (SPDX and CycloneDX formats)
-- `pnpm release` - Version packages with Changesets
-- `pnpm release:tag` - Commit and tag release
+- `pnpm sbom` - Generate SBOM file in CycloneDX format (sbom.cdx.json)
+- `pnpm release` - Version packages with Changesets and build
+- `pnpm release:tag` - Commit changes and create git tag for release
+- `pnpm precommit` - Run lint-staged (automatically triggered by Husky)
 
 ## Architecture & Patterns
 
@@ -36,6 +37,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Test-as-contract**: Property-based testing with fast-check for invariants, unit tests with Vitest
 - **Type safety**: Strict TypeScript with runtime validation using Zod for external boundaries
 - **Module system**: ES modules (`"type": "module"`) with NodeNext resolution
+- **Claude Commands**: Custom commands in `.claude/commands/` for common workflows
+- **Git Hooks**: Custom pre-commit verification via `.claude/hooks/`
 
 ### Key Patterns
 
@@ -55,9 +58,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### CI/CD Pipeline
 
-- GitHub Actions enforces: typecheck → lint → test → OSV scan → SBOM generation
-- Pre-commit hooks via Husky run Prettier and ESLint
-- Trunk-based development with branch protection and linear history
+- **GitHub Actions** enforces: audit → typecheck → lint → format → test → OSV scan → SBOM generation
+- **Security scanning**: CodeQL analysis and OSV vulnerability scanning
+- **Pre-commit hooks** via Husky run lint-staged (Prettier and ESLint)
+- **Attestations**: SLSA provenance and SBOM attestations for build artifacts
+- **Trunk-based development** with branch protection and linear history
 
 ### Development Process
 
@@ -66,3 +71,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 3. Run `pnpm verify` before committing
 4. Use Conventional Commits format
 5. Create Changesets for version bumps
+
+## Claude Commands
+
+Available slash commands in `.claude/commands/`:
+
+- `/analyze-and-fix-github-issue` - Analyze and fix a GitHub issue with full workflow
+- `/release` - Create a new version release following semantic versioning
+- `/update-dependencies` - Update all dependencies to latest versions with PR workflow
+
+## Configuration
+
+- **Package Manager**: pnpm 10.0.0 (specified in package.json)
+- **Node Version**: >=22.0.0 (engines requirement)
+- **TypeScript**: Strict mode with NodeNext module resolution
+- **Testing**: Vitest with V8 coverage provider
+- **Linting**: ESLint 9 with TypeScript support
+- **Formatting**: Prettier 3 with ESLint integration
