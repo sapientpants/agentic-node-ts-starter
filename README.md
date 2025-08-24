@@ -5,6 +5,7 @@ This repository is a **batteries-included** starting point for building software
 > Created: 2025-08-23
 
 ## Tooling
+
 - **Runtime:** Node 22 via **mise** (`mise.toml`)
 - **Package manager:** **pnpm 10** (pinned via mise)
 - **TypeScript (strict)**, **Vitest**, **fast-check**, **Zod**
@@ -13,6 +14,7 @@ This repository is a **batteries-included** starting point for building software
 - **GitHub Actions CI**: typecheck, lint, tests, coverage, OSV scan, SBOM export, CodeQL, SLSA provenance
 
 ## Quick start
+
 ```bash
 # Install Node 22 + pnpm 10 per mise.toml
 mise install

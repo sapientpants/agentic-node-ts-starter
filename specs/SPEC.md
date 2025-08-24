@@ -1,9 +1,11 @@
 # SPEC: Example Feature
 
 ## Goal
+
 As a user, I can add two numbers and see the result.
 
 ## Acceptance Criteria (Gherkin)
+
 ```
 Feature: Add numbers
   Scenario: Simple addition

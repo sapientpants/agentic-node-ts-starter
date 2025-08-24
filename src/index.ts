@@ -7,6 +7,6 @@ import { z } from 'zod';
 export const CreateUser = z.object({
   id: z.string().uuid(),
   email: z.string().email(),
-  age: z.number().int().min(13)
+  age: z.number().int().min(13),
 });
 export type CreateUser = z.infer<typeof CreateUser>;
