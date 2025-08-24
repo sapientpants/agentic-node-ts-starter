@@ -21,7 +21,7 @@
     "sbom": "pnpm sbom:spdx && pnpm sbom:cyclonedx",
     "sbom:spdx": "npm sbom --spdx > .sbom/sbom.spdx.json",
     "sbom:cyclonedx": "pnpm exec @cyclonedx/cyclonedx-npm --output-format json --output-file .sbom/sbom.cdx.json",
-    "prepare": "husky install",
+    "prepare": "husky",
     "release": "changeset version && pnpm build",
     "release:tag": "git add -A && git commit -m \"chore(release): version packages\" && git tag -a v$(node -p \"require('./package.json').version\") -m \"Release\"",
     "precommit": "lint-staged"
