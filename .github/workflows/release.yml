@@ -54,15 +54,29 @@ jobs:
           # Uncomment below if you want to publish to npm
           # NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      # Optional: Create GitHub Release when changesets are published
+      # Conditional NPM Publishing
+      - name: Publish to NPM
+        if: steps.changesets.outputs.published == 'true' && env.NPM_TOKEN != ''
+        run: |
+          echo "Publishing to NPM..."
+          npm config set //registry.npmjs.org/:_authToken ${{ secrets.NPM_TOKEN }}
+          pnpm publish --no-git-checks
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Log NPM Publishing Skipped
+        if: steps.changesets.outputs.published == 'true' && env.NPM_TOKEN == ''
+        run: |
+          echo "📦 NPM publishing skipped - NPM_TOKEN not configured"
+          echo "To enable NPM publishing, add NPM_TOKEN to repository secrets"
+
+      # Create GitHub Release using newer action
       - name: Create GitHub Release
         if: steps.changesets.outputs.published == 'true'
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ fromJson(steps.changesets.outputs.publishedPackages)[0].version }}
-          release_name: Release v${{ fromJson(steps.changesets.outputs.publishedPackages)[0].version }}
+          name: Release v${{ fromJson(steps.changesets.outputs.publishedPackages)[0].version }}
           body: |
             ## What's Changed
             See the [CHANGELOG](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
