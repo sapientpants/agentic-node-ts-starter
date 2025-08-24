@@ -14,6 +14,10 @@ permissions:
 jobs:
   build-test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
     steps:
       - uses: actions/checkout@v4
 
@@ -48,6 +52,19 @@ jobs:
         uses: actions/attest-build-provenance@v2
         with:
           subject-path: 'dist/**'
+
+      - name: Attest SBOM
+        uses: actions/attest-sbom@v2
+        with:
+          subject-path: 'dist/**'
+          sbom-path: 'sbom.cdx.json'
+
+      - name: Upload SBOM as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.cdx.json
+          retention-days: 30
 
   osv-scan:
     permissions:
