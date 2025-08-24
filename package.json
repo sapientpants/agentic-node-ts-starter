@@ -17,7 +17,7 @@
     "test": "vitest run --reporter=verbose --coverage",
     "test:watch": "vitest",
     "coverage:report": "vitest run --coverage --reporter=verbose",
-    "verify": "pnpm audit  --audit-level critical && pnpm typecheck && pnpm lint && pnpm format && pnpm test",
+    "verify": "pnpm audit --audit-level critical && pnpm typecheck && pnpm lint && pnpm format && pnpm test",
     "sbom": "pnpm dlx @cyclonedx/cdxgen -o sbom.cdx.json",
     "prepare": "husky",
     "release": "changeset version && pnpm build",
@@ -33,7 +33,7 @@
     ]
   },
   "dependencies": {
-    "zod": "^3.25.76"
+    "zod": "^4.1.1"
   },
   "devDependencies": {
     "@changesets/changelog-github": "0.5.1",
@@ -41,16 +41,16 @@
     "@commitlint/cli": "19.8.1",
     "@commitlint/config-conventional": "19.8.1",
     "@cyclonedx/cdxgen": "11.6.0",
-    "@fast-check/vitest": "^0.1.6",
-    "@types/node": "^20.19.11",
+    "@fast-check/vitest": "^0.2.2",
+    "@types/node": "^24.3.0",
     "@typescript-eslint/eslint-plugin": "^8.40.0",
     "@typescript-eslint/parser": "^8.40.0",
     "@vitest/coverage-v8": "^3.2.4",
     "eslint": "^9.34.0",
-    "eslint-config-prettier": "^9.1.2",
-    "fast-check": "^3.23.2",
+    "eslint-config-prettier": "^10.1.8",
+    "fast-check": "^4.2.0",
     "husky": "^9.1.7",
-    "lint-staged": "^15.5.2",
+    "lint-staged": "^16.1.5",
     "prettier": "^3.6.2",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4"
