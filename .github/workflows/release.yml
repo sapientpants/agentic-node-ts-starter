@@ -49,22 +49,53 @@ jobs:
           version: pnpm changeset version
           commit: 'chore: version packages'
           title: 'chore: version packages'
+          # Creates GitHub releases automatically with changelog content
+          createGithubReleases: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Uncomment below if you want to publish to npm
-          # NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # NPM_TOKEN is optional - publishing will be skipped if not set
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN || '' }}
 
-      # Optional: Create GitHub Release when changesets are published
-      - name: Create GitHub Release
+      # Conditional NPM Publishing (only if NPM_TOKEN is set)
+      - name: Check NPM Publishing
         if: steps.changesets.outputs.published == 'true'
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -n "${{ secrets.NPM_TOKEN }}" ]; then
+            echo "✅ NPM publishing completed (NPM_TOKEN was configured)"
+          else
+            echo "📦 NPM publishing skipped - NPM_TOKEN not configured"
+            echo "To enable NPM publishing, add NPM_TOKEN to repository secrets"
+          fi
+
+      # Generate SBOM and attestations after publish
+      - name: Generate SBOM
+        if: steps.changesets.outputs.published == 'true'
+        run: pnpm sbom
+
+      - name: Build for attestations
+        if: steps.changesets.outputs.published == 'true'
+        run: pnpm build
+
+      - name: Attest build provenance
+        if: steps.changesets.outputs.published == 'true'
+        uses: actions/attest-build-provenance@v2
         with:
-          tag_name: v${{ fromJson(steps.changesets.outputs.publishedPackages)[0].version }}
-          release_name: Release v${{ fromJson(steps.changesets.outputs.publishedPackages)[0].version }}
-          body: |
-            ## What's Changed
-            See the [CHANGELOG](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
-          draft: false
-          prerelease: false
+          subject-path: 'dist/**'
+
+      - name: Attest SBOM
+        if: steps.changesets.outputs.published == 'true'
+        uses: actions/attest-sbom@v2
+        with:
+          subject-path: 'dist/**'
+          sbom-path: 'sbom.cdx.json'
+
+      # Attach SBOM to GitHub Release
+      - name: Attach SBOM to Release
+        if: steps.changesets.outputs.published == 'true'
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: sbom.cdx.json
+          asset_name: sbom.cdx.json
+          tag: v${{ fromJson(steps.changesets.outputs.publishedPackages)[0].version }}
+          overwrite: true
