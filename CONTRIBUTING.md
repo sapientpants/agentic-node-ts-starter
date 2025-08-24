@@ -267,6 +267,16 @@ Releases are automated:
 3. When release PR is merged, packages are versioned and published
 4. Changelog is automatically updated
 
+### ⚠️ Important: Repository Configuration
+
+For maintainers, ensure the following repository setting is enabled:
+
+1. Go to **Settings** → **Actions** → **General**
+2. Under "Workflow permissions", check:
+   - ✅ **"Allow GitHub Actions to create and approve pull requests"**
+
+This is required for the automated release workflow to create version PRs.
+
 ## 💡 Tips
 
 - Keep PRs focused and small
