@@ -4,5 +4,5 @@ coverage
 .vscode
 .env
 .DS_Store
-.sbom/*
+sbom.cdx.json
 .claude/settings.local.json

@@ -17,8 +17,8 @@
     "test": "vitest run --reporter=verbose --coverage",
     "test:watch": "vitest",
     "coverage:report": "vitest run --coverage --reporter=verbose",
-    "verify": "pnpm typecheck && pnpm lint && pnpm format && pnpm test",
-    "sbom": "mkdir -p .sbom && pnpm ls --json > .sbom/dependencies.json",
+    "verify": "pnpm audit  --audit-level critical && pnpm typecheck && pnpm lint && pnpm format && pnpm test",
+    "sbom": "pnpm dlx @cyclonedx/cdxgen -o sbom.cdx.json",
     "prepare": "husky",
     "release": "changeset version && pnpm build",
     "release:tag": "git add -A && git commit -m \"chore(release): version packages\" && git tag -a v$(node -p \"require('./package.json').version\") -m \"Release\"",
@@ -36,10 +36,11 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@changesets/changelog-github": "0.5.1",
     "@changesets/cli": "^2.29.6",
     "@commitlint/cli": "19.8.1",
     "@commitlint/config-conventional": "19.8.1",
-    "@cyclonedx/cyclonedx-npm": "^1.20.0",
+    "@cyclonedx/cdxgen": "11.6.0",
     "@fast-check/vitest": "^0.1.6",
     "@types/node": "^20.19.11",
     "@typescript-eslint/eslint-plugin": "^8.40.0",
