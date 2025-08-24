@@ -5,3 +5,4 @@ coverage
 .env
 .DS_Store
 .sbom/*
+.claude/settings.local.json
