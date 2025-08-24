@@ -119,14 +119,15 @@ See [CLAUDE.md](./CLAUDE.md) for detailed Claude Code guidance.
 
 This project uses [Changesets](https://github.com/changesets/changesets) for version management:
 
+- **Required for all PRs**: Every PR must include a changeset (CI enforced)
 - **Automated Versioning**: Version bumps based on changeset types
 - **Automated Changelogs**: Generated from changeset descriptions
 - **Release Automation**: GitHub Actions workflow for creating release PRs
 - **Semantic Versioning**: Following semver conventions
 
-### Adding a Changeset
+### Adding a Changeset (Required)
 
-When making changes, add a changeset:
+Every PR must include a changeset:
 
 ```bash
 pnpm changeset  # For user-facing changes

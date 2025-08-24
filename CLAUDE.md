@@ -73,9 +73,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 1. Write/update specifications in `specs/SPEC.md`
 2. Implement with tests (property-based for core logic)
 3. Run `pnpm verify` before committing
-4. Create a changeset with `pnpm changeset` for user-facing changes
+4. **Required**: Create a changeset with `pnpm changeset` or `pnpm changeset --empty`
 5. Use Conventional Commits format
-6. Push and create PR - CI will validate changeset presence
+6. Push and create PR - CI will fail without a changeset
 
 ## Claude Commands
 

@@ -40,9 +40,16 @@ jobs:
         run: |
           # Check if there are changesets
           if pnpm changeset status --since=origin/main 2>&1 | grep -q "No changesets present"; then
-            echo "⚠️ Warning: This PR does not include a changeset."
-            echo "Consider adding a changeset if this PR includes user-facing changes."
-            echo "Run 'pnpm changeset' to create one, or 'pnpm changeset --empty' for non-release changes."
+            echo "❌ Error: This PR does not include a changeset."
+            echo ""
+            echo "Every PR must include a changeset to document the changes."
+            echo ""
+            echo "To add a changeset:"
+            echo "  - For user-facing changes: run 'pnpm changeset'"
+            echo "  - For internal changes (CI, tests, refactoring): run 'pnpm changeset --empty'"
+            echo ""
+            echo "Learn more about changesets in CONTRIBUTING.md"
+            exit 1
           else
             echo "✅ Changeset found"
           fi

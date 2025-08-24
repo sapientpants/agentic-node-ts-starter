@@ -67,7 +67,7 @@ Individual checks:
 
 ### 4. Add a Changeset
 
-**Important:** Every PR that includes user-facing changes needs a changeset.
+**Required:** Every PR must include a changeset. The CI will fail without one.
 
 ```bash
 pnpm changeset
