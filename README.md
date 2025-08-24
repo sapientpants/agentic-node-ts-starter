@@ -1,38 +1,131 @@
-# Agentic Node + TypeScript Starter (Solo) — **mise + pnpm**
+# Agentic Node + TypeScript Starter — **mise + pnpm**
 
-This repository is a **batteries-included** starting point for building software with an **agentic coding** workflow on Node.js + TypeScript. It bakes in a **spec-first, test-as-contract** approach, **quality gates**, **supply-chain security** (SBOM, SLSA provenance), and **progressive delivery** basics.
+A **batteries-included** starting point for building software with an **agentic coding** workflow on Node.js + TypeScript. This template provides a **spec-first, test-as-contract** approach with comprehensive **quality gates**, **supply-chain security** (SBOM, SLSA provenance), and **CI/CD automation**.
 
-> Created: 2025-08-23
+> Created: 2025-08-23  
+> Last Updated: 2025-08-24
 
-## Tooling
+## 🛠️ Tech Stack
 
-- **Runtime:** Node 22 via **mise** (`mise.toml`)
-- **Package manager:** **pnpm 10** (pinned via mise)
-- **TypeScript (strict)**, **Vitest**, **fast-check**, **Zod**
-- **ESLint (flat) + Prettier**
-- **Husky + lint-staged**
-- **GitHub Actions CI**: typecheck, lint, tests, coverage, OSV scan, SBOM export, CodeQL, SLSA provenance
+### Core Technologies
 
-## Quick start
+- **Runtime:** Node.js 22+ via **mise** (`mise.toml`)
+- **Package Manager:** **pnpm 10.0.0** (pinned in package.json)
+- **Language:** TypeScript 5.9+ with strict mode
+- **Testing:** Vitest 3.2+ with V8 coverage
+- **Property Testing:** fast-check 4.2+
+- **Validation:** Zod 4.1+ for runtime type safety
+
+### Code Quality
+
+- **Linting:** ESLint 9 with TypeScript support
+- **Formatting:** Prettier 3.6+
+- **Pre-commit:** Husky + lint-staged
+- **Commit Convention:** Commitlint with conventional commits
+
+### CI/CD & Security
+
+- **GitHub Actions:** Comprehensive CI pipeline
+- **Security Scanning:** CodeQL analysis, OSV vulnerability scanning
+- **Supply Chain:** SBOM generation (CycloneDX), SLSA provenance attestations
+- **Versioning:** Changesets for semantic versioning
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- [mise](https://mise.jdx.dev/) - for Node.js and pnpm version management
+
+### Setup
 
 ```bash
-# Install Node 22 + pnpm 10 per mise.toml
+# Install Node 22 + pnpm 10 via mise
 mise install
 
-# Bootstrap deps
+# Install dependencies
 pnpm install
 
-# All checks
+# Run all quality checks
 pnpm verify
 
-# Run unit tests
-pnpm test
-
-# Generate SBOMs
-pnpm sbom
-
-# Create a changeset (versioning)
-pnpm changeset
+# Start development
+pnpm test:watch
 ```
 
-See `docs/PROCESS.md` for the end-to-end workflow and checklists.
+## 📚 Available Scripts
+
+### Development
+
+- `pnpm build` - Build TypeScript to `dist/`
+- `pnpm typecheck` - Type check without emitting
+- `pnpm lint` - Run ESLint checks
+- `pnpm lint:fix` - Auto-fix ESLint issues
+- `pnpm format` - Check Prettier formatting
+- `pnpm format:fix` - Apply Prettier formatting
+- `pnpm verify` - Run all checks (audit, typecheck, lint, format, test)
+
+### Testing
+
+- `pnpm test` - Run tests with coverage
+- `pnpm test:watch` - Run tests in watch mode
+- `pnpm coverage:report` - Generate detailed coverage report
+
+### Release & Security
+
+- `pnpm sbom` - Generate SBOM (Software Bill of Materials)
+- `pnpm release` - Version packages with Changesets
+- `pnpm release:tag` - Create git tag for release
+
+## 🤖 Claude Code Integration
+
+This project includes special configurations for [Claude Code](https://claude.ai/code):
+
+### Custom Commands
+
+- `/analyze-and-fix-github-issue` - Complete workflow for fixing GitHub issues
+- `/release` - Automated release process
+- `/update-dependencies` - Update dependencies with PR workflow
+
+### Git Hooks
+
+- Prevents bypassing verification with `--no-verify` flag
+- Ensures all commits pass quality checks
+
+See [CLAUDE.md](./CLAUDE.md) for detailed Claude Code guidance.
+
+## 📁 Project Structure
+
+```
+.
+├── .claude/           # Claude Code configurations
+│   ├── commands/      # Custom slash commands
+│   └── hooks/         # Git hook scripts
+├── .github/           # GitHub Actions workflows
+├── docs/              # Documentation
+├── specs/             # Feature specifications
+├── src/               # Source code
+├── tests/             # Test files
+│   ├── *.spec.ts      # Unit tests
+│   └── *.property.spec.ts # Property-based tests
+├── mise.toml          # Tool version management
+├── package.json       # Dependencies and scripts
+└── tsconfig.json      # TypeScript configuration
+```
+
+## 🔒 Security Features
+
+- **Dependency Auditing**: Critical vulnerability checks on every CI run
+- **SBOM Generation**: CycloneDX format for supply chain transparency
+- **CodeQL Analysis**: Static security analysis
+- **OSV Scanning**: Open Source Vulnerability detection
+- **SLSA Provenance**: Build attestations for artifacts
+
+## 📖 Documentation
+
+- [Development Process](./docs/PROCESS.md) - End-to-end workflow and checklists
+- [Architecture Decisions](./docs/architecture/decisions/) - ADR records
+- [Specifications](./specs/SPEC.md) - Feature specifications
+
+## 📄 License
+
+This is a template repository. Feel free to use it for your projects.
