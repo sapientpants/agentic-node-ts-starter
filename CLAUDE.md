@@ -24,8 +24,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Release & Security
 
+- `pnpm changeset` - Create a changeset for your changes (interactive)
+- `pnpm changeset --empty` - Create empty changeset for non-release changes
+- `pnpm changeset status` - Check status of changesets
 - `pnpm sbom` - Generate SBOM file in CycloneDX format (sbom.cdx.json)
 - `pnpm release` - Version packages with Changesets and build
+- `pnpm release:publish` - Build and publish packages
 - `pnpm release:tag` - Commit changes and create git tag for release
 - `pnpm precommit` - Run lint-staged (automatically triggered by Husky)
 
@@ -69,8 +73,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 1. Write/update specifications in `specs/SPEC.md`
 2. Implement with tests (property-based for core logic)
 3. Run `pnpm verify` before committing
-4. Use Conventional Commits format
-5. Create Changesets for version bumps
+4. **Required**: Create a changeset with `pnpm changeset` or `pnpm changeset --empty`
+5. Use Conventional Commits format
+6. Push and create PR - CI will fail without a changeset
 
 ## Claude Commands
 
@@ -88,3 +93,46 @@ Available slash commands in `.claude/commands/`:
 - **Testing**: Vitest with V8 coverage provider
 - **Linting**: ESLint 9 with TypeScript support
 - **Formatting**: Prettier 3 with ESLint integration
+- **Versioning**: Changesets for automated version management
+
+## Changeset Best Practices
+
+### When to Add a Changeset
+
+Always add a changeset when your PR includes:
+
+- Bug fixes (patch)
+- New features (minor)
+- Breaking changes (major)
+- Documentation updates that affect usage (patch)
+
+### When to Use Empty Changeset
+
+Use `pnpm changeset --empty` when:
+
+- Only updating tests
+- Updating CI/CD configuration
+- Internal refactoring with no API changes
+- Updating dev dependencies
+
+### Example Workflow
+
+```bash
+# Make your changes
+git checkout -b feature/my-feature
+
+# After implementing changes
+pnpm verify  # Ensure all checks pass
+
+# Add a changeset
+pnpm changeset  # Interactive prompt
+
+# Commit with conventional commit message
+git add .
+git commit -m "feat: add new feature"
+
+# Push and create PR
+git push origin feature/my-feature
+```
+
+The CI will validate that a changeset is present, and the release workflow will automatically create version PRs when changes are merged to main.

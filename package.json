@@ -21,7 +21,9 @@
     "sbom": "pnpm dlx @cyclonedx/cdxgen -o sbom.cdx.json",
     "prepare": "husky",
     "release": "changeset version && pnpm build",
+    "release:publish": "pnpm build && changeset publish",
     "release:tag": "git add -A && git commit -m \"chore(release): version packages\" && git tag -a v$(node -p \"require('./package.json').version\") -m \"Release\"",
+    "changeset": "changeset",
     "precommit": "lint-staged"
   },
   "lint-staged": {
