@@ -53,7 +53,7 @@ jobs:
         uses: actions/attest-sbom@v2
         with:
           subject-name: 'agentic-node-ts-starter'
-          subject-digest: 'sha256:$GITHUB_SHA'
+          subject-digest: ${{ format('sha256:{0}', github.sha) }}
           sbom-path: 'sbom.cdx.json'
 
   osv-scan:
