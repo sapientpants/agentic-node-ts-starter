@@ -5,8 +5,8 @@ export default defineConfig({
     environment: 'node',
     globals: true,
     coverage: {
-      provider: 'c8',
-      reporter: ['text', 'html']
-    }
-  }
+      provider: 'v8',
+      reporter: ['text', 'html'],
+    },
+  },
 });

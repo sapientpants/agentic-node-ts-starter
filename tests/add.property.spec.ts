@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it } from 'vitest';
 import fc from 'fast-check';
-import { add } from '../src/index';
+import { add } from '../src/index.js';
 
 describe('add (property-based)', () => {
   it('is commutative: a+b === b+a', () => {

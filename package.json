@@ -16,7 +16,7 @@
     "format:write": "prettier --write .",
     "test": "vitest run --reporter=verbose --coverage",
     "test:watch": "vitest",
-    "coverage:report": "vitest run --coverage && pnpm exec c8 report --reporter=text-summary",
+    "coverage:report": "vitest run --coverage --reporter=verbose",
     "verify": "pnpm typecheck && pnpm lint && pnpm format && pnpm test",
     "sbom": "pnpm sbom:spdx && pnpm sbom:cyclonedx",
     "sbom:spdx": "npm sbom --spdx > .sbom/sbom.spdx.json",

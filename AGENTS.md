@@ -16,7 +16,7 @@
 - `pnpm typecheck`: TS type checks without emitting.
 - `pnpm lint` / `pnpm lint:fix`: Lint with ESLint (flat config).
 - `pnpm format` / `pnpm format:write`: Check/format with Prettier.
-- `pnpm test` / `pnpm test:watch`: Run Vitest (+ c8 coverage).
+- `pnpm test` / `pnpm test:watch`: Run Vitest (V8 coverage).
 - `pnpm coverage:report`: Text summary after coverage.
 - `pnpm verify`: Run typecheck, lint, format check, tests.
 - `pnpm sbom`: Generate SPDX and CycloneDX SBOMs.
@@ -30,7 +30,7 @@
 
 ## Testing Guidelines
 
-- Framework: Vitest with `c8` coverage; property tests via `fast-check`.
+- Framework: Vitest with V8 coverage; property tests via `fast-check`.
 - File names: `*.spec.ts`; use `.property.spec.ts` for property-based tests.
 - Expectations: cover happy paths, edge cases, and Zod validation failures.
 - Run locally: `pnpm test`; ensure `pnpm verify` passes before PR.
