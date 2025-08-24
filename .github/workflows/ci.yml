@@ -49,13 +49,6 @@ jobs:
         with:
           subject-path: 'dist/**'
 
-      - name: Generate SBOM attestation
-        uses: actions/attest-sbom@v2
-        with:
-          subject-name: 'agentic-node-ts-starter'
-          subject-digest: ${{ format('sha256:{0}', github.sha) }}
-          sbom-path: 'sbom.cdx.json'
-
   osv-scan:
     permissions:
       security-events: write
