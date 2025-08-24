@@ -135,6 +135,16 @@ pnpm changeset  # For user-facing changes
 pnpm changeset --empty  # For internal changes (no release)
 ```
 
+### ⚠️ Required Repository Settings
+
+For the release automation to work, you must enable GitHub Actions to create pull requests:
+
+1. Go to **Settings** → **Actions** → **General**
+2. Under "Workflow permissions", enable:
+   - **"Allow GitHub Actions to create and approve pull requests"**
+
+Without this setting, the release workflow will fail with a permissions error.
+
 ## 🔒 Security Features
 
 - **Dependency Auditing**: Critical vulnerability checks on every CI run

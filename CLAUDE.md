@@ -68,6 +68,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Pre-commit hooks** via Husky run lint-staged (Prettier and ESLint)
 - **Attestations**: SLSA provenance and SBOM attestations for build artifacts
 - **Trunk-based development** with branch protection and linear history
+- **Release automation**: Requires "Allow GitHub Actions to create and approve pull requests" setting
 
 ### Development Process
 
