@@ -66,8 +66,9 @@ pnpm test:watch
 
 ### Testing
 
-- `pnpm test` - Run tests with coverage
+- `pnpm test` - Run tests
 - `pnpm test:watch` - Run tests in watch mode
+- `pnpm test:coverage` - Run tests with coverage report
 - `pnpm coverage:report` - Generate detailed coverage report
 
 ### Release & Security

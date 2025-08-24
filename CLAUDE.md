@@ -17,8 +17,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Testing
 
-- `pnpm test` - Run tests once with coverage
+- `pnpm test` - Run tests without coverage
 - `pnpm test:watch` - Run tests in watch mode
+- `pnpm test:coverage` - Run tests with coverage report
 - `pnpm coverage:report` - Generate detailed coverage report
 - Test files: `tests/*.spec.ts` for unit tests, `tests/*.property.spec.ts` for property-based tests
 
