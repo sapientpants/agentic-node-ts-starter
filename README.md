@@ -72,8 +72,11 @@ pnpm test:watch
 
 ### Release & Security
 
+- `pnpm changeset` - Create a changeset for your changes
+- `pnpm changeset --empty` - Create an empty changeset for non-release changes
 - `pnpm sbom` - Generate SBOM (Software Bill of Materials)
 - `pnpm release` - Version packages with Changesets
+- `pnpm release:publish` - Build and publish packages
 - `pnpm release:tag` - Create git tag for release
 
 ## 🤖 Claude Code Integration
@@ -112,6 +115,24 @@ See [CLAUDE.md](./CLAUDE.md) for detailed Claude Code guidance.
 └── tsconfig.json      # TypeScript configuration
 ```
 
+## 🔄 Versioning & Releases
+
+This project uses [Changesets](https://github.com/changesets/changesets) for version management:
+
+- **Automated Versioning**: Version bumps based on changeset types
+- **Automated Changelogs**: Generated from changeset descriptions
+- **Release Automation**: GitHub Actions workflow for creating release PRs
+- **Semantic Versioning**: Following semver conventions
+
+### Adding a Changeset
+
+When making changes, add a changeset:
+
+```bash
+pnpm changeset  # For user-facing changes
+pnpm changeset --empty  # For internal changes (no release)
+```
+
 ## 🔒 Security Features
 
 - **Dependency Auditing**: Critical vulnerability checks on every CI run
@@ -122,6 +143,7 @@ See [CLAUDE.md](./CLAUDE.md) for detailed Claude Code guidance.
 
 ## 📖 Documentation
 
+- [Contributing Guide](./CONTRIBUTING.md) - How to contribute to this project
 - [Development Process](./docs/PROCESS.md) - End-to-end workflow and checklists
 - [Architecture Decisions](./docs/architecture/decisions/) - ADR records
 - [Specifications](./specs/SPEC.md) - Feature specifications

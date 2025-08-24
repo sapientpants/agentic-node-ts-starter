@@ -3,7 +3,7 @@
   "changelog": [
     "@changesets/changelog-github",
     {
-      "repo": "<org>/<repo>"
+      "repo": "sapientpants/agentic-node-ts-starter"
     }
   ],
   "commit": false,

@@ -10,8 +10,44 @@ permissions:
   attestations: write
   id-token: write
   security-events: write
+  pull-requests: read
 
 jobs:
+  changeset-validation:
+    name: Validate Changeset
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check for changeset
+        run: |
+          # Check if there are changesets
+          if pnpm changeset status --since=origin/main 2>&1 | grep -q "No changesets present"; then
+            echo "⚠️ Warning: This PR does not include a changeset."
+            echo "Consider adding a changeset if this PR includes user-facing changes."
+            echo "Run 'pnpm changeset' to create one, or 'pnpm changeset --empty' for non-release changes."
+          else
+            echo "✅ Changeset found"
+          fi
+
+  # Continue with existing jobs...
   build-test:
     runs-on: ubuntu-latest
     permissions:
