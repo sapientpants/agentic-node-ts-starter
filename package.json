@@ -24,7 +24,6 @@
     "prepare": "husky install",
     "release": "changeset version && pnpm build",
     "release:tag": "git add -A && git commit -m \"chore(release): version packages\" && git tag -a v$(node -p \"require('./package.json').version\") -m \"Release\"",
-    "agent:task": "node scripts/agentic-task-runner.js --spec specs/SPEC.md --plan specs/PLAN.md",
     "precommit": "lint-staged"
   },
   "lint-staged": {
