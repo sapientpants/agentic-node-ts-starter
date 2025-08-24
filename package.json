@@ -18,7 +18,7 @@
     "test:watch": "vitest",
     "coverage:report": "vitest run --coverage --reporter=verbose",
     "verify": "pnpm typecheck && pnpm lint && pnpm format && pnpm test",
-    "sbom": "pnpm sbom:spdx && pnpm sbom:cyclonedx",
+    "sbom": "mkdir -p .sbom && pnpm sbom:spdx && pnpm sbom:cyclonedx",
     "sbom:spdx": "npm sbom --spdx > .sbom/sbom.spdx.json",
     "sbom:cyclonedx": "pnpm exec @cyclonedx/cyclonedx-npm --output-format json --output-file .sbom/sbom.cdx.json",
     "prepare": "husky",
