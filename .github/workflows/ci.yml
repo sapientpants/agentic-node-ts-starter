@@ -45,9 +45,15 @@ jobs:
         run: pnpm build
 
       - name: Attest build provenance (SLSA)
-        uses: actions/attest-build-provenance@v1
+        uses: actions/attest-build-provenance@v2
         with:
           subject-path: 'dist/**'
+
+      - name: Generate SBOM attestation
+        uses: actions/attest-sbom@v2
+        with:
+          subject-digest: 'sha256:$GITHUB_SHA'
+          sbom-path: 'sbom.cdx.json'
 
   osv-scan:
     permissions:
