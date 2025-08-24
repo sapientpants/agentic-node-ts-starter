@@ -200,11 +200,14 @@ pnpm changeset
 ### Running Tests
 
 ```bash
-# Run all tests with coverage
+# Run all tests
 pnpm test
 
 # Run tests in watch mode
 pnpm test:watch
+
+# Run tests with coverage
+pnpm test:coverage
 
 # Generate coverage report
 pnpm coverage:report
