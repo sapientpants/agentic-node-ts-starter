@@ -37,8 +37,8 @@ graph LR
 
 **Key Features**:
 
-- **Matrix Testing**: Tests against Node.js versions 20 and 22 in parallel
 - **Security Scanning**: Runs CodeQL, OSV Scanner, and dependency review
+- **Timeout Protection**: Prevents hung jobs with configured timeouts
 - **Changeset Validation**: Ensures all PRs include changesets
 - **Artifact Generation**: Creates build artifacts and SBOM
 - **Attestations**: Generates SLSA provenance and SBOM attestations
@@ -164,7 +164,6 @@ jobs:
 
 ### Parallelization
 
-- **Matrix Builds**: Tests multiple Node versions simultaneously
 - **Security Scans**: Runs security checks in parallel
 - **Distribution Channels**: Processes distribution targets concurrently
 
