@@ -172,6 +172,10 @@ Go to **Settings** → **Branches** → Add rule for `main`:
 
 Without these settings, the automated release process will not work correctly.
 
+## 🏗️ Continuous Deployment Architecture
+
+This project implements a **Build Once, Deploy Many** continuous deployment pipeline that ensures artifacts are built once and reused across all deployment targets. For complete architecture details, see [CD Architecture Documentation](docs/CD-ARCHITECTURE.md).
+
 ## 🚀 Automated Release Process
 
 This project features a fully automated release pipeline:

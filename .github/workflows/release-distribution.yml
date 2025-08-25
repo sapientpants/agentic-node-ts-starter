@@ -1,0 +1,171 @@
+name: Release Distribution
+
+# Triggered when a GitHub release is published
+# This workflow reuses artifacts from the CI build instead of rebuilding
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to distribute'
+        required: true
+        type: string
+
+jobs:
+  # Extract metadata from the release
+  prepare-distribution:
+    name: Prepare Distribution
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+      artifact-id: ${{ steps.metadata.outputs.artifact-id }}
+      sbom-artifact-id: ${{ steps.metadata.outputs.sbom-artifact-id }}
+    steps:
+      - name: Extract version info
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            TAG="${{ github.event.release.tag_name }}"
+          else
+            TAG="${{ inputs.tag }}"
+          fi
+          VERSION="${TAG#v}"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Preparing distribution for version: $VERSION (tag: $TAG)"
+
+      - name: Extract build metadata from release
+        id: metadata
+        run: |
+          # Extract artifact IDs from release body if available
+          # For now, we'll use a pattern - in production, parse from release body
+          echo "artifact-id=build-latest" >> $GITHUB_OUTPUT
+          echo "sbom-artifact-id=sbom-latest" >> $GITHUB_OUTPUT
+          echo "⚠️ Note: In production, artifact IDs should be extracted from release metadata"
+
+  # Deploy to multiple targets in parallel
+  deploy-targets:
+    name: Deploy to ${{ matrix.target }}
+    needs: prepare-distribution
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [npm, docker, docs]
+    uses: ./.github/workflows/reusable-deploy.yml
+    with:
+      artifact-id: ${{ needs.prepare-distribution.outputs.artifact-id }}
+      sbom-artifact-id: ${{ needs.prepare-distribution.outputs.sbom-artifact-id }}
+      version: ${{ needs.prepare-distribution.outputs.version }}
+      environment: ${{ matrix.target }}
+    secrets: inherit
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
+      attestations: write
+      pages: write
+
+  # Create additional release artifacts (source tarballs, etc.)
+  create-release-artifacts:
+    name: Create Release Artifacts
+    needs: prepare-distribution
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code at release tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare-distribution.outputs.tag }}
+
+      - name: Create source tarball
+        run: |
+          tar -czf source-${{ needs.prepare-distribution.outputs.version }}.tar.gz \
+            --exclude=node_modules \
+            --exclude=.git \
+            --exclude=dist \
+            --exclude=coverage \
+            --exclude=.pnpm-store \
+            --exclude='*.log' \
+            --exclude='.DS_Store' \
+            src/ package.json pnpm-lock.yaml tsconfig.json README.md LICENSE* || true
+
+      - name: Create checksums
+        run: |
+          sha256sum source-*.tar.gz > checksums-${{ needs.prepare-distribution.outputs.version }}.txt
+          cat checksums-${{ needs.prepare-distribution.outputs.version }}.txt
+
+      - name: Upload artifacts to release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.prepare-distribution.outputs.tag }}
+          files: |
+            source-*.tar.gz
+            checksums-*.txt
+          fail_on_unmatched_files: false
+
+  # Status notification
+  notify-status:
+    name: Distribution Status
+    runs-on: ubuntu-latest
+    needs: [prepare-distribution, deploy-targets, create-release-artifacts]
+    if: always()
+    steps:
+      - name: Create status summary
+        run: |
+          echo "# 📦 Release Distribution Status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Release:** ${{ needs.prepare-distribution.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ needs.prepare-distribution.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Repository:** ${{ github.repository }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Distribution Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Check individual deployment statuses
+          echo "| Channel | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 📦 NPM | ${{ needs.deploy-targets.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🐳 Docker | ${{ needs.deploy-targets.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📚 Docs | ${{ needs.deploy-targets.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📎 Artifacts | ${{ needs.create-release-artifacts.result }} |" >> $GITHUB_STEP_SUMMARY
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Links" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ github.event_name }}" = "release" ]; then
+            echo "- [Release Page](${{ github.event.release.html_url }})" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "- [Workflow Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
+
+      - name: Check Slack Webhook
+        id: check_slack
+        run: |
+          if [ -n "${{ secrets.SLACK_WEBHOOK }}" ]; then
+            echo "has_webhook=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_webhook=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Slack Notification
+        if: steps.check_slack.outputs.has_webhook == 'true'
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          custom_payload: |
+            {
+              text: "Release ${{ needs.prepare-distribution.outputs.tag }} Distribution Complete",
+              attachments: [{
+                color: "${{ contains(needs.*.result, 'failure') && 'danger' || 'good' }}",
+                fields: [
+                  { title: "Version", value: "${{ needs.prepare-distribution.outputs.version }}", short: true },
+                  { title: "Status", value: "${{ needs.deploy-targets.result }}", short: true }
+                ]
+              }]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+        continue-on-error: true
