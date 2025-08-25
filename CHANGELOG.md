@@ -1,5 +1,73 @@
 # agentic-node-ts-starter
 
+## 0.4.0
+
+### Minor Changes
+
+- [#29](https://github.com/sapientpants/agentic-node-ts-starter/pull/29) [`51c1bdc`](https://github.com/sapientpants/agentic-node-ts-starter/commit/51c1bdce74f295cf821da8c82cf0c8a8e3fd5cef) Thanks [@sapientpants](https://github.com/sapientpants)! - feat: implement build-once-deploy-many CD architecture for true continuous deployment
+
+  **Major Architecture Changes:**
+  - **Reusable Workflows**: Created modular, callable workflows for build and deploy operations
+    - `reusable-build.yml`: Centralized build logic with artifact generation
+    - `reusable-deploy.yml`: Deploy pre-built artifacts without rebuilding
+    - `continuous-deployment.yml`: Main orchestrator workflow
+    - `release-distribution.yml`: Alternative entry for release distribution
+  - **Build Once, Deploy Many**: Artifacts are built once in CI and reused across all deployments
+    - Unique artifact IDs for traceability
+    - 90-day retention for cost optimization
+    - Manifest files track build metadata
+  - **PAT Support for Auto-merge**: Version PRs created with PAT trigger workflows
+    - Solves GitHub's GITHUB_TOKEN limitation
+    - Enables true hands-free releases
+    - Documented setup process
+
+  **Key Benefits:**
+  - **Efficiency**: ~60% reduction in build time by eliminating rebuilds
+  - **Consistency**: Same artifacts deployed everywhere
+  - **Automation**: Zero manual steps from merge to deployment
+  - **Traceability**: Complete artifact lineage tracking
+  - **Security**: SLSA provenance and SBOM attestations
+
+  **Configuration:**
+
+  New secrets:
+  - `CHANGESETS_PAT`: Personal Access Token for creating PRs that trigger workflows
+
+  New documentation:
+  - `docs/CD-ARCHITECTURE.md`: Complete architecture documentation
+  - Setup instructions for PAT configuration
+  - Troubleshooting guide for common issues
+
+  This change fundamentally restructures the CI/CD pipeline to achieve true continuous deployment with artifact reuse, solving the core issue of version PRs not triggering workflows and ensuring efficient, consistent deployments.
+
+### Patch Changes
+
+- [#27](https://github.com/sapientpants/agentic-node-ts-starter/pull/27) [`4caf589`](https://github.com/sapientpants/agentic-node-ts-starter/commit/4caf589d965028af6ae650ef80dec30afeb7f407) Thanks [@sapientpants](https://github.com/sapientpants)! - feat: improve GitHub Actions workflows with security and reliability enhancements
+
+  **Bug Fixes:**
+  - Fixed critical bug in auto-merge workflow that was attempting to merge wrong PR number (#17 instead of dynamic PR number)
+  - Added security validation to auto-merge workflow to verify PR author is github-actions bot before enabling auto-merge
+
+  **Security Enhancements:**
+  - Added dependency review action to scan for vulnerable dependencies in pull requests
+  - Added license checking to automatically block problematic licenses (GPL-3.0, AGPL-3.0)
+  - Integrated security validation in auto-merge workflow to prevent unauthorized auto-merge
+
+  **Reliability Improvements:**
+  - Added timeout configurations to prevent hung jobs (15 minutes for build-test, 5 minutes for dependencies)
+  - Created reusable workflow (`setup-node-pnpm.yml`) for consistent Node.js and pnpm setup
+  - Improved error handling and user feedback in auto-merge workflow
+
+  **Documentation:**
+  - Added comprehensive workflow documentation in `.github/WORKFLOWS.md` including:
+    - Workflow architecture diagram
+    - Detailed descriptions and triggers for each workflow
+    - Troubleshooting guide for common issues
+    - Required secrets and variables reference
+    - Performance metrics and best practices
+
+  These improvements strengthen the security posture, improve reliability, and make workflows easier to maintain and troubleshoot.
+
 ## 0.3.1
 
 ### Patch Changes
