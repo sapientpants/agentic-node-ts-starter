@@ -151,7 +151,17 @@ Go to **Settings** → **General** → **Pull Requests**:
 
 - ✅ Enable **"Allow auto-merge"**
 
-#### 3. Branch Protection Rules (Recommended)
+#### 3. Personal Access Token for Auto-Merge (Optional but Recommended)
+
+For fully automated version PR merging:
+
+1. [Create a Personal Access Token (classic)](https://github.com/settings/tokens/new) with `repo` scope
+2. Go to **Settings** → **Secrets and variables** → **Actions**
+3. Add a new repository secret named `AUTO_MERGE_PAT` with your token
+
+**Note**: Without this token, version PRs will need to be manually merged. The default `GITHUB_TOKEN` cannot enable auto-merge on PRs.
+
+#### 4. Branch Protection Rules (Recommended)
 
 Go to **Settings** → **Branches** → Add rule for `main`:
 
@@ -177,7 +187,7 @@ This project features a fully automated release pipeline:
 ### How It Works
 
 - When you merge a PR with changesets, a "Version Packages" PR is automatically created
-- The `auto-merge-version-pr.yml` workflow enables auto-merge for this PR
+- The `auto-merge-version-pr.yml` workflow enables auto-merge for this PR (requires `AUTO_MERGE_PAT`)
 - Once CI checks pass, the PR merges without manual intervention
 - The CI/CD workflow creates a GitHub release with SBOM
 - The `release.yml` workflow triggers on the published release to handle distribution:
