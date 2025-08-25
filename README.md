@@ -166,19 +166,25 @@ Without these settings, the automated release process will not work correctly.
 
 This project features a fully automated release pipeline:
 
-1. **Developer merges PR** with changesets → triggers `release.yml`
+1. **Developer merges PR** with changesets → triggers CI/CD workflow
 2. **Changesets creates version PR** automatically with updated versions and CHANGELOG
 3. **Auto-merge enables** for the version PR (no manual intervention needed)
 4. **CI runs and passes** → PR merges automatically
 5. **Release workflow detects merge** → creates git tag and GitHub release
 6. **SBOM and attestations** are generated and attached to the release
+7. **Release distribution** → automatically publishes to npm, Docker Hub, and other platforms
 
 ### How It Works
 
 - When you merge a PR with changesets, a "Version Packages" PR is automatically created
 - The `auto-merge-version-pr.yml` workflow enables auto-merge for this PR
 - Once CI checks pass, the PR merges without manual intervention
-- The `release.yml` workflow then creates a GitHub release with SBOM
+- The CI/CD workflow creates a GitHub release with SBOM
+- The `release.yml` workflow triggers on the published release to handle distribution:
+  - Publishes package to npm registry with provenance attestation
+  - Builds and pushes multi-architecture Docker images
+  - Deploys documentation to GitHub Pages
+  - Uploads additional release assets (tarballs, checksums)
 
 ### Manual Override
 
@@ -192,6 +198,34 @@ gh pr merge --disable-auto PR_NUMBER
 gh pr merge --auto --squash PR_NUMBER
 ```
 
+## 📦 Release Distribution Setup
+
+### NPM Publishing
+
+To enable npm publishing:
+
+1. Add `NPM_TOKEN` secret in repository settings
+2. Remove `"private": true` from package.json
+3. Use a scoped package name: `@yourorg/package-name`
+
+### Docker Publishing
+
+To enable Docker builds:
+
+1. Set repository variable `ENABLE_DOCKER_RELEASE` to `true`
+2. Add secrets for Docker Hub (optional):
+   - `DOCKERHUB_USERNAME`
+   - `DOCKERHUB_TOKEN`
+3. Images are automatically pushed to GitHub Container Registry
+
+### Documentation Publishing
+
+To enable GitHub Pages documentation:
+
+1. Set repository variable `ENABLE_DOCS_RELEASE` to `true`
+2. Enable GitHub Pages in repository settings
+3. Add documentation build command to release.yml
+
 ## 🔒 Security Features
 
 - **Dependency Auditing**: Critical vulnerability checks on every CI run
@@ -199,6 +233,7 @@ gh pr merge --auto --squash PR_NUMBER
 - **CodeQL Analysis**: Static security analysis
 - **OSV Scanning**: Open Source Vulnerability detection
 - **SLSA Provenance**: Build attestations for artifacts
+- **Container Attestations**: SBOM and provenance for Docker images
 
 ## 📖 Documentation
 

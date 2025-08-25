@@ -21,6 +21,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `pnpm test:watch` - Run tests in watch mode
 - `pnpm test:coverage` - Run tests with coverage report
 - `pnpm coverage:report` - Generate detailed coverage report
+- `vitest run tests/specific.spec.ts` - Run a single test file
+- `vitest -t "test name"` - Run tests matching a pattern
 - Test files: `tests/*.spec.ts` for unit tests, `tests/*.property.spec.ts` for property-based tests
 
 ### Release & Security
@@ -44,6 +46,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Module system**: ES modules (`"type": "module"`) with NodeNext resolution
 - **Claude Commands**: Custom commands in `.claude/commands/` for common workflows
 - **Git Hooks**: Custom pre-commit verification via `.claude/hooks/`
+
+### Project Layout
+
+```
+src/               # Source code - ES modules with .ts extension
+tests/            # Test files - *.spec.ts (unit), *.property.spec.ts (property-based)
+dist/             # Build output (gitignored)
+specs/            # Feature specifications in Gherkin format
+.claude/          # Claude Code configurations and commands
+```
 
 ### Key Patterns
 
@@ -78,6 +90,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 4. **Required**: Create a changeset with `pnpm changeset` or `pnpm changeset --empty`
 5. Use Conventional Commits format
 6. Push and create PR - CI will fail without a changeset
+
+## GitHub CLI Commands
+
+Common gh commands for this repository:
+
+- `gh issue list` - List open issues
+- `gh issue view <number>` - View issue details
+- `gh pr create --title "title" --body "description"` - Create a pull request
+- `gh pr checks` - View CI status for current PR
+- `gh pr merge --auto --squash` - Enable auto-merge for PR
 
 ## Claude Commands
 
@@ -138,3 +160,41 @@ git push origin feature/my-feature
 ```
 
 The CI will validate that a changeset is present, and the release workflow will automatically create version PRs when changes are merged to main.
+
+## Critical Workflow Notes
+
+### Before Committing
+
+1. **Always run `pnpm verify`** - Ensures all checks pass (typecheck, lint, format, tests)
+2. **Always create a changeset** - Required for all PRs (CI will fail without it)
+3. **Use the correct import syntax** - Always use `.js` extension for local ES module imports
+
+### CI/CD Workflow
+
+- **Main workflow**: `.github/workflows/ci-cd.yml` - Runs all checks, security scans, and handles releases
+- **Auto-merge**: `.github/workflows/auto-merge-version-pr.yml` - Automatically merges version PRs
+- **Release distribution**: `.github/workflows/release.yml` - Distributes releases to npm, Docker Hub, etc. when a GitHub release is published
+- **Required checks**: `build-test` and `changeset-validation` must pass for PR merge
+
+### Release Distribution
+
+When a GitHub release is published by `ci-cd.yml`, the `release.yml` workflow automatically handles distribution:
+
+1. **Downloads existing release artifacts** (SBOM from the published release)
+2. **Publishes to npm** (if NPM_TOKEN secret is set) - builds from source at release tag
+3. **Builds and pushes Docker images** to Docker Hub and GitHub Container Registry (if ENABLE_DOCKER_RELEASE=true)
+4. **Deploys documentation** to GitHub Pages (if ENABLE_DOCS_RELEASE=true)
+5. **Creates additional release assets** (source/dist tarballs with checksums)
+
+Key principle: **No duplicate builds** - The workflow checks out code at the release tag and builds only what's needed for each distribution channel.
+
+Required secrets for distribution:
+
+- `NPM_TOKEN` - For npm publishing
+- `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` - For Docker Hub (optional)
+- `SLACK_WEBHOOK` - For Slack notifications (optional)
+
+Required variables:
+
+- `ENABLE_DOCKER_RELEASE` - Set to 'true' to enable Docker builds
+- `ENABLE_DOCS_RELEASE` - Set to 'true' to enable documentation deployment
