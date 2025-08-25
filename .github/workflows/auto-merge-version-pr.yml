@@ -15,25 +15,38 @@ jobs:
 
     steps:
       - name: Enable Auto-Merge
+        # Note: This requires a PAT with repo scope or GitHub App token
+        # The default GITHUB_TOKEN cannot enable auto-merge
+        # See README for setup instructions
         run: |
-          echo "Enabling auto-merge for PR #${{ github.event.pull_request.number }}"
-          gh pr merge --auto --squash "${{ github.event.pull_request.number }}"
+          echo "Attempting to enable auto-merge for PR #${{ github.event.pull_request.number }}"
+          gh pr merge --auto --squash "${{ github.event.pull_request.number }}" || {
+            echo "::warning::Could not enable auto-merge. This requires a PAT with 'repo' scope."
+            echo "::warning::See README.md for instructions on setting up auto-merge."
+            exit 0
+          }
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Use PAT if available, fallback to GITHUB_TOKEN (which will fail but not break the workflow)
+          GH_TOKEN: ${{ secrets.AUTO_MERGE_PAT || secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
 
       - name: Add Auto-Merge Comment
+        if: success()
         run: |
-          gh pr comment "${{ github.event.pull_request.number }}" --body "🤖 **Auto-merge enabled**
+          gh pr comment "${{ github.event.pull_request.number }}" --body "🤖 **Auto-merge status**
 
           This version PR will be automatically merged once all required status checks pass.
 
-          If you need to make additional changes before release:
-          1. Disable auto-merge with: \`gh pr merge --disable-auto PR_NUMBER\`
+          If auto-merge was not enabled (due to missing PAT), you can:
+          - Manually enable it: \`gh pr merge --auto --squash ${{ github.event.pull_request.number }}\`
+          - Or merge manually once checks pass: \`gh pr merge --squash ${{ github.event.pull_request.number }}\`
+
+          To make changes before release:
+          1. Disable auto-merge: \`gh pr merge --disable-auto ${{ github.event.pull_request.number }}\`
           2. Make your changes
           3. Re-enable auto-merge or merge manually
 
-          _This is an automated process. See [README](../blob/main/README.md#automated-release-process) for details._"
+          _See [README](../blob/main/README.md#automated-release-process) for details._"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
