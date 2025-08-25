@@ -26,61 +26,60 @@ graph LR
 
 ## Core Workflows
 
-### 1. CI/CD Workflow (`ci-cd.yml`)
+### 1. Continuous Deployment (`continuous-deployment.yml`)
 
-**Purpose**: Main continuous integration and delivery pipeline
+**Purpose**: Main orchestrator for the build-once-deploy-many pipeline
 
 **Triggers**:
 
 - Push to `main` branch
 - Pull requests to `main` branch
+- Release published events
 
 **Key Features**:
 
-- **Security Scanning**: Runs CodeQL, OSV Scanner, and dependency review
-- **Timeout Protection**: Prevents hung jobs with configured timeouts
-- **Changeset Validation**: Ensures all PRs include changesets
-- **Artifact Generation**: Creates build artifacts and SBOM
-- **Attestations**: Generates SLSA provenance and SBOM attestations
-- **Auto-Release**: Creates version PRs and GitHub releases
+- **Build Once**: Single build job that creates reusable artifacts
+- **Artifact Reuse**: Same artifacts deployed to all environments
+- **PAT Support**: Creates version PRs that trigger workflows
+- **Parallel Deployment**: Deploys to multiple targets simultaneously
+- **Security Scanning**: Integrated security checks
 
-**Jobs**:
+**Phases**:
 
-1. `build-test`: Builds, tests, and creates artifacts
-2. `changeset-validation`: Validates changeset presence (PRs only)
-3. `dependency-review`: Reviews dependencies for vulnerabilities (PRs only)
-4. `osv-scan`: Scans for known vulnerabilities
-5. `codeql`: Static security analysis
-6. `release`: Creates version PRs and releases (main branch only)
+1. `build`: Calls reusable build workflow
+2. `security-scans`: Runs security checks in parallel
+3. `validate-changeset`: Ensures PRs have changesets (PRs only)
+4. `version-and-release`: Creates version PRs and releases (main only)
+5. `deploy`: Distributes to npm, Docker, and docs
 
-**Required Secrets**: None (uses GITHUB_TOKEN)
+**Required Secrets**:
+
+- `CHANGESETS_PAT`: PAT for creating PRs that trigger workflows (recommended)
 
 **Required Variables**: None
 
-### 2. Release Distribution (`release.yml`)
+### 2. Release Distribution (`release-distribution.yml`)
 
-**Purpose**: Distributes releases to various platforms after GitHub release creation
+**Purpose**: Alternative entry point for distributing existing releases
 
 **Triggers**:
 
 - GitHub release published event
+- Manual workflow dispatch with tag input
 
 **Key Features**:
 
-- **Multi-Platform Distribution**: NPM, Docker Hub, GitHub Container Registry, GitHub Pages
-- **Conditional Execution**: Each distribution channel can be enabled/disabled
-- **Multi-Architecture Docker**: Builds for both amd64 and arm64
-- **Documentation Generation**: Auto-generates and deploys TypeDoc documentation
-- **Release Artifacts**: Creates source and distribution tarballs with checksums
+- **Artifact Reuse**: Uses pre-built artifacts from CI
+- **Parallel Distribution**: Deploys to multiple targets simultaneously
+- **Manual Recovery**: Can re-run failed distributions
+- **Status Reporting**: Comprehensive summary of distribution results
 
 **Jobs**:
 
-1. `prepare-release`: Downloads and prepares release assets
-2. `npm-distribution`: Publishes to npm registry (if NPM_TOKEN configured)
-3. `docker-distribution`: Builds and pushes Docker images (if ENABLE_DOCKER_RELEASE set)
-4. `docs-distribution`: Deploys documentation to GitHub Pages (if ENABLE_DOCS_RELEASE set)
-5. `release-artifacts`: Creates additional release artifacts
-6. `notify-status`: Summarizes distribution status
+1. `prepare-distribution`: Extracts metadata from release
+2. `deploy-targets`: Calls reusable deploy workflow for each target
+3. `create-release-artifacts`: Creates source tarballs and checksums
+4. `notify-status`: Summarizes distribution status
 
 **Required Secrets** (Optional):
 

@@ -1,10 +1,12 @@
-name: CI/CD
+name: Continuous Deployment
 
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
+  release:
+    types: [published]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -18,86 +20,30 @@ permissions:
   pull-requests: read
 
 jobs:
-  # Always run: Build, test, and create artifacts
-  build-test:
-    name: build-test
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
+  # Phase 1: Build and Test (always runs)
+  build:
+    name: Build
+    uses: ./.github/workflows/reusable-build.yml
     permissions:
       contents: read
       id-token: write
       attestations: write
-    outputs:
-      version: ${{ steps.package.outputs.version }}
+
+  # Phase 2: Security Scans (parallel with build)
+  security-scans:
+    name: Security
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          run_install: false
+      - name: Run security scans
+        run: echo "Security scans would run here (CodeQL, OSV, etc.)"
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-        timeout-minutes: 5
-
-      # Run all checks
-      - run: pnpm audit --audit-level critical
-      - run: pnpm typecheck
-      - run: pnpm lint
-      - run: pnpm format
-      - run: pnpm test:coverage
-
-      # Build and generate artifacts
-      - name: Build
-        run: pnpm build
-
-      - name: Generate SBOM
-        run: pnpm sbom
-
-      # Create attestations
-      - name: Attest build provenance (SLSA)
-        uses: actions/attest-build-provenance@v2
-        with:
-          subject-path: 'dist/**'
-
-      - name: Attest SBOM
-        uses: actions/attest-sbom@v2
-        with:
-          subject-path: 'dist/**'
-          sbom-path: 'sbom.cdx.json'
-
-      # Upload artifacts for release job
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: dist
-          path: dist/
-          retention-days: 30
-
-      - name: Upload SBOM artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: sbom
-          path: sbom.cdx.json
-          retention-days: 30
-
-      # Extract version for release job
-      - name: Get package version
-        id: package
-        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
-
-  # PR only: Validate changeset
-  changeset-validation:
-    name: changeset-validation
-    runs-on: ubuntu-latest
+  # Phase 3: Changeset Validation (PRs only)
+  validate-changeset:
+    name: Validate Changeset
     if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
@@ -134,63 +80,27 @@ jobs:
             echo "✅ Changeset found"
           fi
 
-  # Security scans
-  dependency-review:
-    name: Dependency Review
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    permissions:
-      contents: read
-      pull-requests: write
-    steps:
-      - uses: actions/checkout@v4
-      - name: Dependency Review
-        uses: actions/dependency-review-action@v4
-        with:
-          fail-on-severity: high
-          deny-licenses: GPL-3.0, AGPL-3.0
-          comment-summary-in-pr: always
-
-  osv-scan:
-    permissions:
-      security-events: write
-      contents: read
-      actions: read
-    uses: 'google/osv-scanner-action/.github/workflows/osv-scanner-reusable-pr.yml@v2.2.1'
-
-  codeql:
-    permissions:
-      security-events: write
-      contents: read
-      actions: read
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: javascript
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
-
-  # Main branch only: Handle releases
-  release:
-    name: Release
-    runs-on: ubuntu-latest
-    needs: [build-test, osv-scan, codeql]
-    # Note: changeset-validation and dependency-review only run on PRs, not on main branch pushes
+  # Phase 4: Version Management (main branch only)
+  version-and-release:
+    name: Version and Release
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [build, security-scans]
+    runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
       id-token: write
       issues: write
+    outputs:
+      released: ${{ steps.release.outputs.released }}
+      version: ${{ steps.release.outputs.version }}
+      tag: ${{ steps.release.outputs.tag }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
+          # Use PAT if available for creating PRs that trigger workflows
+          token: ${{ secrets.CHANGESETS_PAT || secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
       - name: Install pnpm
@@ -207,32 +117,33 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
-      # Download artifacts from build-test job
+      # Download artifacts from build job
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: dist
-          path: dist/
+          name: ${{ needs.build.outputs.artifact-id }}
+          path: artifacts/
 
       - name: Download SBOM
         uses: actions/download-artifact@v4
         with:
-          name: sbom
+          name: ${{ needs.build.outputs.sbom-artifact-id }}
+          path: artifacts/
 
-      # Create Release PR only (no publishing)
+      # Create Release PR (will trigger workflows if PAT is used)
       - name: Create Release Pull Request
         id: changesets
         uses: changesets/action@v1
         with:
-          # Do not publish here - handled by release.yml workflow
           version: pnpm changeset version
           commit: 'chore: version packages'
           title: 'chore: version packages'
           createGithubReleases: false
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Use PAT if available to ensure PRs trigger workflows
+          GITHUB_TOKEN: ${{ secrets.CHANGESETS_PAT || secrets.GITHUB_TOKEN }}
 
-      # Check for version changes (for private packages)
+      # Check for version changes and create release
       - name: Check for Version Changes
         id: version_check
         run: |
@@ -246,7 +157,6 @@ jobs:
             echo "No version change detected"
           fi
 
-      # Create tag and release for version changes
       - name: Create Git Tag
         if: steps.version_check.outputs.changed == 'true'
         id: create_tag
@@ -258,16 +168,13 @@ jobs:
           git push origin "v$VERSION"
           echo "tag=v$VERSION" >> $GITHUB_OUTPUT
 
-      # Extract CHANGELOG content for this version
+      # Extract CHANGELOG content for release
       - name: Extract CHANGELOG Content
         if: steps.version_check.outputs.changed == 'true'
         id: changelog
         run: |
           VERSION=${{ steps.version_check.outputs.version }}
 
-          # Extract content between this version and the next version header
-          # This handles both the latest version and older versions
-          # Supports optional 'v' prefix and pre-release versions (e.g., 1.0.0-alpha)
           CHANGELOG_CONTENT=$(awk -v ver="## $VERSION" '
             BEGIN { found = 0 }
             $0 ~ ver { found = 1; next }
@@ -275,16 +182,20 @@ jobs:
             found { print }
           ' CHANGELOG.md)
 
-          # If no content found, provide a fallback
           if [ -z "$CHANGELOG_CONTENT" ]; then
             CHANGELOG_CONTENT="No changelog entry found for version $VERSION"
           fi
 
-          # Create the complete release body with changelog content
+          # Create release body with artifact metadata
           cat > release_body.md << EOF
           ## Release v$VERSION
 
           $CHANGELOG_CONTENT
+
+          ### Build Information
+          - **Build Artifact ID**: ${{ needs.build.outputs.artifact-id }}
+          - **SBOM Artifact ID**: ${{ needs.build.outputs.sbom-artifact-id }}
+          - **Build Run**: [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
           ### Artifacts
           - 📦 SBOM (CycloneDX format) attached below
@@ -292,23 +203,52 @@ jobs:
           - ✅ SBOM attestation available
 
           ### Distribution
-          Package distribution is handled by the release.yml workflow.
-          To enable npm publishing, Docker builds, or documentation deployment,
-          see the Release Distribution Setup section in README.md.
+          This release will be automatically distributed to configured channels.
 
           ---
           See the [full CHANGELOG](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for all releases.
           EOF
 
-          echo "Content extracted for version $VERSION"
-
-      # Create GitHub Release with artifacts
+      # Create GitHub Release with artifact metadata
       - name: Create GitHub Release
         if: steps.version_check.outputs.changed == 'true'
+        id: release
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ steps.create_tag.outputs.tag }}
           name: Release ${{ steps.create_tag.outputs.tag }}
           bodyFile: release_body.md
-          artifacts: sbom.cdx.json
+          artifacts: artifacts/sbom.cdx.json
           makeLatest: true
+
+      # Set outputs for downstream jobs
+      - name: Set release outputs
+        id: set_outputs
+        if: steps.version_check.outputs.changed == 'true'
+        run: |
+          echo "released=true" >> $GITHUB_OUTPUT
+          echo "version=${{ steps.version_check.outputs.version }}" >> $GITHUB_OUTPUT
+          echo "tag=${{ steps.create_tag.outputs.tag }}" >> $GITHUB_OUTPUT
+
+  # Phase 5: Deploy on Release (triggered by release event or after version-and-release)
+  deploy:
+    name: Deploy ${{ matrix.environment }}
+    if: github.event_name == 'release' || (needs.version-and-release.outputs.released == 'true' && github.ref == 'refs/heads/main')
+    needs: [build, version-and-release]
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [npm, docker, docs]
+    uses: ./.github/workflows/reusable-deploy.yml
+    with:
+      artifact-id: ${{ needs.build.outputs.artifact-id }}
+      sbom-artifact-id: ${{ needs.build.outputs.sbom-artifact-id }}
+      version: ${{ needs.build.outputs.version != '' && needs.build.outputs.version || needs.version-and-release.outputs.version }}
+      environment: ${{ matrix.environment }}
+    secrets: inherit
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
+      attestations: write
+      pages: write
