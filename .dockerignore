@@ -1,0 +1,58 @@
+# Git
+.git
+.gitignore
+.github
+
+# Development
+.claude
+.changeset
+.husky
+.vscode
+.idea
+
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build outputs (we build fresh in Docker)
+dist
+*.tsbuildinfo
+
+# Test files
+tests
+coverage
+.nyc_output
+*.spec.ts
+*.test.ts
+
+# Documentation
+docs
+*.md
+!README.md
+
+# Environment files
+.env*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+
+# Temporary files
+tmp
+temp
+*.tmp
+
+# SBOM and security reports
+sbom.cdx.json
+audit-report.json
