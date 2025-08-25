@@ -249,10 +249,11 @@ jobs:
 
           # Extract content between this version and the next version header
           # This handles both the latest version and older versions
+          # Supports optional 'v' prefix and pre-release versions (e.g., 1.0.0-alpha)
           CHANGELOG_CONTENT=$(awk -v ver="## $VERSION" '
             BEGIN { found = 0 }
             $0 ~ ver { found = 1; next }
-            found && /^## [0-9]+\.[0-9]+\.[0-9]+/ { exit }
+            found && /^## v?[0-9]+\.[0-9]+\.[0-9]+([\-+][0-9A-Za-z\.-]+)?/ { exit }
             found { print }
           ' CHANGELOG.md)
 
