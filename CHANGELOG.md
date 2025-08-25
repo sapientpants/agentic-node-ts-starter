@@ -1,5 +1,45 @@
 # agentic-node-ts-starter
 
+## 0.3.0
+
+### Minor Changes
+
+- [#15](https://github.com/sapientpants/agentic-node-ts-starter/pull/15) [`47ddf0c`](https://github.com/sapientpants/agentic-node-ts-starter/commit/47ddf0c59cb2b7b1521f89742c8ef6bcb9afd32a) Thanks [@sapientpants](https://github.com/sapientpants)! - feat: add automatic merging of version PRs for fully automated releases
+  - Add auto-merge workflow that enables auto-merge for changesets version PRs
+  - Eliminate manual intervention in the release process
+  - Document repository settings required for automation
+  - Update README and CONTRIBUTING with complete automation instructions
+
+  This completes the release automation by automatically merging version PRs when CI passes, making the entire release process hands-free. Once a PR with changesets is merged, the version PR is created, auto-merge is enabled, and when CI passes, it merges automatically, triggering the release with SBOM generation.
+
+### Patch Changes
+
+- [#18](https://github.com/sapientpants/agentic-node-ts-starter/pull/18) [`f5b9a80`](https://github.com/sapientpants/agentic-node-ts-starter/commit/f5b9a804783157b7f12d1ca4e888dac3479eae59) Thanks [@sapientpants](https://github.com/sapientpants)! - fix: add attestations write permission to release workflow
+
+  The release workflow was failing with "Resource not accessible by integration" when trying to create attestations. Added the missing `attestations: write` permission.
+
+- [#19](https://github.com/sapientpants/agentic-node-ts-starter/pull/19) [`75a5d58`](https://github.com/sapientpants/agentic-node-ts-starter/commit/75a5d5819960e6b6d12b9b1e9ebae3f0ab04d7aa) Thanks [@sapientpants](https://github.com/sapientpants)! - fix: update auto-merge workflow to recognize changesets PR author
+
+  The auto-merge workflow was checking for `github-actions[bot]` but changesets creates PRs with `app/github-actions` as the author. Updated the condition to check for both formats.
+
+- [#20](https://github.com/sapientpants/agentic-node-ts-starter/pull/20) [`7446585`](https://github.com/sapientpants/agentic-node-ts-starter/commit/744658564b9447ed30a1eeae21e6bd696c30fc16) Thanks [@sapientpants](https://github.com/sapientpants)! - fix: check PR title instead of actor for auto-merge workflow
+
+  The auto-merge workflow was checking `github.actor` which is the user who triggers the workflow (including when pushing updates to the PR), not the PR author. Changed to check the PR title directly in the job condition, which is more reliable and works regardless of who triggers the workflow.
+
+- [#16](https://github.com/sapientpants/agentic-node-ts-starter/pull/16) [`ce1cec5`](https://github.com/sapientpants/agentic-node-ts-starter/commit/ce1cec5894e1db968e478be7543bafcbdcef5b20) Thanks [@sapientpants](https://github.com/sapientpants)! - fix: correct ncipollo/release-action version from v2 to v1
+
+  The action version v2 doesn't exist. Use v1 which is the current major version tag that points to the latest stable release (v1.18.0).
+
+- [#15](https://github.com/sapientpants/agentic-node-ts-starter/pull/15) [`47ddf0c`](https://github.com/sapientpants/agentic-node-ts-starter/commit/47ddf0c59cb2b7b1521f89742c8ef6bcb9afd32a) Thanks [@sapientpants](https://github.com/sapientpants)! - fix: consolidate release workflow to support private packages with SBOM generation
+  - Configure changesets to support tagging private packages via privatePackages config
+  - Consolidate all release logic into single workflow to avoid token triggering issues
+  - Detect version changes after PR merge and generate release assets
+  - Create GitHub releases with SBOM for every version change
+  - Generate build provenance and SBOM attestations for all releases
+  - Add documentation for future npm publishing requirements
+
+  This fixes the issue where private packages don't trigger the publish flow, ensuring that every release includes supply chain transparency artifacts. The consolidated workflow approach avoids GitHub's restriction on workflow cascading when using GITHUB_TOKEN.
+
 ## 0.2.0
 
 ### Minor Changes
