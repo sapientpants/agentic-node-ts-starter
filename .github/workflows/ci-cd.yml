@@ -162,6 +162,7 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     needs: [build-test, osv-scan, codeql]
+    # Note: changeset-validation only runs on PRs, not on main branch pushes
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     permissions:
       contents: write
