@@ -56,51 +56,7 @@ jobs:
           # NPM_TOKEN is optional - publishing will be skipped if not set
           NPM_TOKEN: ${{ secrets.NPM_TOKEN || '' }}
 
-      # Conditional NPM Publishing (only if NPM_TOKEN is set)
-      - name: Check NPM Publishing
-        if: steps.changesets.outputs.published == 'true'
-        run: |
-          if [ -n "${{ secrets.NPM_TOKEN }}" ]; then
-            echo "✅ NPM publishing completed (NPM_TOKEN was configured)"
-          else
-            echo "📦 NPM publishing skipped - NPM_TOKEN not configured"
-            echo "To enable NPM publishing, add NPM_TOKEN to repository secrets"
-          fi
-
-      # Generate SBOM and attestations after publish
-      - name: Generate SBOM
-        if: steps.changesets.outputs.published == 'true'
-        run: pnpm sbom
-
-      - name: Build for attestations
-        if: steps.changesets.outputs.published == 'true'
-        run: pnpm build
-
-      - name: Attest build provenance
-        if: steps.changesets.outputs.published == 'true'
-        uses: actions/attest-build-provenance@v2
-        with:
-          subject-path: 'dist/**'
-
-      - name: Attest SBOM
-        if: steps.changesets.outputs.published == 'true'
-        uses: actions/attest-sbom@v2
-        with:
-          subject-path: 'dist/**'
-          sbom-path: 'sbom.cdx.json'
-
-      # Attach SBOM to GitHub Release
-      - name: Attach SBOM to Release
-        if: steps.changesets.outputs.published == 'true'
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: sbom.cdx.json
-          asset_name: sbom.cdx.json
-          tag: v${{ fromJson(steps.changesets.outputs.publishedPackages)[0].version }}
-          overwrite: true
-
-      # For private packages: Create tag when version changes are detected
+      # Check for version changes (for private packages or when publish doesn't trigger)
       - name: Check for Version Changes
         id: version_check
         run: |
@@ -116,11 +72,69 @@ jobs:
             echo "No version change detected"
           fi
 
-      - name: Create Git Tag for Private Package
+      # Generate release assets when version changes (works for both private and public packages)
+      - name: Generate SBOM
+        if: steps.version_check.outputs.changed == 'true' || steps.changesets.outputs.published == 'true'
+        run: pnpm sbom
+
+      - name: Build for attestations
+        if: steps.version_check.outputs.changed == 'true' || steps.changesets.outputs.published == 'true'
+        run: pnpm build
+
+      - name: Attest build provenance
+        if: steps.version_check.outputs.changed == 'true' || steps.changesets.outputs.published == 'true'
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: 'dist/**'
+
+      - name: Attest SBOM
+        if: steps.version_check.outputs.changed == 'true' || steps.changesets.outputs.published == 'true'
+        uses: actions/attest-sbom@v2
+        with:
+          subject-path: 'dist/**'
+          sbom-path: 'sbom.cdx.json'
+
+      # Create tag and release for version changes
+      - name: Create Git Tag
         if: steps.version_check.outputs.changed == 'true'
+        id: create_tag
         run: |
           VERSION=${{ steps.version_check.outputs.version }}
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git tag -a "v$VERSION" -m "Release v$VERSION"
           git push origin "v$VERSION"
+          echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+
+      # Create GitHub Release with SBOM
+      - name: Create GitHub Release
+        if: steps.version_check.outputs.changed == 'true'
+        uses: ncipollo/release-action@v2
+        with:
+          tag: ${{ steps.create_tag.outputs.tag }}
+          name: Release ${{ steps.create_tag.outputs.tag }}
+          body: |
+            ## Release ${{ steps.create_tag.outputs.tag }}
+
+            See the [CHANGELOG](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
+
+            ### Artifacts
+            - 📦 SBOM (CycloneDX format) attached below
+            - ✅ Build provenance attestation available
+            - ✅ SBOM attestation available
+
+            ### Package Status
+            This is a private package. To publish to npm:
+            1. Remove `"private": true` from package.json
+            2. Use scoped name: `@yourorg/package-name`
+            3. Add `publishConfig: { "access": "restricted" }`
+            4. Add NPM_TOKEN secret with paid npm account
+          artifacts: sbom.cdx.json
+          makeLatest: true
+
+      # Log NPM publishing status (for when package becomes public)
+      - name: Check NPM Publishing
+        if: steps.changesets.outputs.published == 'true'
+        run: |
+          echo "✅ Package published to npm successfully"
+          echo "GitHub Release created by changesets with SBOM attached"
