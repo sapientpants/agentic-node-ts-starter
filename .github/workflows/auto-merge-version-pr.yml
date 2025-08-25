@@ -8,8 +8,8 @@ jobs:
   auto-merge:
     name: Enable Auto-Merge for Version PRs
     runs-on: ubuntu-latest
-    # Only run for PRs created by github-actions bot
-    if: github.actor == 'github-actions[bot]' && !github.event.pull_request.draft
+    # Only run for PRs created by github-actions bot or app
+    if: (github.actor == 'github-actions[bot]' || github.actor == 'app/github-actions') && !github.event.pull_request.draft
 
     steps:
       - name: Check PR Title
