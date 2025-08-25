@@ -8,23 +8,13 @@ jobs:
   auto-merge:
     name: Enable Auto-Merge for Version PRs
     runs-on: ubuntu-latest
-    # Only run for PRs created by github-actions bot or app
-    if: (github.actor == 'github-actions[bot]' || github.actor == 'app/github-actions') && !github.event.pull_request.draft
+    # Only run for non-draft PRs with the specific title
+    if: |
+      github.event.pull_request.title == 'chore: version packages' && 
+      !github.event.pull_request.draft
 
     steps:
-      - name: Check PR Title
-        id: check
-        run: |
-          if [[ "${{ github.event.pull_request.title }}" == "chore: version packages" ]]; then
-            echo "is_version_pr=true" >> $GITHUB_OUTPUT
-            echo "✅ This is a version PR - will enable auto-merge"
-          else
-            echo "is_version_pr=false" >> $GITHUB_OUTPUT
-            echo "ℹ️ Not a version PR - skipping auto-merge"
-          fi
-
       - name: Enable Auto-Merge
-        if: steps.check.outputs.is_version_pr == 'true'
         run: |
           echo "Enabling auto-merge for PR #${{ github.event.pull_request.number }}"
           gh pr merge --auto --squash "${{ github.event.pull_request.number }}"
@@ -33,7 +23,6 @@ jobs:
           GH_REPO: ${{ github.repository }}
 
       - name: Add Auto-Merge Comment
-        if: steps.check.outputs.is_version_pr == 'true'
         run: |
           gh pr comment "${{ github.event.pull_request.number }}" --body "🤖 **Auto-merge enabled**
 
