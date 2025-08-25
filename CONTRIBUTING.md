@@ -260,12 +260,38 @@ docs/         # Documentation
 
 ## 🚢 Release Process
 
-Releases are automated:
+Releases are fully automated with zero manual intervention:
 
-1. PRs with changesets are merged to main
-2. Release PR is automatically created
-3. When release PR is merged, packages are versioned and published
-4. Changelog is automatically updated
+1. **You merge your PR** with a changeset to main
+2. **Version PR is created** automatically by changesets
+3. **Auto-merge is enabled** on the version PR
+4. **CI runs and passes** → PR merges automatically
+5. **Release is created** with:
+   - Git tag for the version
+   - GitHub release with changelog
+   - SBOM attached as release asset
+   - Build attestations for verification
+
+### What You Need to Do
+
+Just merge your PR! The rest is automatic. The release will happen without any manual steps.
+
+### Monitoring Releases
+
+You can watch the progress:
+
+- Check the [Actions tab](../../actions) to see workflows running
+- The version PR will show "Auto-merge enabled" status
+- Once merged, a GitHub release will appear in [Releases](../../releases)
+
+### Stopping a Release
+
+If you need to prevent an automatic release:
+
+```bash
+# Find the version PR number and disable auto-merge
+gh pr merge --disable-auto PR_NUMBER
+```
 
 ### ⚠️ Important: Repository Configuration
 

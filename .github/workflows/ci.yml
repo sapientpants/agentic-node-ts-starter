@@ -14,7 +14,6 @@ permissions:
 
 jobs:
   changeset-validation:
-    name: Validate Changeset
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:
