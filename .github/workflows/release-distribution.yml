@@ -38,12 +38,43 @@ jobs:
 
       - name: Extract build metadata from release
         id: metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          # Extract artifact IDs from release body if available
-          # For now, we'll use a pattern - in production, parse from release body
-          echo "artifact-id=build-latest" >> $GITHUB_OUTPUT
-          echo "sbom-artifact-id=sbom-latest" >> $GITHUB_OUTPUT
-          echo "⚠️ Note: In production, artifact IDs should be extracted from release metadata"
+          # Extract artifact IDs from release body
+          TAG="${{ steps.version.outputs.tag }}"
+          RELEASE_BODY="$(gh release view "$TAG" --json body -q '.body')"
+
+          # Try to extract artifact IDs from release body metadata
+          ARTIFACT_ID=$(echo "$RELEASE_BODY" | grep -Eo 'artifact-id: [^ ]+' | head -n1 | cut -d' ' -f2)
+          SBOM_ARTIFACT_ID=$(echo "$RELEASE_BODY" | grep -Eo 'sbom-artifact-id: [^ ]+' | head -n1 | cut -d' ' -f2)
+
+          # If not found in body, try to get from workflow run that created the release
+          if [ -z "$ARTIFACT_ID" ] || [ -z "$SBOM_ARTIFACT_ID" ]; then
+            echo "⚠️ Artifact IDs not found in release body, attempting to find from workflow artifacts"
+            
+            # Get the commit SHA for this tag
+            COMMIT_SHA=$(gh api repos/${{ github.repository }}/git/refs/tags/$TAG --jq '.object.sha')
+            
+            # Find the workflow run for this commit
+            RUN_ID=$(gh run list --commit $COMMIT_SHA --workflow continuous-deployment.yml --json databaseId --jq '.[0].databaseId')
+            
+            if [ -n "$RUN_ID" ]; then
+              # Extract artifact names from the workflow run
+              ARTIFACT_ID="build-${RUN_ID}-1"
+              SBOM_ARTIFACT_ID="sbom-${RUN_ID}-1"
+              echo "✅ Found workflow run $RUN_ID for commit $COMMIT_SHA"
+            else
+              echo "❌ Could not find workflow run for release. Using fallback pattern."
+              # Fallback: use a pattern that matches the most recent artifacts
+              ARTIFACT_ID="build-latest"
+              SBOM_ARTIFACT_ID="sbom-latest"
+            fi
+          fi
+
+          echo "artifact-id=$ARTIFACT_ID" >> $GITHUB_OUTPUT
+          echo "sbom-artifact-id=$SBOM_ARTIFACT_ID" >> $GITHUB_OUTPUT
+          echo "📦 Using artifact IDs: build=$ARTIFACT_ID, sbom=$SBOM_ARTIFACT_ID"
 
   # Deploy to multiple targets in parallel
   deploy-targets:

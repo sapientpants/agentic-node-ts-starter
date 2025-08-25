@@ -233,9 +233,7 @@ jobs:
   # Phase 5: Deploy on Release (triggered by release event or after version-and-release)
   deploy:
     name: Deploy ${{ matrix.environment }}
-    if: |
-      github.event_name == 'release' || 
-      (needs.version-and-release.outputs.released == 'true' && github.ref == 'refs/heads/main')
+    if: github.event_name == 'release' || (needs.version-and-release.outputs.released == 'true' && github.ref == 'refs/heads/main')
     needs: [build, version-and-release]
     strategy:
       fail-fast: false
@@ -245,7 +243,7 @@ jobs:
     with:
       artifact-id: ${{ needs.build.outputs.artifact-id }}
       sbom-artifact-id: ${{ needs.build.outputs.sbom-artifact-id }}
-      version: ${{ needs.build.outputs.version || needs.version-and-release.outputs.version }}
+      version: ${{ needs.build.outputs.version != '' && needs.build.outputs.version || needs.version-and-release.outputs.version }}
       environment: ${{ matrix.environment }}
     secrets: inherit
     permissions:
