@@ -201,19 +201,18 @@ jobs:
         with:
           name: sbom
 
-      # Create Release PR or Publish
-      - name: Create Release Pull Request or Publish
+      # Create Release PR only (no publishing)
+      - name: Create Release Pull Request
         id: changesets
         uses: changesets/action@v1
         with:
-          publish: pnpm changeset publish
+          # Do not publish here - handled by release.yml workflow
           version: pnpm changeset version
           commit: 'chore: version packages'
           title: 'chore: version packages'
-          createGithubReleases: true
+          createGithubReleases: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN || '' }}
 
       # Check for version changes (for private packages)
       - name: Check for Version Changes
@@ -258,18 +257,9 @@ jobs:
             - ✅ Build provenance attestation available
             - ✅ SBOM attestation available
 
-            ### Package Status
-            This is a private package. To publish to npm:
-            1. Remove `"private": true` from package.json
-            2. Use scoped name: `@yourorg/package-name`
-            3. Add `publishConfig: { "access": "restricted" }`
-            4. Add NPM_TOKEN secret with paid npm account
+            ### Distribution
+            Package distribution is handled by the release.yml workflow.
+            To enable npm publishing, Docker builds, or documentation deployment,
+            see the Release Distribution Setup section in README.md.
           artifacts: sbom.cdx.json
           makeLatest: true
-
-      # Log NPM publishing status
-      - name: Check NPM Publishing
-        if: steps.changesets.outputs.published == 'true'
-        run: |
-          echo "✅ Package published to npm successfully"
-          echo "GitHub Release created by changesets with SBOM attached"

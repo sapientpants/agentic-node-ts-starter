@@ -12,5 +12,6 @@ Add release distribution workflow for automated multi-platform deployment
 - Add GitHub Pages documentation deployment capability
 - Generate additional release artifacts (source/dist tarballs with checksums)
 - Update documentation with distribution setup instructions
+- Update `ci-cd.yml` to disable npm publishing and GitHub releases in changesets action (now handled by release.yml)
 
-This workflow efficiently reuses artifacts from the CI/CD pipeline and only builds what's necessary for each distribution channel, avoiding duplicate work.
+This workflow efficiently reuses artifacts from the CI/CD pipeline and only builds what's necessary for each distribution channel, avoiding duplicate work. The separation of concerns ensures the CI/CD workflow focuses on version management while release.yml handles all distribution channels.
