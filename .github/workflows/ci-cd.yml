@@ -22,6 +22,7 @@ jobs:
   build-test:
     name: build-test
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
       id-token: write
@@ -44,6 +45,7 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+        timeout-minutes: 5
 
       # Run all checks
       - run: pnpm audit --audit-level critical
@@ -133,6 +135,22 @@ jobs:
           fi
 
   # Security scans
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+          deny-licenses: GPL-3.0, AGPL-3.0
+          comment-summary-in-pr: always
+
   osv-scan:
     permissions:
       security-events: write
@@ -162,7 +180,7 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     needs: [build-test, osv-scan, codeql]
-    # Note: changeset-validation only runs on PRs, not on main branch pushes
+    # Note: changeset-validation and dependency-review only run on PRs, not on main branch pushes
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     permissions:
       contents: write
