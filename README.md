@@ -137,13 +137,60 @@ pnpm changeset --empty  # For internal changes (no release)
 
 ### ⚠️ Required Repository Settings
 
-For the release automation to work, you must enable GitHub Actions to create pull requests:
+For the release automation to work, you must configure the following settings:
 
-1. Go to **Settings** → **Actions** → **General**
-2. Under "Workflow permissions", enable:
-   - **"Allow GitHub Actions to create and approve pull requests"**
+#### 1. GitHub Actions Permissions
 
-Without this setting, the release workflow will fail with a permissions error.
+Go to **Settings** → **Actions** → **General**:
+
+- ✅ Enable **"Allow GitHub Actions to create and approve pull requests"**
+
+#### 2. Auto-Merge Settings
+
+Go to **Settings** → **General** → **Pull Requests**:
+
+- ✅ Enable **"Allow auto-merge"**
+
+#### 3. Branch Protection Rules (Recommended)
+
+Go to **Settings** → **Branches** → Add rule for `main`:
+
+- ✅ **Require status checks to pass before merging**
+  - Select these status checks: `build-test`, `changeset-validation`
+- ✅ **Require branches to be up to date before merging**
+- Optional: **Dismiss stale pull request approvals when new commits are pushed**
+
+Without these settings, the automated release process will not work correctly.
+
+## 🚀 Automated Release Process
+
+This project features a fully automated release pipeline:
+
+1. **Developer merges PR** with changesets → triggers `release.yml`
+2. **Changesets creates version PR** automatically with updated versions and CHANGELOG
+3. **Auto-merge enables** for the version PR (no manual intervention needed)
+4. **CI runs and passes** → PR merges automatically
+5. **Release workflow detects merge** → creates git tag and GitHub release
+6. **SBOM and attestations** are generated and attached to the release
+
+### How It Works
+
+- When you merge a PR with changesets, a "Version Packages" PR is automatically created
+- The `auto-merge-version-pr.yml` workflow enables auto-merge for this PR
+- Once CI checks pass, the PR merges without manual intervention
+- The `release.yml` workflow then creates a GitHub release with SBOM
+
+### Manual Override
+
+If you need to prevent automatic release:
+
+```bash
+# Disable auto-merge for a specific PR
+gh pr merge --disable-auto PR_NUMBER
+
+# Re-enable when ready
+gh pr merge --auto --squash PR_NUMBER
+```
 
 ## 🔒 Security Features
 
