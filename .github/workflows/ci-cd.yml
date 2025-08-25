@@ -240,6 +240,49 @@ jobs:
           git push origin "v$VERSION"
           echo "tag=v$VERSION" >> $GITHUB_OUTPUT
 
+      # Extract CHANGELOG content for this version
+      - name: Extract CHANGELOG Content
+        if: steps.version_check.outputs.changed == 'true'
+        id: changelog
+        run: |
+          VERSION=${{ steps.version_check.outputs.version }}
+
+          # Extract content between this version and the next version header
+          # This handles both the latest version and older versions
+          CHANGELOG_CONTENT=$(awk -v ver="## $VERSION" '
+            BEGIN { found = 0 }
+            $0 ~ ver { found = 1; next }
+            found && /^## [0-9]+\.[0-9]+\.[0-9]+/ { exit }
+            found { print }
+          ' CHANGELOG.md)
+
+          # If no content found, provide a fallback
+          if [ -z "$CHANGELOG_CONTENT" ]; then
+            CHANGELOG_CONTENT="No changelog entry found for version $VERSION"
+          fi
+
+          # Create the complete release body with changelog content
+          cat > release_body.md << EOF
+          ## Release v$VERSION
+
+          $CHANGELOG_CONTENT
+
+          ### Artifacts
+          - 📦 SBOM (CycloneDX format) attached below
+          - ✅ Build provenance attestation available
+          - ✅ SBOM attestation available
+
+          ### Distribution
+          Package distribution is handled by the release.yml workflow.
+          To enable npm publishing, Docker builds, or documentation deployment,
+          see the Release Distribution Setup section in README.md.
+
+          ---
+          See the [full CHANGELOG](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for all releases.
+          EOF
+
+          echo "Content extracted for version $VERSION"
+
       # Create GitHub Release with artifacts
       - name: Create GitHub Release
         if: steps.version_check.outputs.changed == 'true'
@@ -247,19 +290,6 @@ jobs:
         with:
           tag: ${{ steps.create_tag.outputs.tag }}
           name: Release ${{ steps.create_tag.outputs.tag }}
-          body: |
-            ## Release ${{ steps.create_tag.outputs.tag }}
-
-            See the [CHANGELOG](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
-
-            ### Artifacts
-            - 📦 SBOM (CycloneDX format) attached below
-            - ✅ Build provenance attestation available
-            - ✅ SBOM attestation available
-
-            ### Distribution
-            Package distribution is handled by the release.yml workflow.
-            To enable npm publishing, Docker builds, or documentation deployment,
-            see the Release Distribution Setup section in README.md.
+          bodyFile: release_body.md
           artifacts: sbom.cdx.json
           makeLatest: true
