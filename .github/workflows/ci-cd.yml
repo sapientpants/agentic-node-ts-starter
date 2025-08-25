@@ -20,8 +20,13 @@ permissions:
 jobs:
   # Always run: Build, test, and create artifacts
   build-test:
-    name: build-test
+    name: build-test (node-${{ matrix.node-version }})
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        node-version: [20, 22]
+      fail-fast: false
     permissions:
       contents: read
       id-token: write
@@ -39,11 +44,12 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: ${{ matrix.node-version }}
           cache: pnpm
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+        timeout-minutes: 5
 
       # Run all checks
       - run: pnpm audit --audit-level critical
@@ -59,20 +65,23 @@ jobs:
       - name: Generate SBOM
         run: pnpm sbom
 
-      # Create attestations
+      # Create attestations (only on Node 22)
       - name: Attest build provenance (SLSA)
+        if: matrix.node-version == 22
         uses: actions/attest-build-provenance@v2
         with:
           subject-path: 'dist/**'
 
       - name: Attest SBOM
+        if: matrix.node-version == 22
         uses: actions/attest-sbom@v2
         with:
           subject-path: 'dist/**'
           sbom-path: 'sbom.cdx.json'
 
-      # Upload artifacts for release job
+      # Upload artifacts for release job (only on Node 22)
       - name: Upload build artifacts
+        if: matrix.node-version == 22
         uses: actions/upload-artifact@v4
         with:
           name: dist
@@ -80,14 +89,16 @@ jobs:
           retention-days: 30
 
       - name: Upload SBOM artifact
+        if: matrix.node-version == 22
         uses: actions/upload-artifact@v4
         with:
           name: sbom
           path: sbom.cdx.json
           retention-days: 30
 
-      # Extract version for release job
+      # Extract version for release job (only on Node 22)
       - name: Get package version
+        if: matrix.node-version == 22
         id: package
         run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
 
@@ -133,6 +144,22 @@ jobs:
           fi
 
   # Security scans
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+          deny-licenses: GPL-3.0, AGPL-3.0
+          comment-summary-in-pr: always
+
   osv-scan:
     permissions:
       security-events: write
@@ -162,7 +189,7 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     needs: [build-test, osv-scan, codeql]
-    # Note: changeset-validation only runs on PRs, not on main branch pushes
+    # Note: changeset-validation and dependency-review only run on PRs, not on main branch pushes
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     permissions:
       contents: write

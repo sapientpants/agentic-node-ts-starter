@@ -19,8 +19,17 @@ jobs:
         # The default GITHUB_TOKEN cannot enable auto-merge
         # See README for setup instructions
         run: |
-          echo "Attempting to enable auto-merge for PR #${{ github.event.pull_request.number }}"
-          gh pr merge --auto --squash "${{ github.event.pull_request.number }}" || {
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          echo "Attempting to enable auto-merge for PR #${PR_NUMBER}"
+
+          # Verify this is actually a version PR from changesets
+          PR_AUTHOR=$(gh pr view "${PR_NUMBER}" --json author --jq '.author.login')
+          if [[ "$PR_AUTHOR" != "github-actions[bot]" ]] && [[ "$PR_AUTHOR" != "github-actions" ]]; then
+            echo "::warning::PR author is not github-actions bot. Skipping auto-merge for security."
+            exit 0
+          fi
+
+          gh pr merge --auto --squash "${PR_NUMBER}" || {
             echo "::warning::Could not enable auto-merge. This requires a PAT with 'repo' scope."
             echo "::warning::See README.md for instructions on setting up auto-merge."
             exit 0
@@ -33,16 +42,17 @@ jobs:
       - name: Add Auto-Merge Comment
         if: success()
         run: |
-          gh pr comment "${{ github.event.pull_request.number }}" --body "🤖 **Auto-merge status**
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          gh pr comment "${PR_NUMBER}" --body "🤖 **Auto-merge status**
 
           This version PR will be automatically merged once all required status checks pass.
 
           If auto-merge was not enabled (due to missing PAT), you can:
-          - Manually enable it: \`gh pr merge --auto --squash ${{ github.event.pull_request.number }}\`
-          - Or merge manually once checks pass: \`gh pr merge --squash ${{ github.event.pull_request.number }}\`
+          - Manually enable it: \`gh pr merge --auto --squash ${PR_NUMBER}\`
+          - Or merge manually once checks pass: \`gh pr merge --squash ${PR_NUMBER}\`
 
           To make changes before release:
-          1. Disable auto-merge: \`gh pr merge --disable-auto ${{ github.event.pull_request.number }}\`
+          1. Disable auto-merge: \`gh pr merge --disable-auto ${PR_NUMBER}\`
           2. Make your changes
           3. Re-enable auto-merge or merge manually
 
