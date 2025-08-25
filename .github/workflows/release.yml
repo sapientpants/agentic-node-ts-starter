@@ -58,22 +58,35 @@ jobs:
     name: NPM Distribution
     runs-on: ubuntu-latest
     needs: prepare-release
-    if: secrets.NPM_TOKEN != ''
     permissions:
       contents: read
       id-token: write
     steps:
+      - name: Check NPM Token
+        id: check_npm
+        run: |
+          if [ -n "${{ secrets.NPM_TOKEN }}" ]; then
+            echo "has_token=true" >> $GITHUB_OUTPUT
+            echo "NPM_TOKEN is configured, proceeding with npm distribution"
+          else
+            echo "has_token=false" >> $GITHUB_OUTPUT
+            echo "NPM_TOKEN is not configured, skipping npm distribution"
+          fi
+
       - name: Checkout code at release tag
+        if: steps.check_npm.outputs.has_token == 'true'
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.release.tag_name }}
 
       - name: Install pnpm
+        if: steps.check_npm.outputs.has_token == 'true'
         uses: pnpm/action-setup@v4
         with:
           run_install: false
 
       - name: Setup Node.js for npm
+        if: steps.check_npm.outputs.has_token == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -81,12 +94,15 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
+        if: steps.check_npm.outputs.has_token == 'true'
         run: pnpm install --frozen-lockfile
 
       - name: Build package
+        if: steps.check_npm.outputs.has_token == 'true'
         run: pnpm build
 
       - name: Check package configuration
+        if: steps.check_npm.outputs.has_token == 'true'
         id: check_config
         run: |
           IS_PRIVATE=$(node -p "require('./package.json').private || false")
@@ -104,7 +120,7 @@ jobs:
           echo "📦 Package: $PACKAGE_NAME@$PACKAGE_VERSION"
 
       - name: Configure package for publishing
-        if: steps.check_config.outputs.is_private == 'true'
+        if: steps.check_npm.outputs.has_token == 'true' && steps.check_config.outputs.is_private == 'true'
         run: |
           # Remove private flag for publishing
           node -e "
@@ -115,6 +131,7 @@ jobs:
           "
 
       - name: Publish to npm with provenance
+        if: steps.check_npm.outputs.has_token == 'true'
         run: |
           npm config set //registry.npmjs.org/:_authToken=$NODE_AUTH_TOKEN
           pnpm publish --provenance --access public --no-git-checks
@@ -122,6 +139,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Verify npm publication
+        if: steps.check_npm.outputs.has_token == 'true'
         run: |
           echo "Waiting for npm to propagate..."
           sleep 10
@@ -159,8 +177,19 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Check Docker Hub Token
+        id: check_dockerhub
+        run: |
+          if [ -n "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
+            echo "has_token=true" >> $GITHUB_OUTPUT
+            echo "Docker Hub token is configured, will push to Docker Hub"
+          else
+            echo "has_token=false" >> $GITHUB_OUTPUT
+            echo "Docker Hub token is not configured, skipping Docker Hub push"
+          fi
+
       - name: Login to Docker Hub
-        if: secrets.DOCKERHUB_TOKEN != ''
+        if: steps.check_dockerhub.outputs.has_token == 'true'
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -178,7 +207,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            ${{ secrets.DOCKERHUB_USERNAME != '' && format('{0}/{1}', secrets.DOCKERHUB_USERNAME, github.event.repository.name) || '' }}
+            ${{ steps.check_dockerhub.outputs.has_token == 'true' && format('{0}/{1}', secrets.DOCKERHUB_USERNAME, github.event.repository.name) || '' }}
             ghcr.io/${{ github.repository }}
           tags: |
             type=raw,value=${{ needs.prepare-release.outputs.version }}
@@ -408,8 +437,17 @@ jobs:
           fi
 
       # Optional: Send Slack notification
+      - name: Check Slack Webhook
+        id: check_slack
+        run: |
+          if [ -n "${{ secrets.SLACK_WEBHOOK }}" ]; then
+            echo "has_webhook=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_webhook=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Slack Notification
-        if: secrets.SLACK_WEBHOOK != ''
+        if: steps.check_slack.outputs.has_webhook == 'true'
         uses: 8398a7/action-slack@v3
         with:
           status: custom
