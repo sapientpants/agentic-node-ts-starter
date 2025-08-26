@@ -62,12 +62,26 @@ jobs:
         id: check-changesets
         run: |
           # Check if there are any changesets to process
-          if [ -d ".changeset" ] && [ "$(ls -A .changeset/*.md 2>/dev/null | grep -v README.md)" ]; then
-            echo "has_changesets=true" >> $GITHUB_OUTPUT
-            echo "📦 Found changesets to process"
+          if [ -d ".changeset" ]; then
+            shopt -s nullglob
+            files=(.changeset/*.md)
+            has_changeset=false
+            for f in "${files[@]}"; do
+              if [ "$(basename "$f")" != "README.md" ]; then
+                has_changeset=true
+                break
+              fi
+            done
+            if [ "$has_changeset" = true ]; then
+              echo "has_changesets=true" >> $GITHUB_OUTPUT
+              echo "📦 Found changesets to process"
+            else
+              echo "has_changesets=false" >> $GITHUB_OUTPUT
+              echo "⏭️ No changesets to process"
+            fi
           else
             echo "has_changesets=false" >> $GITHUB_OUTPUT
-            echo "⏭️ No changesets to process"
+            echo "⏭️ No .changeset directory found"
           fi
 
       - name: Apply changesets and version
@@ -273,9 +287,11 @@ jobs:
         run: |
           if [ -n "${{ secrets.DOCKERHUB_USERNAME }}" ] && [ -n "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
             echo "has_dockerhub=true" >> $GITHUB_OUTPUT
+            echo "dockerhub_image=${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}" >> $GITHUB_OUTPUT
             echo "✅ Docker Hub credentials configured"
           else
             echo "has_dockerhub=false" >> $GITHUB_OUTPUT
+            echo "dockerhub_image=" >> $GITHUB_OUTPUT
             echo "⚠️ Docker Hub credentials not configured"
           fi
 
@@ -291,7 +307,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            ${{ steps.check-dockerhub.outputs.has_dockerhub == 'true' && format('{0}/{1}', secrets.DOCKERHUB_USERNAME, github.event.repository.name) || '' }}
+            ${{ steps.check-dockerhub.outputs.dockerhub_image }}
             ghcr.io/${{ github.repository }}
           tags: |
             type=raw,value=${{ needs.release.outputs.version }}

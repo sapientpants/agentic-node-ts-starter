@@ -197,7 +197,7 @@ jobs:
           languages: javascript-typescript
 
       - name: Run OSV Scanner
-        uses: google/osv-scanner-action@v2
+        uses: google/osv-scanner-action@v2.2.1
         with:
           scan-args: |-
             --format=sarif
