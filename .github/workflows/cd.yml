@@ -87,6 +87,8 @@ jobs:
       - name: Apply changesets and version
         id: changesets
         if: steps.check-changesets.outputs.has_changesets == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.CHANGESETS_PAT }}
         run: |
           # Get current version before changes
           CURRENT_VERSION=$(node -p "require('./package.json').version")
