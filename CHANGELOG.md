@@ -1,5 +1,14 @@
 # agentic-node-ts-starter
 
+## 0.4.2
+
+### Patch Changes
+
+- [#33](https://github.com/sapientpants/agentic-node-ts-starter/pull/33) [`b57458d`](https://github.com/sapientpants/agentic-node-ts-starter/commit/b57458d959d65cc3fdd787ef9a92f05fd7c25cf8) Thanks [@sapientpants](https://github.com/sapientpants)! - Fix auto-merge workflow to recognize app/github-actions author
+  - GitHub Actions can appear as 'app/github-actions' when using the default token
+  - Add this as valid author for version PRs created by changesets
+  - This fixes auto-merge not triggering for version PRs
+
 ## 0.4.1
 
 ### Patch Changes
