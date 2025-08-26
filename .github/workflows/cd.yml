@@ -38,8 +38,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          # Use PAT if available to bypass branch protection
-          token: ${{ secrets.CHANGESETS_PAT || secrets.GITHUB_TOKEN }}
+          # Use default token for single-user setup
+          token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
       - name: Cache pnpm binary
@@ -99,7 +99,7 @@ jobs:
         id: changesets
         if: steps.check-changesets.outputs.has_changesets == 'true'
         env:
-          GITHUB_TOKEN: ${{ secrets.CHANGESETS_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Get current version before changes
           CURRENT_VERSION=$(node -p "require('./package.json').version")
@@ -137,7 +137,7 @@ jobs:
           name: build-${{ github.event.workflow_run.id }}
           path: .
           run-id: ${{ github.event.workflow_run.id }}
-          github-token: ${{ secrets.CHANGESETS_PAT }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download SBOM
         if: steps.changesets.outputs.published == 'true'
@@ -146,12 +146,12 @@ jobs:
           name: sbom-${{ github.event.workflow_run.id }}
           path: .
           run-id: ${{ github.event.workflow_run.id }}
-          github-token: ${{ secrets.CHANGESETS_PAT }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create version branch and PR
         if: steps.changesets.outputs.published == 'true'
         env:
-          GITHUB_TOKEN: ${{ secrets.CHANGESETS_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           BRANCH="release/v${VERSION}"
@@ -197,7 +197,7 @@ jobs:
       - name: Enable auto-merge
         if: steps.changesets.outputs.published == 'true'
         env:
-          GITHUB_TOKEN: ${{ secrets.CHANGESETS_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Get the PR number
           PR_NUMBER=$(gh pr list --head "release/v${{ steps.version.outputs.version }}" --json number --jq '.[]?.number' 2>/dev/null | head -n1)
@@ -213,7 +213,7 @@ jobs:
       - name: Wait for PR to merge
         if: steps.changesets.outputs.published == 'true'
         env:
-          GITHUB_TOKEN: ${{ secrets.CHANGESETS_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           PR_NUMBER=$(gh pr list --head "release/v${{ steps.version.outputs.version }}" --json number --jq '.[]?.number' 2>/dev/null | head -n1)
 

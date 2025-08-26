@@ -79,8 +79,8 @@ specs/            # Feature specifications in Gherkin format
 - **Security scanning**: CodeQL analysis and OSV vulnerability scanning
 - **Pre-commit hooks** via Husky run lint-staged (Prettier and ESLint)
 - **Attestations**: SLSA provenance and SBOM attestations for build artifacts
-- **Trunk-based development** with branch protection and linear history
-- **Release automation**: Requires "Allow GitHub Actions to create and approve pull requests" setting
+- **Single-user workflow**: Simplified for individual developers without branch protection
+- **Release automation**: Automatically creates version PRs and manages releases
 
 ### Development Process
 
@@ -171,14 +171,14 @@ The CI will validate that a changeset is present, and the release workflow will 
 
 ### CI/CD Workflow
 
-- **Main workflow**: `.github/workflows/ci-cd.yml` - Runs all checks, security scans, and handles releases
-- **Auto-merge**: `.github/workflows/auto-merge-version-pr.yml` - Automatically merges version PRs
-- **Release distribution**: `.github/workflows/release.yml` - Distributes releases to npm, Docker Hub, etc. when a GitHub release is published
-- **Required checks**: `build-test` and `changeset-validation` must pass for PR merge
+- **CI workflow**: `.github/workflows/ci.yml` - Runs all checks and security scans on PRs and main
+- **CD workflow**: `.github/workflows/cd.yml` - Handles releases after CI passes on main
+- **Single-user setup**: No branch protection required, uses standard GITHUB_TOKEN
+- **Required checks**: CI validation and changeset presence for PRs
 
 ### Release Distribution
 
-When a GitHub release is published by `ci-cd.yml`, the `release.yml` workflow automatically handles distribution:
+When a GitHub release is published by the CD workflow, it automatically handles distribution:
 
 1. **Downloads existing release artifacts** (SBOM from the published release)
 2. **Publishes to npm** (if NPM_TOKEN secret is set) - builds from source at release tag
