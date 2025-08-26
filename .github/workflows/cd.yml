@@ -136,6 +136,8 @@ jobs:
         with:
           name: build-${{ github.event.workflow_run.id }}
           path: .
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.CHANGESETS_PAT }}
 
       - name: Download SBOM
         if: steps.changesets.outputs.published == 'true'
@@ -143,6 +145,8 @@ jobs:
         with:
           name: sbom-${{ github.event.workflow_run.id }}
           path: .
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.CHANGESETS_PAT }}
 
       - name: Commit version changes
         if: steps.changesets.outputs.published == 'true'
