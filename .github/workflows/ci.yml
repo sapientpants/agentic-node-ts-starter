@@ -11,6 +11,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+env:
+  PNPM_VERSION: 10.0.0
+  NODE_VERSION: 22
+
 permissions:
   contents: read
   id-token: write
@@ -32,6 +36,7 @@ jobs:
         with:
           version: 10.0.0
           run_install: false
+          standalone: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -81,6 +86,7 @@ jobs:
         with:
           version: 10.0.0
           run_install: false
+          standalone: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -109,7 +115,7 @@ jobs:
 
   build-artifacts:
     name: Build Artifacts
-    needs: [validate]
+    needs: [security-scan-codeql, security-scan-osv]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     outputs:
@@ -120,16 +126,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Cache pnpm binary
+        uses: actions/cache@v4
+        with:
+          path: ~/setup-pnpm
+          key: pnpm-binary-${{ env.PNPM_VERSION }}-${{ runner.os }}
+
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10.0.0
+          version: ${{ env.PNPM_VERSION }}
           run_install: false
+          standalone: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
 
       - name: Install dependencies
@@ -201,7 +214,7 @@ jobs:
 
   security-scan-osv:
     name: OSV Scanner
-    if: github.event_name == 'pull_request'
+    needs: [validate]
     uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable-pr.yml@v2.2.1
     permissions:
       actions: read
