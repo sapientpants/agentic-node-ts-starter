@@ -24,10 +24,15 @@ jobs:
 
           # Verify this is actually a version PR from changesets
           PR_AUTHOR=$(gh pr view "${PR_NUMBER}" --json author --jq '.author.login')
-          if [[ "$PR_AUTHOR" != "github-actions[bot]" ]] && [[ "$PR_AUTHOR" != "github-actions" ]] && [[ "$PR_AUTHOR" != "app/github-actions" ]]; then
-            echo "::warning::PR author is '$PR_AUTHOR', not github-actions bot. Skipping auto-merge for security."
-            exit 0
-          fi
+          case "$PR_AUTHOR" in
+            "github-actions[bot]"|"github-actions"|"app/github-actions")
+              # allowed bot authors, continue
+              ;;
+            *)
+              echo "::warning::PR author is '$PR_AUTHOR', not github-actions bot. Skipping auto-merge for security."
+              exit 0
+              ;;
+          esac
 
           gh pr merge --auto --squash "${PR_NUMBER}" || {
             echo "::warning::Could not enable auto-merge. This requires a PAT with 'repo' scope."
