@@ -1,5 +1,16 @@
 # agentic-node-ts-starter
 
+## 0.4.3
+
+### Patch Changes
+
+- [#35](https://github.com/sapientpants/agentic-node-ts-starter/pull/35) [`56e9241`](https://github.com/sapientpants/agentic-node-ts-starter/commit/56e9241a44c70d02b8fc99fa5f328d3ea9a80e13) Thanks [@sapientpants](https://github.com/sapientpants)! - Make auto-merge workflow fail explicitly when PAT is not configured
+  - Add validation step to check for AUTO_MERGE_PAT secret
+  - Fail the workflow with clear error messages when PAT is missing
+  - Remove silent fallback to GITHUB_TOKEN which doesn't work
+  - Update success comment to confirm auto-merge is enabled
+  - This ensures proper configuration is in place before attempting auto-merge
+
 ## 0.4.2
 
 ### Patch Changes
