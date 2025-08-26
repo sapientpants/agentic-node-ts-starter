@@ -217,7 +217,7 @@ jobs:
   publish-npm:
     name: Publish to NPM
     needs: [release]
-    if: needs.release.outputs.released == 'true' && secrets.NPM_TOKEN != ''
+    if: needs.release.outputs.released == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -244,17 +244,22 @@ jobs:
           pnpm install --frozen-lockfile
           pnpm build
 
-      - name: Publish to npm
+      - name: Check NPM token and publish
         run: |
-          # Remove private flag if present
-          node -e "
-            const fs = require('fs');
-            const pkg = require('./package.json');
-            if (pkg.private) {
-              delete pkg.private;
-              fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));
-            }
-          "
-          npm publish --provenance --access public
+          if [ -n "${{ secrets.NPM_TOKEN }}" ]; then
+            echo "✅ NPM_TOKEN is configured, publishing to npm"
+            # Remove private flag if present
+            node -e "
+              const fs = require('fs');
+              const pkg = require('./package.json');
+              if (pkg.private) {
+                delete pkg.private;
+                fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));
+              }
+            "
+            npm publish --provenance --access public
+          else
+            echo "⏭️ NPM_TOKEN not configured, skipping npm publish"
+          fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
