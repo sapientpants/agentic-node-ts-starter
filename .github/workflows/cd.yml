@@ -1,0 +1,441 @@
+name: CD
+
+on:
+  workflow_run:
+    workflows: ['CI']
+    types: [completed]
+    branches: [main]
+
+# Ensure only one CD workflow runs at a time
+# Queue subsequent runs rather than canceling
+concurrency:
+  group: cd-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+  attestations: write
+  issues: write
+  pull-requests: write
+  pages: write
+
+jobs:
+  release:
+    name: Release
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    outputs:
+      released: ${{ steps.changesets.outputs.published }}
+      version: ${{ steps.version.outputs.version }}
+      release-id: ${{ steps.create-release.outputs.release-id }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # Use PAT if available to bypass branch protection
+          token: ${{ secrets.CHANGESETS_PAT || secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.0.0
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Check for changesets
+        id: check-changesets
+        run: |
+          # Check if there are any changesets to process
+          if [ -d ".changeset" ] && [ "$(ls -A .changeset/*.md 2>/dev/null | grep -v README.md)" ]; then
+            echo "has_changesets=true" >> $GITHUB_OUTPUT
+            echo "📦 Found changesets to process"
+          else
+            echo "has_changesets=false" >> $GITHUB_OUTPUT
+            echo "⏭️ No changesets to process"
+          fi
+
+      - name: Apply changesets and version
+        id: changesets
+        if: steps.check-changesets.outputs.has_changesets == 'true'
+        run: |
+          # Get current version before changes
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "Current version: $CURRENT_VERSION"
+
+          # Apply changesets (updates version and CHANGELOG.md)
+          pnpm changeset version
+
+          # Get new version after changes
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          echo "New version: $NEW_VERSION"
+
+          # Check if version actually changed
+          if [ "$CURRENT_VERSION" != "$NEW_VERSION" ]; then
+            echo "published=true" >> $GITHUB_OUTPUT
+            echo "publishedPackages=[{\"name\":\"$(node -p "require('./package.json').name")\",\"version\":\"$NEW_VERSION\"}]" >> $GITHUB_OUTPUT
+            echo "✅ Version bumped from $CURRENT_VERSION to $NEW_VERSION"
+          else
+            echo "published=false" >> $GITHUB_OUTPUT
+            echo "⚠️ No version change detected"
+          fi
+
+      - name: Get version
+        id: version
+        if: steps.changesets.outputs.published == 'true'
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "📌 Version to release: $VERSION"
+
+      - name: Download build artifacts
+        if: steps.changesets.outputs.published == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: build-${{ github.event.workflow_run.id }}
+          path: .
+
+      - name: Download SBOM
+        if: steps.changesets.outputs.published == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: sbom-${{ github.event.workflow_run.id }}
+          path: .
+
+      - name: Commit version changes
+        if: steps.changesets.outputs.published == 'true'
+        run: |
+          git add -A
+          git commit -m "chore(release): v${{ steps.version.outputs.version }} [skip ci]
+
+          Co-authored-by: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+          git push origin main
+
+      - name: Create release tag
+        if: steps.changesets.outputs.published == 'true'
+        run: |
+          git tag -a "v${{ steps.version.outputs.version }}" -m "Release v${{ steps.version.outputs.version }}"
+          git push origin "v${{ steps.version.outputs.version }}"
+
+      - name: Extract changelog for release
+        if: steps.changesets.outputs.published == 'true'
+        id: changelog
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+
+          # Extract the changelog section for this version
+          CHANGELOG=$(awk -v version="## $VERSION" '
+            $0 ~ version { flag=1; next }
+            /^## [0-9]/ && flag { exit }
+            flag { print }
+          ' CHANGELOG.md)
+
+          # Write to file for GitHub release body
+          echo "$CHANGELOG" > release-notes.md
+          echo "✅ Extracted changelog for version $VERSION"
+
+      - name: Create GitHub release
+        if: steps.changesets.outputs.published == 'true'
+        id: create-release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: v${{ steps.version.outputs.version }}
+          body_path: release-notes.md
+          files: |
+            sbom.cdx.json
+            build-manifest.json
+          draft: false
+          prerelease: false
+          generate_release_notes: false
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate release attestations
+        if: steps.changesets.outputs.published == 'true'
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ${{ github.event.repository.name }}
+          subject-digest: ${{ github.sha }}
+          push-to-registry: true
+
+  publish-npm:
+    name: Publish to NPM
+    needs: [release]
+    if: needs.release.outputs.released == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code at release tag
+        uses: actions/checkout@v4
+        with:
+          ref: v${{ needs.release.outputs.version }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.0.0
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build for publishing
+        run: pnpm build
+
+      - name: Check NPM token
+        id: check-npm
+        run: |
+          if [ -n "${{ secrets.NPM_TOKEN }}" ]; then
+            echo "has_token=true" >> $GITHUB_OUTPUT
+            echo "✅ NPM_TOKEN is configured"
+          else
+            echo "has_token=false" >> $GITHUB_OUTPUT
+            echo "⚠️ NPM_TOKEN not configured - skipping npm publish"
+          fi
+
+      - name: Configure package for publishing
+        if: steps.check-npm.outputs.has_token == 'true'
+        run: |
+          # Check if package is private
+          IS_PRIVATE=$(node -p "require('./package.json').private || false")
+
+          if [ "$IS_PRIVATE" = "true" ]; then
+            echo "📦 Removing private flag for publishing"
+            node -e "
+              const fs = require('fs');
+              const pkg = require('./package.json');
+              delete pkg.private;
+              fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));
+            "
+          fi
+
+      - name: Publish to npm
+        if: steps.check-npm.outputs.has_token == 'true'
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Verify npm publication
+        if: steps.check-npm.outputs.has_token == 'true'
+        run: |
+          PACKAGE_NAME=$(node -p "require('./package.json').name")
+          echo "⏳ Waiting for npm to propagate..."
+          sleep 15
+          npm view "${PACKAGE_NAME}@${{ needs.release.outputs.version }}"
+          echo "✅ Successfully published ${PACKAGE_NAME}@${{ needs.release.outputs.version }} to npm"
+
+  publish-docker:
+    name: Publish Docker Images
+    needs: [release]
+    if: needs.release.outputs.released == 'true' && vars.ENABLE_DOCKER_RELEASE == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code at release tag
+        uses: actions/checkout@v4
+        with:
+          ref: v${{ needs.release.outputs.version }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check Docker Hub credentials
+        id: check-dockerhub
+        run: |
+          if [ -n "${{ secrets.DOCKERHUB_USERNAME }}" ] && [ -n "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
+            echo "has_dockerhub=true" >> $GITHUB_OUTPUT
+            echo "✅ Docker Hub credentials configured"
+          else
+            echo "has_dockerhub=false" >> $GITHUB_OUTPUT
+            echo "⚠️ Docker Hub credentials not configured"
+          fi
+
+      - name: Login to Docker Hub
+        if: steps.check-dockerhub.outputs.has_dockerhub == 'true'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ steps.check-dockerhub.outputs.has_dockerhub == 'true' && format('{0}/{1}', secrets.DOCKERHUB_USERNAME, github.event.repository.name) || '' }}
+            ghcr.io/${{ github.repository }}
+          tags: |
+            type=raw,value=${{ needs.release.outputs.version }}
+            type=raw,value=latest
+
+      - name: Build and push Docker images
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: true
+          sbom: true
+
+  publish-docs:
+    name: Publish Documentation
+    needs: [release]
+    if: needs.release.outputs.released == 'true' && vars.ENABLE_DOCS_RELEASE == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout code at release tag
+        uses: actions/checkout@v4
+        with:
+          ref: v${{ needs.release.outputs.version }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.0.0
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build project
+        run: pnpm build
+
+      - name: Build documentation
+        run: |
+          # Check for docs:build script
+          if npm run | grep -q "docs:build"; then
+            echo "📚 Running docs:build script"
+            pnpm run docs:build
+          else
+            echo "📚 Generating docs with TypeDoc"
+            mkdir -p docs
+            pnpm dlx typedoc --out docs/api dist/index.js \
+              --name "${{ github.event.repository.name }}" \
+              --includeVersion
+          fi
+
+          # Create index redirect if needed
+          if [ ! -f docs/index.html ]; then
+            echo "📄 Creating index.html redirect"
+            cat > docs/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>${{ github.event.repository.name }} Documentation</title>
+              <meta http-equiv="refresh" content="0; url=./api/index.html">
+          </head>
+          <body>
+              <p>Redirecting to <a href="./api/index.html">API Documentation</a>...</p>
+          </body>
+          </html>
+          EOF
+          fi
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './docs'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  notify-release:
+    name: Notify Release
+    needs: [release, publish-npm, publish-docker, publish-docs]
+    if: always() && needs.release.outputs.released == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Slack webhook
+        id: check-slack
+        run: |
+          if [ -n "${{ secrets.SLACK_WEBHOOK }}" ]; then
+            echo "has_webhook=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_webhook=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Send Slack notification
+        if: steps.check-slack.outputs.has_webhook == 'true'
+        uses: slackapi/slack-github-action@v1.27.0
+        with:
+          payload: |
+            {
+              "text": "🚀 Release v${{ needs.release.outputs.version }} completed",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "🚀 Release v${{ needs.release.outputs.version }}"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Repository:*\n<${{ github.server_url }}/${{ github.repository }}|${{ github.repository }}>"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Release:*\n<${{ github.server_url }}/${{ github.repository }}/releases/tag/v${{ needs.release.outputs.version }}|v${{ needs.release.outputs.version }}>"
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Publishing Status:*\n• NPM: ${{ needs.publish-npm.result == 'success' && '✅' || needs.publish-npm.result == 'skipped' && '⏭️' || '❌' }}\n• Docker: ${{ needs.publish-docker.result == 'success' && '✅' || needs.publish-docker.result == 'skipped' && '⏭️' || '❌' }}\n• Docs: ${{ needs.publish-docs.result == 'success' && '✅' || needs.publish-docs.result == 'skipped' && '⏭️' || '❌' }}"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
