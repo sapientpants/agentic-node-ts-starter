@@ -171,14 +171,14 @@ The CI will validate that a changeset is present, and the release workflow will 
 
 ### CI/CD Workflow
 
-- **CI workflow**: `.github/workflows/ci.yml` - Runs all checks and security scans on PRs and main
-- **CD workflow**: `.github/workflows/cd.yml` - Handles releases after CI passes on main
+- **Unified workflow**: `.github/workflows/ci-cd.yml` - Single workflow handling CI, CD, and releases
 - **Single-user setup**: No branch protection required, uses standard GITHUB_TOKEN
-- **Required checks**: CI validation and changeset presence for PRs
+- **Automatic flow**: Validation → Security Scans → Release → Publishing (npm/Docker/docs)
+- **Required checks**: Validation and changeset presence for PRs
 
 ### Release Distribution
 
-When a GitHub release is published by the CD workflow, it automatically handles distribution:
+When a GitHub release is created by the unified CI/CD workflow, it automatically handles distribution:
 
 1. **Downloads existing release artifacts** (SBOM from the published release)
 2. **Publishes to npm** (if NPM_TOKEN secret is set) - builds from source at release tag
