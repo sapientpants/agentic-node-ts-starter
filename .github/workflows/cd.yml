@@ -12,6 +12,10 @@ concurrency:
   group: cd-${{ github.ref }}
   cancel-in-progress: false
 
+env:
+  PNPM_VERSION: 10.0.0
+  NODE_VERSION: 22
+
 permissions:
   contents: write
   packages: write
@@ -42,19 +46,19 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/setup-pnpm
-          key: pnpm-binary-10.0.0-${{ runner.os }}
+          key: pnpm-binary-${{ env.PNPM_VERSION }}-${{ runner.os }}
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10.0.0
+          version: ${{ env.PNPM_VERSION }}
           run_install: false
           standalone: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
 
       - name: Install dependencies
@@ -213,19 +217,19 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/setup-pnpm
-          key: pnpm-binary-10.0.0-${{ runner.os }}
+          key: pnpm-binary-${{ env.PNPM_VERSION }}-${{ runner.os }}
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10.0.0
+          version: ${{ env.PNPM_VERSION }}
           run_install: false
           standalone: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
           registry-url: 'https://registry.npmjs.org'
 
@@ -360,19 +364,19 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/setup-pnpm
-          key: pnpm-binary-10.0.0-${{ runner.os }}
+          key: pnpm-binary-${{ env.PNPM_VERSION }}-${{ runner.os }}
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10.0.0
+          version: ${{ env.PNPM_VERSION }}
           run_install: false
           standalone: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
 
       - name: Install dependencies
