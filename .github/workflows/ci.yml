@@ -111,7 +111,7 @@ jobs:
 
   build-artifacts:
     name: Build Artifacts
-    needs: [validate]
+    needs: [validate, security-scan-codeql, security-scan-osv]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     outputs:
