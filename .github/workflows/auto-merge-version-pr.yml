@@ -14,6 +14,21 @@ jobs:
       !github.event.pull_request.draft
 
     steps:
+      - name: Check for PAT
+        run: |
+          if [ -z "${{ secrets.AUTO_MERGE_PAT }}" ]; then
+            echo "::error::AUTO_MERGE_PAT secret is not configured."
+            echo "::error::Auto-merge requires a Personal Access Token with 'repo' scope."
+            echo "::error::Please follow the setup instructions in README.md"
+            echo ""
+            echo "To set up AUTO_MERGE_PAT:"
+            echo "1. Go to https://github.com/settings/tokens/new"
+            echo "2. Create a token with 'repo' scope"
+            echo "3. Add it as a secret named AUTO_MERGE_PAT in repository settings"
+            exit 1
+          fi
+          echo "✅ AUTO_MERGE_PAT is configured"
+
       - name: Enable Auto-Merge
         # Note: This requires a PAT with repo scope or GitHub App token
         # The default GITHUB_TOKEN cannot enable auto-merge
@@ -35,31 +50,28 @@ jobs:
           esac
 
           gh pr merge --auto --squash "${PR_NUMBER}" || {
-            echo "::warning::Could not enable auto-merge. This requires a PAT with 'repo' scope."
-            echo "::warning::See README.md for instructions on setting up auto-merge."
-            exit 0
+            echo "::error::Failed to enable auto-merge for PR #${PR_NUMBER}"
+            echo "::error::This usually means the PAT doesn't have the required permissions."
+            echo "::error::Ensure AUTO_MERGE_PAT has 'repo' scope."
+            exit 1
           }
         env:
-          # Use PAT if available, fallback to GITHUB_TOKEN (which will fail but not break the workflow)
-          GH_TOKEN: ${{ secrets.AUTO_MERGE_PAT || secrets.GITHUB_TOKEN }}
+          # Use PAT (required for auto-merge to work)
+          GH_TOKEN: ${{ secrets.AUTO_MERGE_PAT }}
           GH_REPO: ${{ github.repository }}
 
       - name: Add Auto-Merge Comment
         if: success()
         run: |
           PR_NUMBER="${{ github.event.pull_request.number }}"
-          gh pr comment "${PR_NUMBER}" --body "🤖 **Auto-merge status**
+          gh pr comment "${PR_NUMBER}" --body "🤖 **Auto-merge enabled successfully!**
 
           This version PR will be automatically merged once all required status checks pass.
-
-          If auto-merge was not enabled (due to missing PAT), you can:
-          - Manually enable it: \`gh pr merge --auto --squash ${PR_NUMBER}\`
-          - Or merge manually once checks pass: \`gh pr merge --squash ${PR_NUMBER}\`
 
           To make changes before release:
           1. Disable auto-merge: \`gh pr merge --disable-auto ${PR_NUMBER}\`
           2. Make your changes
-          3. Re-enable auto-merge or merge manually
+          3. Re-enable auto-merge: \`gh pr merge --auto --squash ${PR_NUMBER}\`
 
           _See [README](../blob/main/README.md#automated-release-process) for details._"
         env:
