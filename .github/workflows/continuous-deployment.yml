@@ -203,7 +203,7 @@ jobs:
             VERSION=$(node -p "require('./package.json').version")
             echo "released=true" >> $GITHUB_OUTPUT
             echo "version=$VERSION" >> $GITHUB_OUTPUT
-            echo "📦 Version released: $VERSION"
+            echo "Version released: $VERSION"
           else
             echo "released=false" >> $GITHUB_OUTPUT
             echo "version=" >> $GITHUB_OUTPUT
@@ -213,7 +213,7 @@ jobs:
   # Deploy NPM when a release is created
   deploy-npm:
     name: Deploy to NPM
-    if: needs.version-and-release.outputs.released == 'true'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && needs.version-and-release.outputs.released == 'true'
     needs: [version-and-release]
     uses: ./.github/workflows/reusable-deploy.yml
     with:
@@ -227,7 +227,7 @@ jobs:
   # Deploy Docker when enabled
   deploy-docker:
     name: Deploy to Docker
-    if: needs.version-and-release.outputs.released == 'true' && vars.ENABLE_DOCKER_RELEASE == 'true'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && needs.version-and-release.outputs.released == 'true' && vars.ENABLE_DOCKER_RELEASE == 'true'
     needs: [version-and-release]
     uses: ./.github/workflows/reusable-deploy.yml
     with:
@@ -243,7 +243,7 @@ jobs:
   # Deploy Docs when enabled
   deploy-docs:
     name: Deploy Documentation
-    if: needs.version-and-release.outputs.released == 'true' && vars.ENABLE_DOCS_RELEASE == 'true'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && needs.version-and-release.outputs.released == 'true' && vars.ENABLE_DOCS_RELEASE == 'true'
     needs: [version-and-release]
     uses: ./.github/workflows/reusable-deploy.yml
     with:
