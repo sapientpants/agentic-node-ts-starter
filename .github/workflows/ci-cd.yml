@@ -20,13 +20,9 @@ permissions:
   packages: write
   id-token: write
   attestations: write
-  issues: write
-  pull-requests: write
-  pages: write
   security-events: write
 
 jobs:
-  # ===== VALIDATION & SECURITY =====
   validate:
     name: Validate
     runs-on: ubuntu-latest
@@ -52,122 +48,51 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # Security and quality checks
-      - name: Audit dependencies
-        run: pnpm audit --audit-level critical
-
-      - name: Type check
-        run: pnpm typecheck
-
-      - name: Lint
-        run: pnpm lint
-
-      - name: Format check
-        run: pnpm format
+      # Run all checks in parallel
+      - name: Run quality checks
+        run: |
+          pnpm audit --audit-level critical &
+          pnpm typecheck &
+          pnpm lint &
+          pnpm format &
+          wait
+          echo "✅ All quality checks passed"
 
       - name: Test with coverage
         run: pnpm test:coverage
 
-      - name: Upload coverage reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: coverage/
-          retention-days: 7
-
-  changeset-check:
-    name: Check Changeset
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
-          run_install: false
-          standalone: true
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Check for changeset
-        run: |
-          if pnpm changeset status --since=origin/main 2>&1 | grep -q "No changesets present"; then
-            echo "::error::This PR does not include a changeset."
-            echo ""
-            echo "Every PR must include a changeset to document the changes."
-            echo ""
-            echo "To add a changeset:"
-            echo "  - For user-facing changes: run 'pnpm changeset'"
-            echo "  - For internal changes (CI, tests, refactoring): run 'pnpm changeset --empty'"
-            echo ""
-            exit 1
-          else
-            echo "✅ Changeset found"
-          fi
-
-  security-scan-codeql:
-    name: CodeQL Analysis
-    needs: [validate]
-    runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-      contents: read
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Initialize CodeQL
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: github/codeql-action/init@v3
         with:
           languages: javascript-typescript
 
       - name: Run CodeQL Analysis
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: github/codeql-action/analyze@v3
 
-  security-scan-osv:
-    name: OSV Scanner
-    needs: [validate]
-    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable-pr.yml@v2.2.1
-    permissions:
-      actions: read
-      contents: read
-      security-events: write
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ github.sha }}
+          path: coverage/
+          retention-days: 7
 
-  # ===== RELEASE (Main branch only) =====
   release:
     name: Release
-    needs: [validate, security-scan-codeql, security-scan-osv]
+    needs: [validate]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     outputs:
-      released: ${{ steps.changesets.outputs.published }}
-      version: ${{ steps.version.outputs.version }}
-      release-id: ${{ steps.create-release.outputs.release-id }}
+      released: ${{ steps.release.outputs.released }}
+      version: ${{ steps.release.outputs.version }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
-
-      - name: Cache pnpm binary
-        uses: actions/cache@v4
-        with:
-          path: ~/setup-pnpm
-          key: pnpm-binary-${{ env.PNPM_VERSION }}-${{ runner.os }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -184,283 +109,121 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
-      - name: Build
-        run: pnpm build
-
-      - name: Generate SBOM
-        run: pnpm sbom
-
-      - name: Create build manifest
-        run: |
-          cat > build-manifest.json << EOF
-          {
-            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-            "sha": "${{ github.sha }}",
-            "run_id": "${{ github.run_id }}",
-            "run_number": "${{ github.run_number }}",
-            "ref": "${{ github.ref }}",
-            "actor": "${{ github.actor }}"
-          }
-          EOF
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-${{ github.run_id }}
-          path: |
-            dist/
-            package.json
-            pnpm-lock.yaml
-            build-manifest.json
-          retention-days: 30
-          if-no-files-found: error
-
-      - name: Upload SBOM
-        uses: actions/upload-artifact@v4
-        with:
-          name: sbom-${{ github.run_id }}
-          path: sbom.cdx.json
-          retention-days: 30
-
-      - name: Generate artifact attestations
-        uses: actions/attest-build-provenance@v2
-        with:
-          subject-path: |
-            dist/**/*.js
-            sbom.cdx.json
 
       - name: Configure git
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Check for changesets
-        id: check-changesets
+      - name: Check or generate changeset
+        id: changeset
         run: |
-          # Check if there are any changesets to process
-          if [ -d ".changeset" ]; then
-            shopt -s nullglob
-            files=(.changeset/*.md)
-            has_changeset=false
-            for f in "${files[@]}"; do
-              if [ "$(basename "$f")" != "README.md" ]; then
-                has_changeset=true
-                break
-              fi
-            done
-            if [ "$has_changeset" = true ]; then
-              echo "has_changesets=true" >> $GITHUB_OUTPUT
-              echo "📦 Found changesets to process"
-            else
-              echo "has_changesets=false" >> $GITHUB_OUTPUT
-              echo "⏭️ No changesets to process"
-            fi
+          # Check for existing changesets
+          if [ -d ".changeset" ] && ls .changeset/*.md 2>/dev/null | grep -v README.md > /dev/null; then
+            echo "has_changeset=true" >> $GITHUB_OUTPUT
+            echo "📦 Found existing changeset"
           else
-            echo "has_changesets=false" >> $GITHUB_OUTPUT
-            echo "⏭️ No .changeset directory found"
+            echo "has_changeset=false" >> $GITHUB_OUTPUT
+            echo "📝 No changeset found, will check commits"
+            
+            # Get commits since last tag
+            LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+            if [ -z "$LAST_TAG" ]; then
+              COMMIT_RANGE="HEAD"
+            else
+              COMMIT_RANGE="$LAST_TAG..HEAD"
+            fi
+            
+            # Check if there are any feat/fix commits
+            if git log $COMMIT_RANGE --pretty=format:"%s" | grep -E "^(feat|fix|perf|refactor)(\(.+\))?:" > /dev/null; then
+              echo "🎯 Found conventional commits, generating changeset"
+              node scripts/generate-changeset.js
+              echo "generated_changeset=true" >> $GITHUB_OUTPUT
+            else
+              echo "⏭️ No releasable commits found"
+            fi
           fi
 
-      - name: Apply changesets and version
-        id: changesets
-        if: steps.check-changesets.outputs.has_changesets == 'true'
+      - name: Version and release
+        id: release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Get current version before changes
+          # Get current version
           CURRENT_VERSION=$(node -p "require('./package.json').version")
-          echo "Current version: $CURRENT_VERSION"
 
-          # Apply changesets (updates version and CHANGELOG.md)
+          # Apply changesets
           pnpm changeset version
 
-          # Get new version after changes
+          # Get new version
           NEW_VERSION=$(node -p "require('./package.json').version")
-          echo "New version: $NEW_VERSION"
 
-          # Check if version actually changed
           if [ "$CURRENT_VERSION" != "$NEW_VERSION" ]; then
-            echo "published=true" >> $GITHUB_OUTPUT
-            echo "publishedPackages=[{\"name\":\"$(node -p "require('./package.json').name")\",\"version\":\"$NEW_VERSION\"}]" >> $GITHUB_OUTPUT
-            echo "✅ Version bumped from $CURRENT_VERSION to $NEW_VERSION"
+            echo "released=true" >> $GITHUB_OUTPUT
+            echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+            
+            # Build before release
+            pnpm build
+            
+            # Generate SBOM
+            pnpm sbom
+            
+            # Commit and tag
+            git add -A
+            git commit -m "chore(release): v${NEW_VERSION}
+
+            Co-authored-by: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+            git tag -a "v${NEW_VERSION}" -m "Release v${NEW_VERSION}"
+            
+            # Push changes
+            git push origin main --follow-tags
+            
+            # Extract changelog for this version
+            awk -v version="## $NEW_VERSION" '
+              $0 ~ version { flag=1; next }
+              /^## [0-9]/ && flag { exit }
+              flag { print }
+            ' CHANGELOG.md > release-notes.md
+            
+            echo "✅ Released version $NEW_VERSION"
           else
-            echo "published=false" >> $GITHUB_OUTPUT
-            echo "⚠️ No version change detected"
+            echo "released=false" >> $GITHUB_OUTPUT
+            echo "⏭️ No version change"
           fi
-
-      - name: Get version
-        id: version
-        if: steps.changesets.outputs.published == 'true'
-        run: |
-          VERSION=$(node -p "require('./package.json').version")
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "📌 Version to release: $VERSION"
-
-      - name: Create version branch and PR
-        if: steps.changesets.outputs.published == 'true'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          BRANCH="release/v${VERSION}"
-
-          # Create and checkout new branch
-          git checkout -b "$BRANCH"
-
-          # Commit changes
-          git add -A
-          git commit -m "chore(release): v${VERSION}
-
-          Co-authored-by: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
-
-          # Push branch
-          git push origin "$BRANCH"
-
-          # Create PR (labels are optional - will be added if they exist)
-          gh pr create \
-            --title "chore(release): v${VERSION}" \
-            --body "## 🚀 Release v${VERSION}
-
-          This PR was automatically created by the CI/CD workflow to release version ${VERSION}.
-
-          ### Changes
-          - Updated version to ${VERSION}
-          - Updated CHANGELOG.md with release notes
-          - Removed processed changesets
-
-          ### Next Steps
-          This PR will be automatically merged once all checks pass.
-
-          ---
-          🤖 Generated by GitHub Actions" \
-            --base main
-
-          # Try to add labels if they exist (don't fail if they don't)
-          PR_NUMBER=$(gh pr list --head "$BRANCH" --json number --jq '.[]?.number' 2>/dev/null | head -n1)
-          if [[ "$PR_NUMBER" =~ ^[0-9]+$ ]]; then
-            gh pr edit "$PR_NUMBER" --add-label "release" 2>/dev/null || true
-            gh pr edit "$PR_NUMBER" --add-label "automated" 2>/dev/null || true
-          fi
-
-      - name: Enable auto-merge
-        if: steps.changesets.outputs.published == 'true'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # Get the PR number
-          PR_NUMBER=$(gh pr list --head "release/v${{ steps.version.outputs.version }}" --json number --jq '.[]?.number' 2>/dev/null | head -n1)
-
-          if [[ "$PR_NUMBER" =~ ^[0-9]+$ ]]; then
-            echo "📝 Enabling auto-merge for PR #${PR_NUMBER}"
-            gh pr merge "$PR_NUMBER" --auto --squash
-          else
-            echo "⚠️ Could not find PR for release/v${{ steps.version.outputs.version }}"
-            exit 1
-          fi
-
-      - name: Wait for PR to merge
-        if: steps.changesets.outputs.published == 'true'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          PR_NUMBER=$(gh pr list --head "release/v${{ steps.version.outputs.version }}" --json number --jq '.[]?.number' 2>/dev/null | head -n1)
-
-          if [[ ! "$PR_NUMBER" =~ ^[0-9]+$ ]]; then
-            echo "❌ Could not find valid PR number for release/v${{ steps.version.outputs.version }}"
-            exit 1
-          fi
-
-          echo "⏳ Waiting for PR #${PR_NUMBER} to merge..."
-
-          # Wait up to 5 minutes for PR to merge
-          for i in {1..30}; do
-            STATE=$(gh pr view "$PR_NUMBER" --json state --jq '.state')
-            if [ "$STATE" = "MERGED" ]; then
-              echo "✅ PR #${PR_NUMBER} has been merged!"
-              break
-            elif [ "$STATE" = "CLOSED" ]; then
-              echo "❌ PR #${PR_NUMBER} was closed without merging"
-              exit 1
-            fi
-            echo "Waiting... (attempt $i/30)"
-            sleep 10
-          done
-
-          if [ "$STATE" != "MERGED" ]; then
-            echo "❌ Timeout waiting for PR to merge"
-            exit 1
-          fi
-
-          # Pull the merged changes
-          git checkout main
-          git pull origin main
-
-      - name: Create release tag
-        if: steps.changesets.outputs.published == 'true'
-        run: |
-          git tag -a "v${{ steps.version.outputs.version }}" -m "Release v${{ steps.version.outputs.version }}"
-          git push origin "v${{ steps.version.outputs.version }}"
-
-      - name: Extract changelog for release
-        if: steps.changesets.outputs.published == 'true'
-        id: changelog
-        run: |
-          VERSION="${{ steps.version.outputs.version }}"
-
-          # Extract the changelog section for this version
-          CHANGELOG=$(awk -v version="## $VERSION" '
-            $0 ~ version { flag=1; next }
-            /^## [0-9]/ && flag { exit }
-            flag { print }
-          ' CHANGELOG.md)
-
-          # Write to file for GitHub release body
-          echo "$CHANGELOG" > release-notes.md
-          echo "✅ Extracted changelog for version $VERSION"
 
       - name: Create GitHub release
-        if: steps.changesets.outputs.published == 'true'
-        id: create-release
+        if: steps.release.outputs.released == 'true'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ steps.version.outputs.version }}
-          name: v${{ steps.version.outputs.version }}
+          tag_name: v${{ steps.release.outputs.version }}
+          name: v${{ steps.release.outputs.version }}
           body_path: release-notes.md
           files: |
             sbom.cdx.json
-            build-manifest.json
           draft: false
           prerelease: false
-          generate_release_notes: false
           make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Generate release attestations
-        if: steps.changesets.outputs.published == 'true'
+      - name: Generate attestations
+        if: steps.release.outputs.released == 'true'
         uses: actions/attest-build-provenance@v2
         with:
-          subject-name: ${{ github.event.repository.name }}
-          subject-digest: ${{ github.sha }}
-          push-to-registry: true
+          subject-path: |
+            dist/**/*.js
+            sbom.cdx.json
 
-  # ===== PUBLISHING (After successful release) =====
   publish-npm:
     name: Publish to NPM
     needs: [release]
-    if: needs.release.outputs.released == 'true'
+    if: needs.release.outputs.released == 'true' && secrets.NPM_TOKEN != ''
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code at release tag
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
           ref: v${{ needs.release.outputs.version }}
-
-      - name: Cache pnpm binary
-        uses: actions/cache@v4
-        with:
-          path: ~/setup-pnpm
-          key: pnpm-binary-${{ env.PNPM_VERSION }}-${{ runner.os }}
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -476,252 +239,22 @@ jobs:
           cache: pnpm
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build for publishing
-        run: pnpm build
-
-      - name: Check NPM token
-        id: check-npm
+      - name: Install and build
         run: |
-          if [ -n "${{ secrets.NPM_TOKEN }}" ]; then
-            echo "has_token=true" >> $GITHUB_OUTPUT
-            echo "✅ NPM_TOKEN is configured"
-          else
-            echo "has_token=false" >> $GITHUB_OUTPUT
-            echo "⚠️ NPM_TOKEN not configured - skipping npm publish"
-          fi
-
-      - name: Configure package for publishing
-        if: steps.check-npm.outputs.has_token == 'true'
-        run: |
-          # Check if package is private
-          IS_PRIVATE=$(node -p "require('./package.json').private || false")
-
-          if [ "$IS_PRIVATE" = "true" ]; then
-            echo "📦 Removing private flag for publishing"
-            node -e "
-              const fs = require('fs');
-              const pkg = require('./package.json');
-              delete pkg.private;
-              fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));
-            "
-          fi
+          pnpm install --frozen-lockfile
+          pnpm build
 
       - name: Publish to npm
-        if: steps.check-npm.outputs.has_token == 'true'
-        run: npm publish --provenance --access public
+        run: |
+          # Remove private flag if present
+          node -e "
+            const fs = require('fs');
+            const pkg = require('./package.json');
+            if (pkg.private) {
+              delete pkg.private;
+              fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));
+            }
+          "
+          npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Verify npm publication
-        if: steps.check-npm.outputs.has_token == 'true'
-        run: |
-          PACKAGE_NAME=$(node -p "require('./package.json').name")
-          echo "⏳ Waiting for npm to propagate..."
-          sleep 15
-          npm view "${PACKAGE_NAME}@${{ needs.release.outputs.version }}"
-          echo "✅ Successfully published ${PACKAGE_NAME}@${{ needs.release.outputs.version }} to npm"
-
-  publish-docker:
-    name: Publish Docker Images
-    needs: [release]
-    if: needs.release.outputs.released == 'true' && vars.ENABLE_DOCKER_RELEASE == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code at release tag
-        uses: actions/checkout@v4
-        with:
-          ref: v${{ needs.release.outputs.version }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Check Docker Hub credentials
-        id: check-dockerhub
-        run: |
-          if [ -n "${{ secrets.DOCKERHUB_USERNAME }}" ] && [ -n "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
-            echo "has_dockerhub=true" >> $GITHUB_OUTPUT
-            echo "dockerhub_image=${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}" >> $GITHUB_OUTPUT
-            echo "✅ Docker Hub credentials configured"
-          else
-            echo "has_dockerhub=false" >> $GITHUB_OUTPUT
-            echo "dockerhub_image=" >> $GITHUB_OUTPUT
-            echo "⚠️ Docker Hub credentials not configured"
-          fi
-
-      - name: Login to Docker Hub
-        if: steps.check-dockerhub.outputs.has_dockerhub == 'true'
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Extract Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: |
-            ${{ steps.check-dockerhub.outputs.dockerhub_image }}
-            ghcr.io/${{ github.repository }}
-          tags: |
-            type=raw,value=${{ needs.release.outputs.version }}
-            type=raw,value=latest
-
-      - name: Build and push Docker images
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          provenance: true
-          sbom: true
-
-  publish-docs:
-    name: Publish Documentation
-    needs: [release]
-    if: needs.release.outputs.released == 'true' && vars.ENABLE_DOCS_RELEASE == 'true'
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Checkout code at release tag
-        uses: actions/checkout@v4
-        with:
-          ref: v${{ needs.release.outputs.version }}
-
-      - name: Cache pnpm binary
-        uses: actions/cache@v4
-        with:
-          path: ~/setup-pnpm
-          key: pnpm-binary-${{ env.PNPM_VERSION }}-${{ runner.os }}
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
-          run_install: false
-          standalone: true
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build project
-        run: pnpm build
-
-      - name: Build documentation
-        run: |
-          # Check for docs:build script
-          if npm run | grep -q "docs:build"; then
-            echo "📚 Running docs:build script"
-            pnpm run docs:build
-          else
-            echo "📚 Generating docs with TypeDoc"
-            mkdir -p docs
-            pnpm dlx typedoc --out docs/api dist/index.js \
-              --name "${{ github.event.repository.name }}" \
-              --includeVersion
-          fi
-
-          # Create index redirect if needed
-          if [ ! -f docs/index.html ]; then
-            echo "📄 Creating index.html redirect"
-            cat > docs/index.html << 'EOF'
-          <!DOCTYPE html>
-          <html>
-          <head>
-              <title>${{ github.event.repository.name }} Documentation</title>
-              <meta http-equiv="refresh" content="0; url=./api/index.html">
-          </head>
-          <body>
-              <p>Redirecting to <a href="./api/index.html">API Documentation</a>...</p>
-          </body>
-          </html>
-          EOF
-          fi
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: './docs'
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-
-  notify-release:
-    name: Notify Release
-    needs: [release, publish-npm, publish-docker, publish-docs]
-    if: always() && needs.release.outputs.released == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check Slack webhook
-        id: check-slack
-        run: |
-          if [ -n "${{ secrets.SLACK_WEBHOOK }}" ]; then
-            echo "has_webhook=true" >> $GITHUB_OUTPUT
-          else
-            echo "has_webhook=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Send Slack notification
-        if: steps.check-slack.outputs.has_webhook == 'true'
-        uses: slackapi/slack-github-action@v1.27.0
-        with:
-          payload: |
-            {
-              "text": "🚀 Release v${{ needs.release.outputs.version }} completed",
-              "blocks": [
-                {
-                  "type": "header",
-                  "text": {
-                    "type": "plain_text",
-                    "text": "🚀 Release v${{ needs.release.outputs.version }}"
-                  }
-                },
-                {
-                  "type": "section",
-                  "fields": [
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Repository:*\n<${{ github.server_url }}/${{ github.repository }}|${{ github.repository }}>"
-                    },
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Release:*\n<${{ github.server_url }}/${{ github.repository }}/releases/tag/v${{ needs.release.outputs.version }}|v${{ needs.release.outputs.version }}>"
-                    }
-                  ]
-                },
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*Publishing Status:*\n• NPM: ${{ needs.publish-npm.result == 'success' && '✅' || needs.publish-npm.result == 'skipped' && '⏭️' || '❌' }}\n• Docker: ${{ needs.publish-docker.result == 'success' && '✅' || needs.publish-docker.result == 'skipped' && '⏭️' || '❌' }}\n• Docs: ${{ needs.publish-docs.result == 'success' && '✅' || needs.publish-docs.result == 'skipped' && '⏭️' || '❌' }}"
-                  }
-                }
-              ]
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}

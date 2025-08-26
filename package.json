@@ -25,6 +25,8 @@
     "release:publish": "pnpm build && changeset publish",
     "release:tag": "git add -A && git commit -m \"chore(release): version packages\" && git tag -a v$(node -p \"require('./package.json').version\") -m \"Release\"",
     "changeset": "changeset",
+    "changeset:from-commits": "node scripts/generate-changeset.js",
+    "release:auto": "pnpm changeset:from-commits && pnpm changeset version",
     "precommit": "lint-staged"
   },
   "lint-staged": {

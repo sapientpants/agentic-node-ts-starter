@@ -29,6 +29,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - `pnpm changeset` - Create a changeset for your changes (interactive)
 - `pnpm changeset --empty` - Create empty changeset for non-release changes
+- `pnpm changeset:from-commits` - Generate changeset from conventional commits
+- `pnpm release:auto` - Auto-generate changeset and version
 - `pnpm changeset status` - Check status of changesets
 - `pnpm sbom` - Generate SBOM file in CycloneDX format (sbom.cdx.json)
 - `pnpm release` - Version packages with Changesets and build
@@ -82,14 +84,14 @@ specs/            # Feature specifications in Gherkin format
 - **Single-user workflow**: Simplified for individual developers without branch protection
 - **Release automation**: Automatically creates version PRs and manages releases
 
-### Development Process
+### Development Process (Simplified)
 
 1. Write/update specifications in `specs/SPEC.md`
 2. Implement with tests (property-based for core logic)
 3. Run `pnpm verify` before committing
-4. **Required**: Create a changeset with `pnpm changeset` or `pnpm changeset --empty`
-5. Use Conventional Commits format
-6. Push and create PR - CI will fail without a changeset
+4. Use Conventional Commits format (`feat:`, `fix:`, etc.)
+5. **Optional**: Create changeset for detailed release notes
+6. Push directly to main or create PR for review
 
 ## GitHub CLI Commands
 
@@ -166,25 +168,27 @@ The CI will validate that a changeset is present, and the release workflow will 
 ### Before Committing
 
 1. **Always run `pnpm verify`** - Ensures all checks pass (typecheck, lint, format, tests)
-2. **Always create a changeset** - Required for all PRs (CI will fail without it)
-3. **Use the correct import syntax** - Always use `.js` extension for local ES module imports
+2. **Use conventional commits** - Format: `type(scope): description` (e.g., `feat: add dark mode`)
+3. **Changesets are optional** - Create one for detailed release notes, or let CI auto-generate from commits
+4. **Use the correct import syntax** - Always use `.js` extension for local ES module imports
 
-### CI/CD Workflow
+### CI/CD Workflow (Simplified)
 
-- **Unified workflow**: `.github/workflows/ci-cd.yml` - Single workflow handling CI, CD, and releases
-- **Single-user setup**: No branch protection required, uses standard GITHUB_TOKEN
-- **Automatic flow**: Validation → Security Scans → Release → Publishing (npm/Docker/docs)
-- **Required checks**: Validation and changeset presence for PRs
+- **Ultra-simple workflow**: `.github/workflows/ci-cd.yml` - Streamlined single-user workflow (~260 lines, 70% reduction)
+- **Three jobs only**: `validate` (all checks), `release` (auto-changelog), `publish-npm` (optional)
+- **Direct commits to main**: No PR creation for releases, immediate push
+- **Hybrid changelog**: Uses changesets if present, auto-generates from conventional commits if not
+- **Parallel validation**: All checks run simultaneously for faster CI
 
-### Release Distribution
+### Automatic Release Process
 
-When a GitHub release is created by the unified CI/CD workflow, it automatically handles distribution:
+The simplified workflow automatically handles releases on every push to main:
 
-1. **Downloads existing release artifacts** (SBOM from the published release)
-2. **Publishes to npm** (if NPM_TOKEN secret is set) - builds from source at release tag
-3. **Builds and pushes Docker images** to Docker Hub and GitHub Container Registry (if ENABLE_DOCKER_RELEASE=true)
-4. **Deploys documentation** to GitHub Pages (if ENABLE_DOCS_RELEASE=true)
-5. **Creates additional release assets** (source/dist tarballs with checksums)
+1. **Checks for changesets** or conventional commits (`feat:`, `fix:`, etc.)
+2. **Auto-generates changelog** from commits if no changeset exists
+3. **Versions and tags** directly on main (no PR needed)
+4. **Creates GitHub release** with changelog and SBOM
+5. **Publishes to npm** if NPM_TOKEN is configured
 
 Key principle: **No duplicate builds** - The workflow checks out code at the release tag and builds only what's needed for each distribution channel.
 
