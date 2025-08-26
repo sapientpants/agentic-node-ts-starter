@@ -50,6 +50,7 @@ jobs:
         if: steps.check_npm.outputs.has_token == 'true'
         uses: pnpm/action-setup@v4
         with:
+          version: 10.0.0
           run_install: false
 
       - name: Setup Node.js for npm
@@ -195,6 +196,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
+          version: 10.0.0
           run_install: false
 
       - name: Setup Node.js
