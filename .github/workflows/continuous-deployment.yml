@@ -210,47 +210,23 @@ jobs:
             echo "No version release detected"
           fi
 
-  # Deploy NPM when a release is created
-  deploy-npm:
-    name: Deploy to NPM
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && needs.version-and-release.outputs.released == 'true'
+  # Deploy when a release is created (only on main branch)
+  deploy:
+    name: Deploy to ${{ matrix.environment }}
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     needs: [version-and-release]
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [npm]
     uses: ./.github/workflows/reusable-deploy.yml
     with:
       version: ${{ needs.version-and-release.outputs.version }}
-      environment: npm
-    secrets: inherit
-    permissions:
-      contents: read
-      id-token: write
-
-  # Deploy Docker when enabled
-  deploy-docker:
-    name: Deploy to Docker
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && needs.version-and-release.outputs.released == 'true' && vars.ENABLE_DOCKER_RELEASE == 'true'
-    needs: [version-and-release]
-    uses: ./.github/workflows/reusable-deploy.yml
-    with:
-      version: ${{ needs.version-and-release.outputs.version }}
-      environment: docker
+      environment: ${{ matrix.environment }}
     secrets: inherit
     permissions:
       contents: read
       id-token: write
       packages: write
       attestations: write
-
-  # Deploy Docs when enabled
-  deploy-docs:
-    name: Deploy Documentation
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && needs.version-and-release.outputs.released == 'true' && vars.ENABLE_DOCS_RELEASE == 'true'
-    needs: [version-and-release]
-    uses: ./.github/workflows/reusable-deploy.yml
-    with:
-      version: ${{ needs.version-and-release.outputs.version }}
-      environment: docs
-    secrets: inherit
-    permissions:
-      contents: read
       pages: write
-      id-token: write
