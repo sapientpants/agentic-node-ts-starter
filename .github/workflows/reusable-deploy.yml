@@ -3,14 +3,6 @@ name: Reusable Deploy
 on:
   workflow_call:
     inputs:
-      artifact-id:
-        description: 'Build artifact ID to deploy'
-        required: true
-        type: string
-      sbom-artifact-id:
-        description: 'SBOM artifact ID'
-        required: true
-        type: string
       version:
         description: 'Version being deployed'
         required: true
@@ -51,7 +43,7 @@ jobs:
         if: steps.check_npm.outputs.has_token == 'true'
         uses: actions/download-artifact@v4
         with:
-          name: ${{ inputs.artifact-id }}
+          name: build
           path: .
 
       - name: Install pnpm
@@ -97,7 +89,6 @@ jobs:
       - name: Publish to npm with provenance
         if: steps.check_npm.outputs.has_token == 'true'
         run: |
-          # Use the pre-built dist folder from artifacts
           npm config set //registry.npmjs.org/:_authToken=$NODE_AUTH_TOKEN
           npm publish --provenance --access public
         env:
@@ -127,40 +118,11 @@ jobs:
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: ${{ inputs.artifact-id }}
+          name: build
           path: .
-
-      - name: Download SBOM
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ inputs.sbom-artifact-id }}
-          path: .
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: 'arm64,amd64'
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
-      - name: Check Docker Hub Token
-        id: check_dockerhub
-        run: |
-          if [ -n "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
-            echo "has_token=true" >> $GITHUB_OUTPUT
-            echo "✅ Docker Hub credentials configured"
-          else
-            echo "has_token=false" >> $GITHUB_OUTPUT
-            echo "⚠️ Docker Hub credentials not configured - only pushing to GHCR"
-          fi
-
-      - name: Login to Docker Hub
-        if: steps.check_dockerhub.outputs.has_token == 'true'
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
@@ -169,27 +131,27 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set build timestamp
-        id: timestamp
-        run: echo "BUILD_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_ENV
+      - name: Login to Docker Hub
+        if: env.DOCKERHUB_USERNAME != ''
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
 
       - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: |
-            ${{ steps.check_dockerhub.outputs.has_token == 'true' && format('{0}/{1}', secrets.DOCKERHUB_USERNAME, github.event.repository.name) || '' }}
+            ${{ secrets.DOCKERHUB_USERNAME && format('{0}/{1}', secrets.DOCKERHUB_USERNAME, github.event.repository.name) || '' }}
             ghcr.io/${{ github.repository }}
           tags: |
             type=raw,value=${{ inputs.version }}
-            type=raw,value=v${{ inputs.version }}
-            type=semver,pattern={{version}},value=${{ inputs.version }}
-            type=semver,pattern={{major}}.{{minor}},value=${{ inputs.version }}
-            type=semver,pattern={{major}},value=${{ inputs.version }}
             type=raw,value=latest
 
       - name: Build and push Docker images
-        id: build
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -199,23 +161,6 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          build-args: |
-            VERSION=${{ inputs.version }}
-            BUILD_DATE=${{ env.BUILD_DATE }}
-            VCS_REF=${{ github.sha }}
-
-      - name: Generate SBOM attestation for container
-        uses: actions/attest-sbom@v2
-        with:
-          subject-name: ghcr.io/${{ github.repository }}
-          subject-digest: ${{ steps.build.outputs.digest }}
-          sbom-path: sbom.cdx.json
-
-      - name: Generate build provenance attestation
-        uses: actions/attest-build-provenance@v2
-        with:
-          subject-name: ghcr.io/${{ github.repository }}
-          subject-digest: ${{ steps.build.outputs.digest }}
 
   deploy-docs:
     name: Deploy Documentation
@@ -229,13 +174,13 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Checkout code for docs generation
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: ${{ inputs.artifact-id }}
+          name: build
           path: .
 
       - name: Install pnpm
@@ -260,11 +205,9 @@ jobs:
             pnpm run docs:build
           else
             echo "No docs:build script found, generating with TypeDoc"
-            # Generate API documentation with TypeDoc using pre-built dist
             pnpm dlx typedoc --out docs/api dist/index.js \
               --name "${{ github.event.repository.name }}" \
-              --includeVersion \
-              --gitRevision v${{ inputs.version }}
+              --includeVersion
           fi
 
           # Create index.html if it doesn't exist

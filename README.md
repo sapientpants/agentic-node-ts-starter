@@ -174,7 +174,7 @@ Without these settings, the automated release process will not work correctly.
 
 ## 🏗️ Continuous Deployment Architecture
 
-This project implements a **Build Once, Deploy Many** continuous deployment pipeline that ensures artifacts are built once and reused across all deployment targets. For complete architecture details, see [CD Architecture Documentation](docs/CD-ARCHITECTURE.md).
+This project implements a streamlined continuous deployment pipeline with automated versioning and multi-channel distribution. For workflow details, see [GitHub Workflows Documentation](.github/WORKFLOWS.md).
 
 ## 🚀 Automated Release Process
 

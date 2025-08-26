@@ -5,8 +5,6 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
-  release:
-    types: [published]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -16,30 +14,85 @@ permissions:
   contents: read
   attestations: write
   id-token: write
-  security-events: write
   pull-requests: read
 
 jobs:
-  # Phase 1: Build and Test (always runs)
+  # Build, test, and validate
   build:
-    name: Build
-    uses: ./.github/workflows/reusable-build.yml
-    permissions:
-      contents: read
-      id-token: write
-      attestations: write
-
-  # Phase 2: Security Scans (parallel with build)
-  security-scans:
-    name: Security
+    name: Build and Test
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.package.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Run security scans
-        run: echo "Security scans would run here (CodeQL, OSV, etc.)"
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
 
-  # Phase 3: Changeset Validation (PRs only)
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Run all checks
+      - name: Audit dependencies
+        run: pnpm audit --audit-level critical
+
+      - name: Type check
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Format check
+        run: pnpm format
+
+      - name: Test with coverage
+        run: pnpm test:coverage
+
+      # Build and generate artifacts (only on main branch)
+      - name: Build
+        if: github.ref == 'refs/heads/main'
+        run: pnpm build
+
+      - name: Generate SBOM
+        if: github.ref == 'refs/heads/main'
+        run: pnpm sbom
+
+      # Get version for later use
+      - name: Get package version
+        id: package
+        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+
+      # Upload artifacts for deployment (simplified naming)
+      - name: Upload build artifacts
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: build
+          path: |
+            dist/
+            package.json
+            pnpm-lock.yaml
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Upload SBOM
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.cdx.json
+          retention-days: 30
+
+  # Validate changesets on PRs
   validate-changeset:
     name: Validate Changeset
     if: github.event_name == 'pull_request'
@@ -80,11 +133,11 @@ jobs:
             echo "✅ Changeset found"
           fi
 
-  # Phase 4: Version Management (main branch only)
+  # Version and release on main branch
   version-and-release:
     name: Version and Release
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    needs: [build, security-scans]
+    needs: [build]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -92,9 +145,8 @@ jobs:
       id-token: write
       issues: write
     outputs:
-      released: ${{ steps.release.outputs.released }}
-      version: ${{ steps.release.outputs.version }}
-      tag: ${{ steps.release.outputs.tag }}
+      released: ${{ steps.changesets.outputs.published }}
+      version: ${{ steps.changesets.outputs.publishedPackages && fromJSON(steps.changesets.outputs.publishedPackages)[0].version || '' }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -117,133 +169,49 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
-      # Download artifacts from build job
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: ${{ needs.build.outputs.artifact-id }}
-          path: artifacts/
+          name: build
+          path: .
 
       - name: Download SBOM
         uses: actions/download-artifact@v4
         with:
-          name: ${{ needs.build.outputs.sbom-artifact-id }}
-          path: artifacts/
+          name: sbom
+          path: .
 
-      # Create Release PR (will trigger workflows if PAT is used)
-      - name: Create Release Pull Request
+      # Create Release PR or Release
+      - name: Create Release Pull Request or Publish
         id: changesets
         uses: changesets/action@v1
         with:
           version: pnpm changeset version
+          publish: pnpm release:tag
           commit: 'chore: version packages'
           title: 'chore: version packages'
-          createGithubReleases: false
+          createGithubReleases: true
         env:
           # Use PAT if available to ensure PRs trigger workflows
           GITHUB_TOKEN: ${{ secrets.CHANGESETS_PAT || secrets.GITHUB_TOKEN }}
 
-      # Check for version changes and create release
-      - name: Check for Version Changes
-        id: version_check
-        run: |
-          if git log -1 --pretty=%B | grep -q "chore: version packages"; then
-            VERSION=$(node -p "require('./package.json').version")
-            echo "version=$VERSION" >> $GITHUB_OUTPUT
-            echo "changed=true" >> $GITHUB_OUTPUT
-            echo "Version change detected: v$VERSION"
-          else
-            echo "changed=false" >> $GITHUB_OUTPUT
-            echo "No version change detected"
-          fi
-
-      - name: Create Git Tag
-        if: steps.version_check.outputs.changed == 'true'
-        id: create_tag
-        run: |
-          VERSION=${{ steps.version_check.outputs.version }}
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag -a "v$VERSION" -m "Release v$VERSION"
-          git push origin "v$VERSION"
-          echo "tag=v$VERSION" >> $GITHUB_OUTPUT
-
-      # Extract CHANGELOG content for release
-      - name: Extract CHANGELOG Content
-        if: steps.version_check.outputs.changed == 'true'
-        id: changelog
-        run: |
-          VERSION=${{ steps.version_check.outputs.version }}
-
-          CHANGELOG_CONTENT=$(awk -v ver="## $VERSION" '
-            BEGIN { found = 0 }
-            $0 ~ ver { found = 1; next }
-            found && /^## v?[0-9]+\.[0-9]+\.[0-9]+([\-+][0-9A-Za-z\.-]+)?/ { exit }
-            found { print }
-          ' CHANGELOG.md)
-
-          if [ -z "$CHANGELOG_CONTENT" ]; then
-            CHANGELOG_CONTENT="No changelog entry found for version $VERSION"
-          fi
-
-          # Create release body with artifact metadata
-          cat > release_body.md << EOF
-          ## Release v$VERSION
-
-          $CHANGELOG_CONTENT
-
-          ### Build Information
-          - **Build Artifact ID**: ${{ needs.build.outputs.artifact-id }}
-          - **SBOM Artifact ID**: ${{ needs.build.outputs.sbom-artifact-id }}
-          - **Build Run**: [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-
-          ### Artifacts
-          - 📦 SBOM (CycloneDX format) attached below
-          - ✅ Build provenance attestation available
-          - ✅ SBOM attestation available
-
-          ### Distribution
-          This release will be automatically distributed to configured channels.
-
-          ---
-          See the [full CHANGELOG](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for all releases.
-          EOF
-
-      # Create GitHub Release with artifact metadata
-      - name: Create GitHub Release
-        if: steps.version_check.outputs.changed == 'true'
-        id: release
-        uses: ncipollo/release-action@v1
-        with:
-          tag: ${{ steps.create_tag.outputs.tag }}
-          name: Release ${{ steps.create_tag.outputs.tag }}
-          bodyFile: release_body.md
-          artifacts: artifacts/sbom.cdx.json
-          makeLatest: true
-
-      # Set outputs for downstream jobs
-      - name: Set release outputs
-        id: set_outputs
-        if: steps.version_check.outputs.changed == 'true'
-        run: |
-          echo "released=true" >> $GITHUB_OUTPUT
-          echo "version=${{ steps.version_check.outputs.version }}" >> $GITHUB_OUTPUT
-          echo "tag=${{ steps.create_tag.outputs.tag }}" >> $GITHUB_OUTPUT
-
-  # Phase 5: Deploy on Release (triggered by release event or after version-and-release)
+  # Deploy when a release is created
   deploy:
-    name: Deploy ${{ matrix.environment }}
-    if: github.event_name == 'release' || (needs.version-and-release.outputs.released == 'true' && github.ref == 'refs/heads/main')
-    needs: [build, version-and-release]
+    name: Deploy to ${{ matrix.environment }}
+    if: needs.version-and-release.outputs.released == 'true'
+    needs: [version-and-release]
     strategy:
       fail-fast: false
       matrix:
-        environment: [npm, docker, docs]
+        environment: [npm]
+        include:
+          - environment: docker
+            if: vars.ENABLE_DOCKER_RELEASE == 'true'
+          - environment: docs
+            if: vars.ENABLE_DOCS_RELEASE == 'true'
     uses: ./.github/workflows/reusable-deploy.yml
     with:
-      artifact-id: ${{ needs.build.outputs.artifact-id }}
-      sbom-artifact-id: ${{ needs.build.outputs.sbom-artifact-id }}
-      version: ${{ needs.build.outputs.version != '' && needs.build.outputs.version || needs.version-and-release.outputs.version }}
+      version: ${{ needs.version-and-release.outputs.version }}
       environment: ${{ matrix.environment }}
     secrets: inherit
     permissions:
