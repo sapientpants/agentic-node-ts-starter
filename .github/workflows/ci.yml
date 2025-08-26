@@ -204,7 +204,7 @@ jobs:
 
   security-scan-osv:
     name: OSV Scanner
-    if: github.event_name == 'pull_request'
+    needs: [validate]
     uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable-pr.yml@v2.2.1
     permissions:
       actions: read
