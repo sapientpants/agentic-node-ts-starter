@@ -43,6 +43,7 @@ jobs:
         with:
           version: 10.0.0
           run_install: false
+          standalone: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -207,6 +208,7 @@ jobs:
         with:
           version: 10.0.0
           run_install: false
+          standalone: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -347,6 +349,7 @@ jobs:
         with:
           version: 10.0.0
           run_install: false
+          standalone: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
