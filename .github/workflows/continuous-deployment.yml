@@ -145,8 +145,8 @@ jobs:
       id-token: write
       issues: write
     outputs:
-      released: ${{ steps.changesets.outputs.published }}
-      version: ${{ steps.changesets.outputs.publishedPackages && fromJSON(steps.changesets.outputs.publishedPackages)[0].version || '' }}
+      released: ${{ steps.check-release.outputs.released }}
+      version: ${{ steps.check-release.outputs.version }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -193,6 +193,22 @@ jobs:
         env:
           # Use PAT if available to ensure PRs trigger workflows
           GITHUB_TOKEN: ${{ secrets.CHANGESETS_PAT || secrets.GITHUB_TOKEN }}
+
+      # Check if a release was created
+      - name: Check for release
+        id: check-release
+        run: |
+          # Check if version was bumped in the last commit
+          if git log -1 --pretty=%B | grep -q "chore: version packages"; then
+            VERSION=$(node -p "require('./package.json').version")
+            echo "released=true" >> $GITHUB_OUTPUT
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+            echo "📦 Version released: $VERSION"
+          else
+            echo "released=false" >> $GITHUB_OUTPUT
+            echo "version=" >> $GITHUB_OUTPUT
+            echo "No version release detected"
+          fi
 
   # Deploy NPM when a release is created
   deploy-npm:
