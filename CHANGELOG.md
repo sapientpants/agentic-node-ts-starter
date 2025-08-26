@@ -1,5 +1,15 @@
 # agentic-node-ts-starter
 
+## 0.4.4
+
+### Patch Changes
+
+- [#43](https://github.com/sapientpants/agentic-node-ts-starter/pull/43) [`f6152a7`](https://github.com/sapientpants/agentic-node-ts-starter/commit/f6152a73d6bebbeda2df0f54517c3484f5e4278d) Thanks [@sapientpants](https://github.com/sapientpants)! - fix: handle missing labels gracefully in CD workflow
+
+  The CD workflow now creates PRs without failing if labels don't exist.
+  Labels are added after PR creation if they exist, but their absence
+  won't cause the workflow to fail.
+
 ## 1.0.0
 
 ### Major Changes
