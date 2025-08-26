@@ -1,16 +1,15 @@
-name: CD
+name: CI/CD
 
 on:
-  workflow_run:
-    workflows: ['CI']
-    types: [completed]
+  pull_request:
+    branches: [main]
+  push:
     branches: [main]
 
-# Ensure only one CD workflow runs at a time
-# Queue subsequent runs rather than canceling
+# Cancel in-progress runs for PRs, but not for main branch
 concurrency:
-  group: cd-${{ github.ref }}
-  cancel-in-progress: false
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   PNPM_VERSION: 10.0.0
@@ -24,11 +23,134 @@ permissions:
   issues: write
   pull-requests: write
   pages: write
+  security-events: write
 
 jobs:
+  # ===== VALIDATION & SECURITY =====
+  validate:
+    name: Validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
+          standalone: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Security and quality checks
+      - name: Audit dependencies
+        run: pnpm audit --audit-level critical
+
+      - name: Type check
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Format check
+        run: pnpm format
+
+      - name: Test with coverage
+        run: pnpm test:coverage
+
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 7
+
+  changeset-check:
+    name: Check Changeset
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
+          standalone: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check for changeset
+        run: |
+          if pnpm changeset status --since=origin/main 2>&1 | grep -q "No changesets present"; then
+            echo "::error::This PR does not include a changeset."
+            echo ""
+            echo "Every PR must include a changeset to document the changes."
+            echo ""
+            echo "To add a changeset:"
+            echo "  - For user-facing changes: run 'pnpm changeset'"
+            echo "  - For internal changes (CI, tests, refactoring): run 'pnpm changeset --empty'"
+            echo ""
+            exit 1
+          else
+            echo "✅ Changeset found"
+          fi
+
+  security-scan-codeql:
+    name: CodeQL Analysis
+    needs: [validate]
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+
+      - name: Run CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+  security-scan-osv:
+    name: OSV Scanner
+    needs: [validate]
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable-pr.yml@v2.2.1
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+  # ===== RELEASE (Main branch only) =====
   release:
     name: Release
-    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main'
+    needs: [validate, security-scan-codeql, security-scan-osv]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     outputs:
       released: ${{ steps.changesets.outputs.published }}
@@ -38,7 +160,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          # Use default token for single-user setup
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
@@ -63,6 +184,51 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Generate SBOM
+        run: pnpm sbom
+
+      - name: Create build manifest
+        run: |
+          cat > build-manifest.json << EOF
+          {
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "sha": "${{ github.sha }}",
+            "run_id": "${{ github.run_id }}",
+            "run_number": "${{ github.run_number }}",
+            "ref": "${{ github.ref }}",
+            "actor": "${{ github.actor }}"
+          }
+          EOF
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ github.run_id }}
+          path: |
+            dist/
+            package.json
+            pnpm-lock.yaml
+            build-manifest.json
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ github.run_id }}
+          path: sbom.cdx.json
+          retention-days: 30
+
+      - name: Generate artifact attestations
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            dist/**/*.js
+            sbom.cdx.json
 
       - name: Configure git
         run: |
@@ -130,24 +296,6 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "📌 Version to release: $VERSION"
 
-      - name: Download build artifacts
-        if: steps.changesets.outputs.published == 'true'
-        uses: actions/download-artifact@v4
-        with:
-          name: build-${{ github.event.workflow_run.id }}
-          path: .
-          run-id: ${{ github.event.workflow_run.id }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Download SBOM
-        if: steps.changesets.outputs.published == 'true'
-        uses: actions/download-artifact@v4
-        with:
-          name: sbom-${{ github.event.workflow_run.id }}
-          path: .
-          run-id: ${{ github.event.workflow_run.id }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Create version branch and PR
         if: steps.changesets.outputs.published == 'true'
         env:
@@ -173,7 +321,7 @@ jobs:
             --title "chore(release): v${VERSION}" \
             --body "## 🚀 Release v${VERSION}
 
-          This PR was automatically created by the CD workflow to release version ${VERSION}.
+          This PR was automatically created by the CI/CD workflow to release version ${VERSION}.
 
           ### Changes
           - Updated version to ${VERSION}
@@ -296,6 +444,7 @@ jobs:
           subject-digest: ${{ github.sha }}
           push-to-registry: true
 
+  # ===== PUBLISHING (After successful release) =====
   publish-npm:
     name: Publish to NPM
     needs: [release]
