@@ -25,6 +25,20 @@ jobs:
     name: Validate
     runs-on: ubuntu-latest
     steps:
+      - name: Validate required inputs
+        run: |
+          if [ -z "${{ inputs.node-version }}" ]; then
+            echo "❌ Error: node-version input is required"
+            exit 1
+          fi
+          if [ -z "${{ inputs.pnpm-version }}" ]; then
+            echo "❌ Error: pnpm-version input is required"
+            exit 1
+          fi
+          echo "✅ All required inputs are present"
+          echo "Node version: ${{ inputs.node-version }}"
+          echo "pnpm version: ${{ inputs.pnpm-version }}"
+
       - name: Checkout code
         uses: actions/checkout@v4
         with:
