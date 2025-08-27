@@ -1,0 +1,81 @@
+name: Reusable Setup
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        description: 'Node.js version'
+        type: string
+        default: '22'
+      pnpm-version:
+        description: 'pnpm version'
+        type: string
+        default: '10.0.0'
+      install-deps:
+        description: 'Install dependencies'
+        type: boolean
+        default: true
+      build:
+        description: 'Run build'
+        type: boolean
+        default: false
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ inputs.pnpm-version }}
+          run_install: false
+          standalone: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: pnpm
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        if: inputs.install-deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        if: inputs.build
+        run: pnpm build
+
+      - name: Upload node_modules
+        if: inputs.install-deps
+        uses: actions/upload-artifact@v4
+        with:
+          name: node-modules-${{ github.sha }}
+          path: node_modules/
+          retention-days: 1
+
+      - name: Upload dist
+        if: inputs.build
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ github.sha }}
+          path: dist/
+          retention-days: 1

@@ -1,0 +1,94 @@
+name: Reusable Security
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        description: 'Node.js version'
+        type: string
+        default: '22'
+      pnpm-version:
+        description: 'pnpm version'
+        type: string
+        default: '10.0.0'
+      run-codeql:
+        description: 'Run CodeQL analysis'
+        type: boolean
+        default: true
+      run-osv-scan:
+        description: 'Run OSV vulnerability scan'
+        type: boolean
+        default: true
+      generate-sbom:
+        description: 'Generate SBOM'
+        type: boolean
+        default: false
+
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ inputs.pnpm-version }}
+          run_install: false
+          standalone: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Initialize CodeQL
+        if: inputs.run-codeql
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+
+      - name: Run CodeQL Analysis
+        if: inputs.run-codeql
+        uses: github/codeql-action/analyze@v3
+
+      - name: Generate SBOM
+        if: inputs.generate-sbom
+        run: pnpm sbom
+
+      - name: Upload SBOM
+        if: inputs.generate-sbom
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ github.sha }}
+          path: sbom.cdx.json
+          retention-days: 7
+
+      - name: Run OSV Scanner
+        if: inputs.run-osv-scan
+        run: |
+          # Install OSV Scanner
+          curl -sSfL https://github.com/google/osv-scanner/releases/download/v1.9.1/osv-scanner_linux_amd64 -o osv-scanner
+          chmod +x osv-scanner
+
+          # Run OSV Scanner and generate SARIF report
+          ./osv-scanner --format sarif --output results.sarif . || true
+
+      - name: Upload OSV results to GitHub Security
+        if: inputs.run-osv-scan && always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
+          category: 'osv-scan'
