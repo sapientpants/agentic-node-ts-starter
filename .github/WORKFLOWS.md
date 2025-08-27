@@ -6,170 +6,165 @@ This document describes the GitHub Actions workflows used in this repository.
 
 ```mermaid
 graph LR
-    PR[Pull Request] --> BUILD[Build & Test]
-    PR --> VALIDATE[Validate Changeset]
+    PR[Pull Request] --> VALIDATE[Validate]
+    VALIDATE --> TEST[Test & Build]
 
-    MERGE[Merge to Main] --> BUILD2[Build & Test]
-    BUILD2 --> VERSION[Version & Release]
-    VERSION --> AUTOMERGE[Auto-Merge PR]
-    AUTOMERGE --> RELEASE[GitHub Release]
-    RELEASE --> DEPLOY[Deploy]
-    DEPLOY --> NPM[NPM Publish]
-    DEPLOY --> DOCKER[Docker Images]
-    DEPLOY --> DOCS[Documentation]
+    PUSH[Push to Main] --> MAIN[Main Workflow]
+    MAIN --> VERSION[Version Packages]
+    VERSION --> RELEASE[Create Release]
+    RELEASE --> PUBLISH[Publish Workflow]
+    PUBLISH --> NPM[NPM Package]
+    PUBLISH --> DOCKER[Docker Image]
 ```
+
+## Important Setup Requirements
+
+### Personal Access Token for Release Workflow
+
+The Main workflow creates GitHub releases that should trigger the Publish workflow. However, due to GitHub's security features, workflows triggered by the default `GITHUB_TOKEN` cannot trigger other workflows (this prevents infinite loops).
+
+**To enable the Publish workflow to trigger automatically:**
+
+1. Create a Personal Access Token (PAT) with the following permissions:
+   - `contents:write` - To create releases
+   - `actions:read` - To trigger workflows
+
+2. Add the PAT as a repository secret named `RELEASE_TOKEN`:
+   - Go to Settings → Secrets and variables → Actions
+   - Click "New repository secret"
+   - Name: `RELEASE_TOKEN`
+   - Value: Your PAT
+
+3. The Main workflow will automatically use `RELEASE_TOKEN` if available, falling back to `GITHUB_TOKEN` if not configured.
 
 ## Workflows
 
-### 1. Continuous Deployment (`continuous-deployment.yml`)
+### 1. Pull Request Workflow (`pr.yml`)
 
-**Purpose**: Main CI/CD pipeline that handles building, testing, versioning, and deployment.
+**Purpose**: Validates and tests all pull requests.
 
-**Triggers**:
-
-- Push to `main` branch
-- Pull requests to `main` branch
+**Triggers**: Pull requests to `main` branch
 
 **Jobs**:
 
-1. **Build and Test**: Runs on every push and PR
-   - Installs dependencies
-   - Runs audit, typecheck, lint, format, and tests
-   - Builds artifacts and generates SBOM (main branch only)
-   - Uploads artifacts with simplified naming
+- **validate**: Checks changeset status
+- **security-audit**: Runs security audit
+- **type-checking**: TypeScript type checking
+- **linting**: ESLint checks
+- **format-checking**: Prettier formatting checks
+- **test**: Runs test suite with coverage
+- **codeql**: Security analysis
+- **osv-scan**: Vulnerability scanning
 
-2. **Validate Changeset**: PR only
-   - Ensures every PR includes a changeset
+### 2. Main Workflow (`main.yml`)
 
-3. **Version and Release**: Main branch only
-   - Creates version PRs using changesets
-   - Auto-creates GitHub releases when versions change
-   - Uses PAT if configured for workflow triggering
+**Purpose**: Handles versioning and release creation when changes are merged to main.
 
-4. **Deploy**: After release creation
-   - Deploys to npm (always)
-   - Deploys to Docker (if `ENABLE_DOCKER_RELEASE=true`)
-   - Deploys to docs (if `ENABLE_DOCS_RELEASE=true`)
+**Triggers**: Push to `main` branch
 
-**Required Secrets**:
+**Jobs**:
 
-- `CHANGESETS_PAT`: Personal Access Token for creating PRs that trigger workflows (optional but recommended)
-- `NPM_TOKEN`: For npm publishing (optional)
-- `DOCKERHUB_USERNAME` & `DOCKERHUB_TOKEN`: For Docker Hub (optional)
+- **build**:
+  - Checks for changesets (fails if releasable commits lack changesets)
+  - Versions packages using changesets
+  - Builds artifacts and generates SBOM
+  - Creates GitHub release with artifacts
+  - Generates build attestations
 
-### 2. Auto-Merge Version PRs (`auto-merge-version-pr.yml`)
+**Important**: Requires `RELEASE_TOKEN` secret to trigger the publish workflow.
 
-**Purpose**: Automatically enables auto-merge for changesets version PRs.
+### 3. Publish Workflow (`publish.yml`)
+
+**Purpose**: Publishes packages to registries after a release.
 
 **Triggers**:
 
-- PR opened, reopened, synchronized, or ready for review
-- Only runs for PRs titled "chore: version packages"
+- Release published event
+- Manual workflow dispatch
 
-**Features**:
+**Jobs**:
 
-- Verifies PR is from github-actions bot
-- Attempts to enable auto-merge with squash strategy
-- Falls back gracefully if PAT not configured
-- Adds informative comment to PR
-
-**Required Secrets**:
-
-- `AUTO_MERGE_PAT`: Personal Access Token with `repo` scope (optional)
-
-### 3. Reusable Deploy (`reusable-deploy.yml`)
-
-**Purpose**: Handles deployment to different targets (npm, Docker, docs).
-
-**Called by**: `continuous-deployment.yml`
-
-**Deployment Targets**:
-
-- **NPM**: Publishes packages with provenance
-- **Docker**: Multi-architecture images to GHCR and Docker Hub
-- **Documentation**: GitHub Pages deployment
+- **npm**: Publishes to NPM (requires `ENABLE_NPM_RELEASE` variable and `NPM_TOKEN` secret)
+- **docker**: Builds and publishes Docker images (requires `ENABLE_DOCKER_RELEASE` variable)
 
 ## Configuration
 
 ### Required Secrets
 
-| Secret               | Purpose                           | Required For    |
-| -------------------- | --------------------------------- | --------------- |
-| `CHANGESETS_PAT`     | Create PRs that trigger workflows | Auto-versioning |
-| `AUTO_MERGE_PAT`     | Enable auto-merge on version PRs  | Auto-merge      |
-| `NPM_TOKEN`          | NPM authentication                | NPM publishing  |
-| `DOCKERHUB_USERNAME` | Docker Hub username               | Docker Hub push |
-| `DOCKERHUB_TOKEN`    | Docker Hub access token           | Docker Hub push |
+| Secret               | Purpose                                       | Required For    |
+| -------------------- | --------------------------------------------- | --------------- |
+| `RELEASE_TOKEN`      | PAT to trigger publish workflow from releases | Auto-publish    |
+| `NPM_TOKEN`          | NPM authentication                            | NPM publishing  |
+| `DOCKERHUB_USERNAME` | Docker Hub username                           | Docker Hub push |
+| `DOCKERHUB_TOKEN`    | Docker Hub access token                       | Docker Hub push |
 
 ### Repository Variables
 
 | Variable                | Purpose                    | Default |
 | ----------------------- | -------------------------- | ------- |
+| `ENABLE_NPM_RELEASE`    | Enable NPM publishing      | `false` |
 | `ENABLE_DOCKER_RELEASE` | Enable Docker distribution | `false` |
-| `ENABLE_DOCS_RELEASE`   | Enable docs deployment     | `false` |
 
 ## Setup Instructions
 
-### 1. Create a Personal Access Token (PAT)
+### 1. Create a Personal Access Token for Releases
 
-For full automation, create a fine-grained PAT with:
+Create a fine-grained PAT with:
 
 - **Repository access**: Your repository
-- **Permissions**: Actions (Read), Contents (Write), Pull requests (Write), Workflows (Write)
+- **Permissions**: Contents (Write), Actions (Read)
 
-Add as `CHANGESETS_PAT` and/or `AUTO_MERGE_PAT` secrets.
+Add as `RELEASE_TOKEN` secret.
 
 ### 2. Configure NPM Publishing
 
 1. Get NPM token from npmjs.com
 2. Add as `NPM_TOKEN` secret
+3. Set `ENABLE_NPM_RELEASE=true` variable
 
 ### 3. Enable Docker Distribution (Optional)
 
 1. Set `ENABLE_DOCKER_RELEASE=true` variable
 2. Add Docker Hub credentials if using Docker Hub
 
-### 4. Enable Documentation (Optional)
-
-1. Enable GitHub Pages in repository settings
-2. Set `ENABLE_DOCS_RELEASE=true` variable
-
 ## How It Works
 
 1. **Developer creates PR** with changes and changeset
 2. **CI validates** the PR (tests pass, changeset present)
 3. **PR is merged** to main branch
-4. **Build runs** and creates artifacts
-5. **Changesets creates version PR** (using PAT if configured)
-6. **Auto-merge enables** on version PR
-7. **Version PR auto-merges** when checks pass
-8. **Release is created** with changelog
-9. **Deployment runs** to configured channels
+4. **Main workflow runs**:
+   - Checks for changesets
+   - Versions packages
+   - Builds artifacts
+   - Creates GitHub release
+5. **Publish workflow triggers** (if `RELEASE_TOKEN` configured):
+   - Publishes to NPM
+   - Builds Docker images
+   - Deploys to configured targets
 
 ## Troubleshooting
 
-### Version PRs Not Auto-Merging
+### Publish Workflow Not Triggering
 
-- Verify `AUTO_MERGE_PAT` or `CHANGESETS_PAT` is configured
-- Check that auto-merge is enabled in repository settings
-- Ensure required status checks are passing
+- Verify `RELEASE_TOKEN` secret is configured
+- Ensure the PAT has `contents:write` and `actions:read` permissions
+- Check that the release was created (not draft)
 
 ### NPM Publish Failing
 
 - Verify `NPM_TOKEN` is valid
-- Check package.json version doesn't already exist
-- Ensure package isn't marked as private (workflow handles this)
+- Check `ENABLE_NPM_RELEASE` variable is set to `true`
+- Ensure package.json version doesn't already exist
 
-### Artifacts Not Found
+### Missing Changesets
 
-- Check that build job completed successfully
-- Artifacts are retained for 30 days
-- Artifact names are simplified: `build` and `sbom`
+- Main workflow will fail if releasable commits lack changesets
+- Add changesets with `pnpm changeset`
 
 ## Best Practices
 
-1. **Always include changesets** in PRs
-2. **Configure PAT** for full automation
+1. **Always include changesets** in PRs with changes
+2. **Configure `RELEASE_TOKEN`** for automatic publishing
 3. **Keep secrets secure** and rotate regularly
 4. **Monitor workflow runs** for failures
 5. **Use `pnpm verify`** before pushing code
