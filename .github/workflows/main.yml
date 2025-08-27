@@ -1,15 +1,12 @@
 name: CI/CD
 
 on:
-  pull_request:
-    branches: [main]
   push:
     branches: [main]
 
-# Cancel in-progress runs for PRs, but not for main branch
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: false
 
 permissions:
   contents: write
@@ -33,7 +30,6 @@ jobs:
   cd:
     name: CD
     needs: [ci]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     uses: ./.github/workflows/cd.yml
     with:
       node-version: '22'
