@@ -75,19 +75,3 @@ jobs:
           name: sbom-${{ github.sha }}
           path: sbom.cdx.json
           retention-days: 7
-
-      - name: OSV Scanner
-        if: inputs.run-osv-scan
-        uses: google/osv-scanner-action@v2.2.1
-        with:
-          scan-args: |-
-            --format=sarif
-            --output=results.sarif
-            .
-
-      - name: Upload OSV results
-        if: inputs.run-osv-scan && always()
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: results.sarif
-          category: 'osv-scan'
