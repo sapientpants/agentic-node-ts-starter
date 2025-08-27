@@ -310,7 +310,10 @@ jobs:
             dist-${{ steps.version.outputs.version }}.tar.gz
             dist-${{ steps.version.outputs.version }}.zip
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Use RELEASE_TOKEN instead of GITHUB_TOKEN to trigger the publish workflow
+          # GITHUB_TOKEN doesn't trigger other workflows as a security feature
+          # Create a PAT with 'contents:write' and 'actions:read' permissions
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Generate attestations
         if: steps.version.outputs.changed == 'true'
