@@ -88,8 +88,27 @@ jobs:
           # Install OSV Scanner
           npm install -g @google/osv-scanner
 
-          # Run OSV Scanner on the project
-          osv-scanner --format table .
+          # Run OSV Scanner on the project with multiple output formats
+          osv-scanner --format table . | tee osv-report.txt
+          osv-scanner --format json . > osv-report.json
+
+      - name: Upload SBOM
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ github.sha }}
+          path: sbom.cdx.json
+          retention-days: 7
+
+      - name: Upload OSV Scanner Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: osv-reports-${{ github.sha }}
+          path: |
+            osv-report.txt
+            osv-report.json
+          retention-days: 7
 
       - name: Upload coverage
         if: always()
