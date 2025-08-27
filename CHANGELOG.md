@@ -1,5 +1,20 @@
 # agentic-node-ts-starter
 
+## 0.5.2
+
+### Patch Changes
+
+- [#47](https://github.com/sapientpants/agentic-node-ts-starter/pull/47) [`6500da9`](https://github.com/sapientpants/agentic-node-ts-starter/commit/6500da976100317b037ddac39bba06cd81de9657) Thanks [@sapientpants](https://github.com/sapientpants)! - Fix GITHUB_TOKEN secret reference in release creation workflow
+  - Changed `secrets.github-token` to `secrets.GITHUB_TOKEN` in the Create GitHub Release step
+  - This ensures the release is created with proper permissions to trigger subsequent workflows
+  - Also reorganized YAML properties for better readability (moved release flags before files list)
+
+- [#46](https://github.com/sapientpants/agentic-node-ts-starter/pull/46) [`bf61f04`](https://github.com/sapientpants/agentic-node-ts-starter/commit/bf61f0443cc50089eba8356e2783c201144106ff) Thanks [@sapientpants](https://github.com/sapientpants)! - refactor: split CI/CD workflow into reusable workflows
+  - Created separate reusable workflows for CI validation and CD release/publishing
+  - Simplified main workflow to orchestrate reusable components
+  - Improved maintainability and modularity of GitHub Actions workflows
+  - Centralized Node.js and pnpm version configuration using environment variables
+
 ## 0.5.1
 
 ### Patch Changes
