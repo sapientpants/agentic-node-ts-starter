@@ -18,7 +18,34 @@ env:
   NODE_VERSION: 22
 
 jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
+          standalone: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Changeset status
+        run: pnpm changeset:status
+
   security-audit:
+    needs: [validate]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -46,6 +73,7 @@ jobs:
         run: pnpm audit --audit-level critical
 
   type-checking:
+    needs: [validate]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -73,6 +101,7 @@ jobs:
         run: pnpm typecheck
 
   linting:
+    needs: [validate]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -100,6 +129,7 @@ jobs:
         run: pnpm lint
 
   format-checking:
+    needs: [validate]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -127,6 +157,7 @@ jobs:
         run: pnpm format
 
   test:
+    needs: [validate]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
