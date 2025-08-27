@@ -29,7 +29,6 @@ jobs:
     with:
       node-version: ${{ env.NODE_VERSION }}
       pnpm-version: ${{ env.PNPM_VERSION }}
-      run-codeql: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     permissions:
       contents: read
       security-events: write
