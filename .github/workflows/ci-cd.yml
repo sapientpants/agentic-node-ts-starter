@@ -16,6 +16,7 @@ permissions:
   id-token: write
   attestations: write
   security-events: write
+  actions: read
 
 jobs:
   ci:
@@ -27,6 +28,7 @@ jobs:
     permissions:
       contents: read
       security-events: write
+      actions: read
 
   cd:
     name: CD
