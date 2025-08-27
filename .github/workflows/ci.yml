@@ -80,6 +80,20 @@ jobs:
       - name: Run CodeQL Analysis
         uses: github/codeql-action/analyze@v3
 
+      - name: Generate SBOM
+        run: pnpm sbom
+
+      - name: Run OSV Scanner
+        run: |
+          # Install OSV Scanner
+          npm install -g @google/osv-scanner
+
+          # Run OSV Scanner on the project
+          osv-scanner --format table .
+
+          # Also scan the SBOM file
+          osv-scanner --format table --sbom sbom.cdx.json
+
       - name: Upload coverage
         if: always()
         uses: actions/upload-artifact@v4
@@ -87,7 +101,3 @@ jobs:
           name: coverage-${{ github.sha }}
           path: coverage/
           retention-days: 7
-
-  osv-scan:
-    name: OSV Security Scan
-    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable-pr.yml@v2.2.2
