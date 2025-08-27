@@ -14,8 +14,8 @@ permissions:
   actions: read
 
 env:
-  NODE_VERSION: '22'
-  PNPM_VERSION: '10.0.0'
+  PNPM_VERSION: 10.0.0
+  NODE_VERSION: 22
 
 jobs:
   security-audit:
@@ -224,7 +224,7 @@ jobs:
       - name: Upload SBOM
         uses: actions/upload-artifact@v4
         with:
-          name: sbom-${{ github.sha }}
+          name: sbom-${{ github.sha }}.cdx.json
           path: sbom.cdx.json
           retention-days: 7
 
@@ -235,3 +235,8 @@ jobs:
       contents: read
       security-events: write
     uses: 'google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v2.2.1'
+    with:
+      download-artifact-directory: ./
+      download-artifact: sbom-${{ github.sha }}.cdx.json
+      scan-args: |-
+        --sbom=sbom-${{ github.sha }}.cdx.json
