@@ -99,7 +99,7 @@ jobs:
       - name: Linting
         run: pnpm lint
 
-  check-formatting:
+  format-checking:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -161,7 +161,7 @@ jobs:
           retention-days: 7
 
   codeql:
-    needs: [test]
+    needs: [format-checking, linting, security-audit, test, type-checking]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -194,7 +194,7 @@ jobs:
         uses: github/codeql-action/analyze@v3
 
   osv-scan:
-    needs: [test]
+    needs: [format-checking, linting, security-audit, test, type-checking]
     permissions:
       actions: read
       contents: read
