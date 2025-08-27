@@ -98,8 +98,8 @@ jobs:
           path: coverage/
           retention-days: 7
 
-    osv-scan:
-      needs: [build]
-      permissions:
-        security-events: write
-      uses: 'google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v2.2.1'
+  osv-scan:
+    needs: [build]
+    permissions:
+      security-events: write
+    uses: 'google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v2.2.1'
