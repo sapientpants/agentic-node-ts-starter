@@ -76,7 +76,7 @@ jobs:
           echo "email=$AUTHOR_EMAIL" >> $GITHUB_OUTPUT
           echo "👤 Author: $AUTHOR_NAME <$AUTHOR_EMAIL>"
 
-      - name: Check or generate changeset
+      - name: Check for changeset
         id: check-changeset
         run: |
           # Check for existing changesets
@@ -85,7 +85,6 @@ jobs:
             echo "📦 Found existing changeset"
           else
             echo "has_changeset=false" >> $GITHUB_OUTPUT
-            echo "📝 No changeset found, will check commits"
             
             # Get commits since last tag
             LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
@@ -95,13 +94,16 @@ jobs:
               COMMIT_RANGE="$LAST_TAG..HEAD"
             fi
             
-            # Check if there are any feat/fix commits
+            # Check if there are any feat/fix commits that would require a release
             if git log $COMMIT_RANGE --pretty=format:"%s" | grep -E "^(feat|fix|perf|refactor)(\(.+\))?:" > /dev/null; then
-              echo "🎯 Found conventional commits, generating changeset"
-              node scripts/generate-changeset.js
-              echo "generated_changeset=true" >> $GITHUB_OUTPUT
+              echo "❌ Error: Found releasable commits but no changeset"
+              echo "Commits that require a changeset:"
+              git log $COMMIT_RANGE --pretty=format:"  - %s" | grep -E "^  - (feat|fix|perf|refactor)(\(.+\))?:"
+              echo ""
+              echo "Please add a changeset by running: pnpm changeset"
+              exit 1
             else
-              echo "⏭️ No releasable commits found"
+              echo "⏭️ No releasable commits found, skipping release"
               echo "skip_release=true" >> $GITHUB_OUTPUT
             fi
           fi
