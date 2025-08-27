@@ -27,13 +27,15 @@ permissions:
   contents: write
   id-token: write
   attestations: write
+  pull-requests: write
+  issues: write
 
 jobs:
   cd:
     name: CD
     runs-on: ubuntu-latest
     outputs:
-      released: ${{ steps.release.outputs.released }}
+      released: ${{ steps.changesets.outputs.published }}
       version: ${{ steps.get-version.outputs.version }}
     steps:
       - name: Validate required inputs
@@ -106,97 +108,56 @@ jobs:
             fi
           fi
 
-      - name: Version packages
+      - name: Create Release
+        id: changesets
         if: steps.check-changeset.outputs.skip_release != 'true'
-        run: |
-          # Get current version before changes
-          CURRENT_VERSION=$(node -p "require('./package.json').version")
-          echo "Current version: $CURRENT_VERSION"
-
-          # Apply changesets
-          pnpm changeset version
-
-          # Get new version after changes
-          NEW_VERSION=$(node -p "require('./package.json').version")
-          echo "New version: $NEW_VERSION"
-
-          if [ "$CURRENT_VERSION" != "$NEW_VERSION" ]; then
-            echo "version_changed=true" >> $GITHUB_ENV
-            echo "new_version=$NEW_VERSION" >> $GITHUB_ENV
-          else
-            echo "version_changed=false" >> $GITHUB_ENV
-          fi
-
-      - name: Build
-        if: env.version_changed == 'true'
-        run: pnpm build
-
-      - name: Generate SBOM
-        if: env.version_changed == 'true'
-        run: pnpm sbom
-
-      - name: Create build artifacts
-        if: env.version_changed == 'true'
-        run: |
-          # Create tarball of dist folder
-          tar -czf dist-${{ env.new_version }}.tar.gz dist/
-
-          # Create zip of dist folder
-          zip -r dist-${{ env.new_version }}.zip dist/
-
-      - name: Commit and push
-        if: env.version_changed == 'true'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "chore(release): v${{ env.new_version }}
-
-          Co-authored-by: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
-          git tag -a "v${{ env.new_version }}" -m "Release v${{ env.new_version }}"
-          git push origin main --follow-tags
-
-      - name: Mark as released
-        id: release
-        if: env.version_changed == 'true'
-        run: echo "released=true" >> $GITHUB_OUTPUT
+        uses: changesets/action@v1
+        with:
+          publish: pnpm run release:tag
+          createGithubReleases: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.github-token }}
 
       - name: Get version
         id: get-version
-        if: env.version_changed == 'true'
+        if: steps.changesets.outputs.published == 'true'
         run: |
-          echo "version=${{ env.new_version }}" >> $GITHUB_OUTPUT
-          echo "📦 Released version: ${{ env.new_version }}"
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Released version: $VERSION"
 
-      - name: Extract release notes
-        if: env.version_changed == 'true'
+      - name: Build
+        if: steps.changesets.outputs.published == 'true'
+        run: pnpm build
+
+      - name: Generate SBOM
+        if: steps.changesets.outputs.published == 'true'
+        run: pnpm sbom
+
+      - name: Create build artifacts
+        if: steps.changesets.outputs.published == 'true'
         run: |
-          # Extract changelog for this version
-          awk -v version="## ${{ env.new_version }}" '
-            $0 ~ version { flag=1; next }
-            /^## [0-9]/ && flag { exit }
-            flag { print }
-          ' CHANGELOG.md > release-notes.md
+          VERSION="${{ steps.get-version.outputs.version }}"
+          # Create tarball of dist folder
+          tar -czf dist-${VERSION}.tar.gz dist/
 
-      - name: Create GitHub Release
-        if: env.version_changed == 'true'
+          # Create zip of dist folder
+          zip -r dist-${VERSION}.zip dist/
+
+      - name: Upload artifacts to release
+        if: steps.changesets.outputs.published == 'true'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ env.new_version }}
-          name: v${{ env.new_version }}
-          body_path: release-notes.md
+          tag_name: v${{ steps.get-version.outputs.version }}
           files: |
             sbom.cdx.json
-            dist-${{ env.new_version }}.tar.gz
-            dist-${{ env.new_version }}.zip
-          draft: false
-          prerelease: false
-          make_latest: true
+            dist-${{ steps.get-version.outputs.version }}.tar.gz
+            dist-${{ steps.get-version.outputs.version }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.github-token }}
 
       - name: Generate attestations
-        if: env.version_changed == 'true'
+        if: steps.changesets.outputs.published == 'true'
         uses: actions/attest-build-provenance@v2
         with:
           subject-path: |
