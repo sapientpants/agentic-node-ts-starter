@@ -75,3 +75,20 @@ jobs:
           name: sbom-${{ github.sha }}
           path: sbom.cdx.json
           retention-days: 7
+
+      - name: Run OSV Scanner
+        if: inputs.run-osv-scan
+        run: |
+          # Install OSV Scanner
+          curl -sSfL https://github.com/google/osv-scanner/releases/download/v1.9.1/osv-scanner_linux_amd64 -o osv-scanner
+          chmod +x osv-scanner
+
+          # Run OSV Scanner and generate SARIF report
+          ./osv-scanner --format sarif --output results.sarif . || true
+
+      - name: Upload OSV results to GitHub Security
+        if: inputs.run-osv-scan && always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
+          category: 'osv-scan'
