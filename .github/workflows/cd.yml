@@ -115,6 +115,7 @@ jobs:
         with:
           publish: pnpm run release:tag
           createGithubReleases: true
+          commitMode: github-api
         env:
           GITHUB_TOKEN: ${{ secrets.github-token }}
 
