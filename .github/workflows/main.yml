@@ -302,15 +302,15 @@ jobs:
           tag_name: v${{ steps.version.outputs.version }}
           name: v${{ steps.version.outputs.version }}
           body_path: release-notes.md
+          draft: false
+          prerelease: false
+          make_latest: true
           files: |
             sbom.cdx.json
             dist-${{ steps.version.outputs.version }}.tar.gz
             dist-${{ steps.version.outputs.version }}.zip
-          draft: false
-          prerelease: false
-          make_latest: true
         env:
-          GITHUB_TOKEN: ${{ secrets.github-token }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Generate attestations
         if: steps.version.outputs.changed == 'true'
