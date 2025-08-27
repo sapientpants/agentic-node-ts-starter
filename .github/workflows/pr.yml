@@ -14,7 +14,7 @@ permissions:
   actions: read
 
 jobs:
-  build:
+  ci:
     uses: ./.github/workflows/ci.yml
     with:
       node-version: '22'

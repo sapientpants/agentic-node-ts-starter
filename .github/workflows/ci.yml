@@ -14,7 +14,7 @@ permissions:
   actions: read
 
 jobs:
-  ci:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Validate required inputs
