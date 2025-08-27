@@ -78,7 +78,16 @@ jobs:
         run: |
           # Get the author info from the commit that triggered the workflow
           AUTHOR_NAME="${{ github.actor }}"
-          AUTHOR_EMAIL="${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com"
+
+          # Try to get the public email from GitHub API
+          PUBLIC_EMAIL=$(gh api users/${{ github.actor }} --jq '.email // empty' 2>/dev/null || echo "")
+
+          if [ -n "$PUBLIC_EMAIL" ] && [ "$PUBLIC_EMAIL" != "null" ]; then
+            AUTHOR_EMAIL="$PUBLIC_EMAIL"
+          else
+            # Fall back to noreply email
+            AUTHOR_EMAIL="${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com"
+          fi
 
           # Try to get the real email from the last commit if available
           if [ "${{ github.event_name }}" == "push" ]; then
