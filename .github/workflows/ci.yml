@@ -79,12 +79,6 @@ jobs:
       - name: Run CodeQL Analysis
         uses: github/codeql-action/analyze@v3
 
-      - name: Run OSV Scanner
-        uses: google/osv-scanner-action@v2.2.2
-        with:
-          scan-args: |-
-            --lockfile=pnpm-lock.yaml
-
       - name: Upload coverage
         if: always()
         uses: actions/upload-artifact@v4
@@ -92,3 +86,7 @@ jobs:
           name: coverage-${{ github.sha }}
           path: coverage/
           retention-days: 7
+
+  osv-scan:
+    name: OSV Security Scan
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable-pr.yml@v2.2.2
