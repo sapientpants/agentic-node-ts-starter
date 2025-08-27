@@ -236,7 +236,5 @@ jobs:
       security-events: write
     uses: 'google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v2.2.1'
     with:
-      download-artifact-directory: ./
       download-artifact: sbom-${{ github.sha }}.cdx.json
-      scan-args: |-
-        --sbom=sbom-${{ github.sha }}.cdx.json
+      scan-args: --sbom=sbom-${{ github.sha }}.cdx.json
