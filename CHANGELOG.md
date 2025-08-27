@@ -1,5 +1,16 @@
 # agentic-node-ts-starter
 
+## 0.5.5
+
+### Patch Changes
+
+- [#52](https://github.com/sapientpants/agentic-node-ts-starter/pull/52) [`5dbec56`](https://github.com/sapientpants/agentic-node-ts-starter/commit/5dbec56313cee920273ebf2cfea30b08551841f9) Thanks [@sapientpants](https://github.com/sapientpants)! - Optimize GitHub Actions workflows for better performance and maintainability
+  - Extract reusable workflows for setup, validation, and security scanning
+  - Parallelize PR validation jobs for ~50% faster feedback
+  - Simplify publish workflow by removing unnecessary matrix strategy
+  - Fix publish workflow to properly handle secrets in conditions
+  - Reduce overall workflow code by ~25% through DRY principles
+
 ## 0.5.4
 
 ### Patch Changes
