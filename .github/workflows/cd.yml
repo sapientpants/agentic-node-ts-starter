@@ -1,4 +1,4 @@
-name: CD Release
+name: CD
 
 on:
   workflow_call:
@@ -6,11 +6,9 @@ on:
       node-version:
         description: 'Node.js version to use'
         type: string
-        default: '22'
       pnpm-version:
         description: 'pnpm version to use'
         type: string
-        default: '10.0.0'
     outputs:
       released:
         description: 'Whether a release was created'
@@ -29,8 +27,7 @@ permissions:
   attestations: write
 
 jobs:
-  cd:
-    name: CD
+  build:
     runs-on: ubuntu-latest
     outputs:
       released: ${{ steps.release.outputs.released }}
