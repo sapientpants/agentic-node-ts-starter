@@ -30,7 +30,7 @@ permissions:
   security-events: write
 
 jobs:
-  security-scan:
+  security:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
