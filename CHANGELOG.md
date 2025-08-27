@@ -1,5 +1,16 @@
 # agentic-node-ts-starter
 
+## 0.5.6
+
+### Patch Changes
+
+- [#53](https://github.com/sapientpants/agentic-node-ts-starter/pull/53) [`b6abce1`](https://github.com/sapientpants/agentic-node-ts-starter/commit/b6abce1c0db13485bf91cfb8856ba958195a9738) Thanks [@sapientpants](https://github.com/sapientpants)! - Fix duplicate workflow runs for release commits by adding [skip actions] tag
+
+- [#54](https://github.com/sapientpants/agentic-node-ts-starter/pull/54) [`44f0a33`](https://github.com/sapientpants/agentic-node-ts-starter/commit/44f0a33d03fdb40623ddb1b81a805ab23a27112e) Thanks [@sapientpants](https://github.com/sapientpants)! - Update dependencies to latest versions
+  - zod: 4.1.1 → 4.1.4
+  - @typescript-eslint/eslint-plugin: 8.40.0 → 8.41.0
+  - @typescript-eslint/parser: 8.40.0 → 8.41.0
+
 ## 0.5.5
 
 ### Patch Changes
