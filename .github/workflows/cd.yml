@@ -31,13 +31,14 @@ permissions:
   packages: write
   id-token: write
   attestations: write
+  pull-requests: write
 
 jobs:
   cd:
     name: CD
     runs-on: ubuntu-latest
     outputs:
-      released: ${{ steps.changesets.outputs.published }}
+      released: ${{ steps.release.outputs.published }}
       version: ${{ steps.get-version.outputs.version }}
     steps:
       - name: Validate required inputs
@@ -111,44 +112,102 @@ jobs:
             fi
           fi
 
-      - name: Create Release Pull Request or Publish
-        id: changesets
+      - name: Version packages
         if: steps.check-changeset.outputs.skip_release != 'true'
-        uses: changesets/action@v1
-        with:
-          publish: pnpm release:publish
-          version: pnpm changeset version
-          commit: 'chore(release): version packages'
-          title: 'chore(release): version packages'
-          createGithubReleases: true
+        run: |
+          # Get current version before changes
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "Current version: $CURRENT_VERSION"
+
+          # Apply changesets
+          pnpm changeset version
+
+          # Get new version after changes
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          echo "New version: $NEW_VERSION"
+
+          if [ "$CURRENT_VERSION" != "$NEW_VERSION" ]; then
+            echo "version_changed=true" >> $GITHUB_ENV
+            echo "new_version=$NEW_VERSION" >> $GITHUB_ENV
+          else
+            echo "version_changed=false" >> $GITHUB_ENV
+          fi
+
+      - name: Build
+        if: env.version_changed == 'true'
+        run: pnpm build
+
+      - name: Generate SBOM
+        if: env.version_changed == 'true'
+        run: pnpm sbom
+
+      - name: Commit and push
+        if: env.version_changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore(release): v${{ env.new_version }}"
+          git tag -a "v${{ env.new_version }}" -m "Release v${{ env.new_version }}"
+          git push origin main --follow-tags
+
+      - name: Publish to NPM
+        id: release
+        if: env.version_changed == 'true'
+        run: |
+          if [ -n "${{ secrets.npm-token }}" ]; then
+            echo "✅ NPM_TOKEN is configured, publishing to npm"
+            # Remove private flag if present
+            node -e "
+              const fs = require('fs');
+              const pkg = require('./package.json');
+              if (pkg.private) {
+                delete pkg.private;
+                fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));
+              }
+            "
+            npm publish --provenance --access public
+            echo "published=true" >> $GITHUB_OUTPUT
+          else
+            echo "⏭️ NPM_TOKEN not configured, skipping npm publish"
+            echo "published=true" >> $GITHUB_OUTPUT  # Still mark as published for GitHub release
+          fi
         env:
-          GITHUB_TOKEN: ${{ secrets.github-token }}
-          NPM_TOKEN: ${{ secrets.npm-token }}
           NODE_AUTH_TOKEN: ${{ secrets.npm-token }}
 
       - name: Get version
         id: get-version
-        if: steps.changesets.outputs.published == 'true'
+        if: env.version_changed == 'true'
         run: |
-          VERSION=$(node -p "require('./package.json').version")
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "📦 Released version: $VERSION"
+          echo "version=${{ env.new_version }}" >> $GITHUB_OUTPUT
+          echo "📦 Released version: ${{ env.new_version }}"
 
-      - name: Generate SBOM
-        if: steps.changesets.outputs.published == 'true'
-        run: pnpm sbom
+      - name: Extract release notes
+        if: env.version_changed == 'true'
+        run: |
+          # Extract changelog for this version
+          awk -v version="## ${{ env.new_version }}" '
+            $0 ~ version { flag=1; next }
+            /^## [0-9]/ && flag { exit }
+            flag { print }
+          ' CHANGELOG.md > release-notes.md
 
-      - name: Upload SBOM to release
-        if: steps.changesets.outputs.published == 'true'
+      - name: Create GitHub Release
+        if: env.version_changed == 'true'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ steps.get-version.outputs.version }}
+          tag_name: v${{ env.new_version }}
+          name: v${{ env.new_version }}
+          body_path: release-notes.md
           files: sbom.cdx.json
+          draft: false
+          prerelease: false
+          make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.github-token }}
 
       - name: Generate attestations
-        if: steps.changesets.outputs.published == 'true'
+        if: env.version_changed == 'true'
         uses: actions/attest-build-provenance@v2
         with:
           subject-path: |
