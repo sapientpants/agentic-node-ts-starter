@@ -110,6 +110,8 @@ jobs:
       - name: Version packages
         id: version
         if: steps.check-changeset.outputs.skip_release != 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Get current version before changes
           CURRENT_VERSION=$(node -p "require('./package.json').version")
