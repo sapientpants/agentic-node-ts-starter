@@ -10,53 +10,48 @@ on:
         required: true
         type: string
 
+env:
+  PNPM_VERSION: 10.0.0
+  NODE_VERSION: 22
+
 permissions:
   contents: read
   packages: write
   id-token: write
 
 jobs:
-  prepare:
+  npm:
+    name: Publish to NPM
     runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.version.outputs.version }}
-      tag: ${{ steps.version.outputs.tag }}
+    if: vars.ENABLE_NPM_RELEASE == 'true'
     steps:
       - name: Determine version
         id: version
         run: |
-          if [ "${{ github.event_name }}" == "release" ]; then
-            VERSION="${{ github.event.release.tag_name }}"
-          else
-            VERSION="${{ inputs.tag }}"
-          fi
-          # Remove 'v' prefix if present
+          VERSION="${{ github.event_name == 'release' && github.event.release.tag_name || inputs.tag }}"
           VERSION="${VERSION#v}"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "tag=v$VERSION" >> $GITHUB_OUTPUT
-          echo "📦 Publishing version: $VERSION"
+          echo "📦 Publishing to NPM: $VERSION"
 
-  build:
-    needs: prepare
-    runs-on: ubuntu-latest
-    steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ref: ${{ needs.prepare.outputs.tag }}
+          ref: ${{ steps.version.outputs.tag }}
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10.0.0
+          version: ${{ env.PNPM_VERSION }}
           run_install: false
           standalone: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -64,123 +59,87 @@ jobs:
       - name: Build
         run: pnpm build
 
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: dist-${{ needs.prepare.outputs.version }}
-          path: dist/
-          retention-days: 1
+      - name: Publish to NPM
+        if: ${{ secrets.NPM_TOKEN != '' }}
+        run: |
+          # Remove private flag if present
+          jq 'del(.private)' package.json > tmp.json && mv tmp.json package.json
+          npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-  publish-registries:
-    needs: [prepare, build]
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - registry: npm
-            enabled: ${{ vars.ENABLE_NPM_RELEASE == 'true' }}
-            url: https://registry.npmjs.org
-            scope: ''
-          - registry: github
-            enabled: ${{ vars.ENABLE_GITHUB_PACKAGES == 'true' }}
-            url: https://npm.pkg.github.com
-            scope: '@${{ github.repository_owner }}'
+  github-packages:
+    name: Publish to GitHub Packages
     runs-on: ubuntu-latest
-    if: matrix.enabled
+    if: vars.ENABLE_GITHUB_PACKAGES == 'true'
     steps:
+      - name: Determine version
+        id: version
+        run: |
+          VERSION="${{ github.event_name == 'release' && github.event.release.tag_name || inputs.tag }}"
+          VERSION="${VERSION#v}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Publishing to GitHub Packages: $VERSION"
+
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ref: ${{ needs.prepare.outputs.tag }}
+          ref: ${{ steps.version.outputs.tag }}
 
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
         with:
-          name: dist-${{ needs.prepare.outputs.version }}
-          path: dist/
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
+          standalone: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
-          registry-url: ${{ matrix.url }}
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          registry-url: 'https://npm.pkg.github.com'
 
-      - name: Configure package
-        run: |
-          if [ "${{ matrix.registry }}" == "github" ] && [ -n "${{ matrix.scope }}" ]; then
-            # Update package name to include scope for GitHub Packages
-            node -e "
-              const fs = require('fs');
-              const pkg = require('./package.json');
-              if (!pkg.name.startsWith('${{ matrix.scope }}')) {
-                pkg.name = '${{ matrix.scope }}/' + pkg.name;
-              }
-              delete pkg.private;
-              fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));
-            "
-          else
-            # Remove private flag for npm
-            node -e "
-              const fs = require('fs');
-              const pkg = require('./package.json');
-              delete pkg.private;
-              fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));
-            "
-          fi
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-      - name: Check credentials
-        id: check-creds
-        run: |
-          if [ "${{ matrix.registry }}" == "npm" ]; then
-            if [ -n "${{ secrets.NPM_TOKEN }}" ]; then
-              echo "has_token=true" >> $GITHUB_OUTPUT
-            else
-              echo "⚠️ NPM_TOKEN not configured, skipping"
-              echo "has_token=false" >> $GITHUB_OUTPUT
-            fi
-          else
-            echo "has_token=true" >> $GITHUB_OUTPUT
-          fi
+      - name: Build
+        run: pnpm build
 
-      - name: Publish to ${{ matrix.registry }}
-        if: steps.check-creds.outputs.has_token == 'true'
+      - name: Publish to GitHub Packages
         run: |
-          npm publish --provenance --access public
-          echo "✅ Published to ${{ matrix.registry }}: ${{ needs.prepare.outputs.version }}"
+          # Update package name to include scope and remove private flag
+          jq '.name = "@${{ github.repository_owner }}/" + .name | del(.private)' package.json > tmp.json && mv tmp.json package.json
+          npm publish --access public
         env:
-          NODE_AUTH_TOKEN: ${{ matrix.registry == 'npm' && secrets.NPM_TOKEN || secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   docker:
-    needs: [prepare, build]
-    if: vars.ENABLE_DOCKER_RELEASE == 'true'
+    name: Publish to Docker Hub
     runs-on: ubuntu-latest
+    if: vars.ENABLE_DOCKER_RELEASE == 'true' && secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != ''
     steps:
+      - name: Determine version
+        id: version
+        run: |
+          VERSION="${{ github.event_name == 'release' && github.event.release.tag_name || inputs.tag }}"
+          VERSION="${VERSION#v}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "🐳 Building Docker image: $VERSION"
+
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ref: ${{ needs.prepare.outputs.tag }}
-
-      - name: Check Docker credentials
-        id: check-docker
-        run: |
-          if [ -n "${{ secrets.DOCKERHUB_USERNAME }}" ] && [ -n "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
-            echo "has_credentials=true" >> $GITHUB_OUTPUT
-            echo "✅ Docker Hub credentials configured"
-          else
-            echo "has_credentials=false" >> $GITHUB_OUTPUT
-            echo "⚠️ Docker Hub credentials not configured"
-          fi
+          ref: v${{ steps.version.outputs.version }}
 
       - name: Set up QEMU
-        if: steps.check-docker.outputs.has_credentials == 'true'
         uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
-        if: steps.check-docker.outputs.has_credentials == 'true'
         uses: docker/setup-buildx-action@v3
 
       - name: Login to Docker Hub
-        if: steps.check-docker.outputs.has_credentials == 'true'
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -188,18 +147,16 @@ jobs:
 
       - name: Extract metadata
         id: meta
-        if: steps.check-docker.outputs.has_credentials == 'true'
         uses: docker/metadata-action@v5
         with:
           images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}
           tags: |
-            type=semver,pattern={{version}},value=${{ needs.prepare.outputs.version }}
-            type=semver,pattern={{major}}.{{minor}},value=${{ needs.prepare.outputs.version }}
-            type=semver,pattern={{major}},value=${{ needs.prepare.outputs.version }}
+            type=semver,pattern={{version}},value=${{ steps.version.outputs.version }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ steps.version.outputs.version }}
+            type=semver,pattern={{major}},value=${{ steps.version.outputs.version }}
             type=raw,value=latest
 
       - name: Build and push
-        if: steps.check-docker.outputs.has_credentials == 'true'
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -209,53 +166,28 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          build-args: |
-            VERSION=${{ needs.prepare.outputs.version }}
+          build-args: VERSION=${{ steps.version.outputs.version }}
 
   notify:
-    needs: [prepare, publish-registries, docker]
-    if: always()
+    name: Notify
+    if: always() && secrets.SLACK_WEBHOOK != ''
+    needs: [npm, docker, github-packages]
     runs-on: ubuntu-latest
     steps:
-      - name: Check Slack webhook
-        id: check-slack
-        run: |
-          if [ -n "${{ secrets.SLACK_WEBHOOK }}" ]; then
-            echo "has_webhook=true" >> $GITHUB_OUTPUT
-          else
-            echo "has_webhook=false" >> $GITHUB_OUTPUT
-          fi
-
       - name: Send Slack notification
-        if: steps.check-slack.outputs.has_webhook == 'true'
         uses: slackapi/slack-github-action@v2
         with:
           payload: |
             {
-              "text": "Release published: ${{ needs.prepare.outputs.version }}",
+              "text": "🚀 Release ${{ github.event_name == 'release' && github.event.release.tag_name || inputs.tag }}",
               "blocks": [
-                {
-                  "type": "header",
-                  "text": {
-                    "type": "plain_text",
-                    "text": "🚀 Release Published: ${{ needs.prepare.outputs.version }}"
-                  }
-                },
                 {
                   "type": "section",
                   "fields": [
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Repository:*\n${{ github.repository }}"
-                    },
-                    {
-                      "type": "mrkdwn", 
-                      "text": "*Version:*\n${{ needs.prepare.outputs.version }}"
-                    },
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Status:*\n${{ job.status == 'success' && '✅ Success' || '⚠️ Partial' }}"
-                    }
+                    {"type": "mrkdwn", "text": "*Repo:*\n${{ github.repository }}"},
+                    {"type": "mrkdwn", "text": "*NPM:*\n${{ needs.npm.result == 'success' && '✅' || needs.npm.result == 'skipped' && '⏭️' || '❌' }}"},
+                    {"type": "mrkdwn", "text": "*Docker:*\n${{ needs.docker.result == 'success' && '✅' || needs.docker.result == 'skipped' && '⏭️' || '❌' }}"},
+                    {"type": "mrkdwn", "text": "*GitHub:*\n${{ needs.github-packages.result == 'success' && '✅' || needs.github-packages.result == 'skipped' && '⏭️' || '❌' }}"}
                   ]
                 }
               ]
