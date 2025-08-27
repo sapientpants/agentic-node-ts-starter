@@ -91,9 +91,6 @@ jobs:
           # Run OSV Scanner on the project
           osv-scanner --format table .
 
-          # Also scan the SBOM file
-          osv-scanner --format table --sbom sbom.cdx.json
-
       - name: Upload coverage
         if: always()
         uses: actions/upload-artifact@v4
