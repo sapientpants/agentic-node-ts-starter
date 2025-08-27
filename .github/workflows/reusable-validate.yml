@@ -1,0 +1,95 @@
+name: Reusable Validate
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        description: 'Node.js version'
+        type: string
+        default: '22'
+      pnpm-version:
+        description: 'pnpm version'
+        type: string
+        default: '10.0.0'
+      run-audit:
+        description: 'Run security audit'
+        type: boolean
+        default: true
+      run-typecheck:
+        description: 'Run type checking'
+        type: boolean
+        default: true
+      run-lint:
+        description: 'Run linting'
+        type: boolean
+        default: true
+      run-format:
+        description: 'Run format checking'
+        type: boolean
+        default: true
+      run-tests:
+        description: 'Run tests'
+        type: boolean
+        default: true
+      upload-coverage:
+        description: 'Upload coverage artifacts'
+        type: boolean
+        default: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ inputs.pnpm-version }}
+          run_install: false
+          standalone: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Security audit
+        if: inputs.run-audit
+        run: pnpm audit --audit-level critical
+
+      - name: Type checking
+        if: inputs.run-typecheck
+        run: pnpm typecheck
+
+      - name: Linting
+        if: inputs.run-lint
+        run: pnpm lint
+
+      - name: Format checking
+        if: inputs.run-format
+        run: pnpm format
+
+      - name: Tests
+        if: inputs.run-tests
+        run: |
+          if [ "${{ inputs.upload-coverage }}" = "true" ]; then
+            pnpm test:coverage
+          else
+            pnpm test
+          fi
+
+      - name: Upload coverage
+        if: inputs.run-tests && inputs.upload-coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ github.sha }}
+          path: coverage/
+          retention-days: 7
