@@ -35,8 +35,9 @@ jobs:
       scan-args: |-
         ./
     permissions:
-      # Require writing security events to upload SARIF file to security tab
       security-events: write
+      actions: read
+      contents: read
 
   version-and-release:
     needs: [validate, codeql, vulnerability]
