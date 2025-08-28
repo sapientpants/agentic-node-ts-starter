@@ -7,8 +7,9 @@
 
 ## 1) Specify (SPEC-first)
 
-- Write or update `specs/SPEC.md` with clear scope, non-goals, risks, acceptance criteria (Given/When/Then). Prefer **executable specs** via tests.
-- Define API with OpenAPI if relevant; generate types from schema.
+- Use `/spec-feature` Claude command to create a GitHub issue with Gherkin specification
+- Define clear scope, non-goals, risks, and acceptance criteria (Given/When/Then)
+- Prefer **executable specs** via tests
 
 ## 2) Plan & slice
 

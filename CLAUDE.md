@@ -43,7 +43,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Project Structure
 
-- **Spec-first approach**: Features start with specifications in `specs/SPEC.md` using Gherkin-style acceptance criteria
 - **Test-as-contract**: Property-based testing with fast-check for invariants, unit tests with Vitest
 - **Type safety**: Strict TypeScript with runtime validation using Zod for external boundaries
 - **Module system**: ES modules (`"type": "module"`) with NodeNext resolution
@@ -56,25 +55,61 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 src/               # Source code - ES modules with .ts extension
 tests/            # Test files - *.spec.ts (unit), *.property.spec.ts (property-based)
 dist/             # Build output (gitignored)
-specs/            # Feature specifications in Gherkin format
 .claude/          # Claude Code configurations and commands
 ```
 
 ### Key Patterns
 
-1. **Validation Pattern**: Use Zod schemas for runtime validation at system boundaries
+#### 1. Validation Pattern
 
-   ```typescript
-   const Schema = z.object({ ... });
-   type Schema = z.infer<typeof Schema>;
-   ```
+Use Zod schemas for runtime validation at system boundaries:
 
-2. **Property Testing**: Use fast-check for testing invariants (commutativity, identity, etc.)
+```typescript
+import { z } from 'zod';
 
-3. **Import Extensions**: Always use `.js` extension in imports for ES modules:
-   ```typescript
-   import { function } from './module.js';
-   ```
+const UserSchema = z.object({
+  email: z.string().email(),
+  age: z.number().positive().int(),
+});
+
+type User = z.infer<typeof UserSchema>;
+
+export function validateUser(data: unknown): User {
+  return UserSchema.parse(data);
+}
+```
+
+#### 2. Property Testing Pattern
+
+Use fast-check for testing invariants:
+
+```typescript
+import { describe, it, expect } from 'vitest';
+import { fc } from '@fast-check/vitest';
+
+describe('myFunction', () => {
+  it.prop([fc.integer(), fc.integer()])('should be commutative', (a, b) => {
+    expect(myFunction(a, b)).toBe(myFunction(b, a));
+  });
+});
+```
+
+Common properties to test:
+
+- Commutativity: `f(a, b) === f(b, a)`
+- Associativity: `f(f(a, b), c) === f(a, f(b, c))`
+- Identity: `f(a, identity) === a`
+- Idempotence: `f(f(a)) === f(a)`
+- Round-trip: `decode(encode(a)) === a`
+
+#### 3. Import Extensions
+
+Always use `.js` extension in imports for ES modules:
+
+```typescript
+import { myFunction } from './module.js'; // ✓ Correct
+import { myFunction } from './module'; // ✗ Wrong
+```
 
 ### CI/CD Pipeline
 
@@ -87,7 +122,7 @@ specs/            # Feature specifications in Gherkin format
 
 ### Development Process
 
-1. Write/update specifications in `specs/SPEC.md`
+1. (Optional) Use `/spec-feature` to create a feature spec as a GitHub issue
 2. Implement with tests (property-based for core logic)
 3. Run `pnpm verify` before committing
 4. Use Conventional Commits format (`feat:`, `fix:`, etc.)
@@ -108,8 +143,8 @@ Common gh commands for this repository:
 
 Available slash commands in `.claude/commands/`:
 
-- `/analyze-and-fix-github-issue` - Analyze and fix a GitHub issue with full workflow
-- `/release` - Guide for the automated Changesets release process
+- `/spec-feature` - Create a feature specification in Gherkin format as a GitHub issue
+- `/implement-github-issue` - Implement a GitHub issue with full workflow
 - `/update-dependencies` - Update all dependencies to latest versions with PR workflow
 
 ## Configuration
@@ -164,6 +199,62 @@ git push origin feature/my-feature
 
 The CI will validate that a changeset is present, and the release workflow will automatically create version PRs when changes are merged to main.
 
+## Coding Standards
+
+### Type Safety
+
+- **Use TypeScript strictly** - Avoid `any`, use `unknown` when type is truly unknown
+- **Define explicit types** - For function parameters, return types, and complex objects
+- **Runtime validation** - Use Zod for data from external sources (APIs, user input, files)
+
+### Testing Requirements
+
+- **Unit tests** (`tests/*.spec.ts`) - Test functions in isolation
+- **Property-based tests** (`tests/*.property.spec.ts`) - Required for business logic
+- **Test coverage** - Aim for high coverage of new code
+- **Test naming** - Use descriptive names that explain what is being tested
+- **Test independence** - Tests should not depend on execution order
+- **Assertions** - Use multiple assertions to thoroughly verify behavior
+
+### Code Quality Guidelines
+
+- **Function size** - Keep functions small and focused (single responsibility)
+- **Error handling** - Comprehensive error handling with meaningful messages
+- **Comments** - Document complex logic and public APIs with JSDoc
+- **Performance** - Consider performance implications, avoid premature optimization
+- **Security** - Never hardcode secrets, validate all inputs, sanitize outputs
+
+### Branch Naming Convention
+
+```bash
+<type>/<issue-number>-<brief-description>
+
+# Examples:
+feat/42-user-authentication
+fix/13-validation-error
+chore/7-update-dependencies
+```
+
+### Commit Message Format
+
+```bash
+<type>(<scope>): <description>
+
+<optional-body>
+
+Closes #<issue-number>
+
+# Types: feat, fix, docs, style, refactor, test, chore, perf
+# Example:
+git commit -m "feat(auth): implement JWT authentication
+
+- Added login/logout endpoints
+- Implemented JWT token generation
+- Added refresh token support
+
+Closes #42"
+```
+
 ## Critical Workflow Notes
 
 ### Before Committing
@@ -172,6 +263,32 @@ The CI will validate that a changeset is present, and the release workflow will 
 2. **Use conventional commits** - Format: `type(scope): description` (e.g., `feat: add dark mode`)
 3. **Add changesets** - Run `pnpm changeset` to document your changes for the release notes
 4. **Use the correct import syntax** - Always use `.js` extension for local ES module imports
+
+### Troubleshooting Common Issues
+
+#### Pre-commit Hook Fails
+
+```bash
+pnpm format:fix  # Fix formatting issues
+pnpm lint:fix    # Fix linting issues
+pnpm test        # Ensure tests pass
+```
+
+#### Type Errors
+
+- Check imports include `.js` extension
+- Verify TypeScript version compatibility
+- Ensure strict mode compliance
+
+#### Test Failures
+
+```bash
+pnpm test:watch  # Run tests in watch mode
+# Check for:
+# - Shared state between tests
+# - Missing mock/stub cleanup
+# - Async operations not awaited
+```
 
 ### CI/CD Workflow
 
