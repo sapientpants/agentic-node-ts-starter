@@ -50,7 +50,35 @@ git checkout -b fix/your-fix-name
 - Add tests for new functionality
 - Update documentation as needed
 
-### 3. Run Quality Checks
+### 3. Use Structured Logging
+
+When adding logging to your code:
+
+```typescript
+import { logger, createChildLogger } from './logger.js';
+
+// Use module-specific loggers
+const log = createChildLogger('module-name');
+
+// Include context in logs
+log.info({ userId, action }, 'User action performed');
+
+// Handle errors properly
+log.error({ err: error, context }, 'Operation failed');
+
+// Never log sensitive data directly
+// These fields are automatically redacted: password, token, api_key, etc.
+```
+
+**Logging Guidelines:**
+
+- Use appropriate log levels (debug, info, warn, error, fatal)
+- Include relevant context as structured data (first parameter)
+- Keep log messages descriptive but concise (second parameter)
+- Use child loggers for module-specific logging
+- Never use console.log in production code
+
+### 4. Run Quality Checks
 
 Before committing, you can manually run all checks:
 
@@ -67,7 +95,7 @@ Individual checks:
 - `pnpm format` - Prettier formatting check
 - `pnpm test` - Run tests with coverage
 
-### 4. Add a Changeset
+### 5. Add a Changeset
 
 **Required:** Every PR must include a changeset. The CI will fail without one.
 
@@ -100,7 +128,7 @@ For changes that don't affect users (like CI updates, tests, internal refactorin
 pnpm changeset --empty
 ```
 
-### 5. Commit Your Changes
+### 6. Commit Your Changes
 
 This project uses [Conventional Commits](https://www.conventionalcommits.org/):
 
@@ -131,7 +159,7 @@ Pre-commit hooks will automatically:
 
 Note: The pre-commit hook runs `pnpm precommit` which executes ALL quality checks. This ensures code quality but may take longer than typical pre-commit hooks.
 
-### 6. Push and Create a Pull Request
+### 7. Push and Create a Pull Request
 
 ```bash
 git push origin your-branch-name
