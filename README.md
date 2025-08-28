@@ -26,7 +26,7 @@ A **batteries-included** starting point for building software with an **agentic 
 
 ### CI/CD & Security
 
-- **GitHub Actions:** Comprehensive CI pipeline
+- **GitHub Actions:** Required - comprehensive CI pipeline for PR validation and releases
 - **Security Scanning:** CodeQL analysis, OSV vulnerability scanning
 - **Supply Chain:** SBOM generation (CycloneDX), SLSA provenance attestations
 - **Versioning:** Changesets for semantic versioning
@@ -43,6 +43,7 @@ A **batteries-included** starting point for building software with an **agentic 
 
 ### Prerequisites
 
+- **GitHub repository** - Required for CI/CD workflows
 - [mise](https://mise.jdx.dev/) - for Node.js and pnpm version management (or use nvm/fnm)
 - Node.js >= 22.0.0
 - pnpm 10.15.0

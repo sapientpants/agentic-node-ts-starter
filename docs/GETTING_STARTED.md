@@ -139,7 +139,7 @@ EOF
 
 ### 6. Configure GitHub Repository
 
-If using GitHub:
+This template's CI/CD workflows require GitHub. Create your repository:
 
 ```bash
 # Create a new repository on GitHub, then:
@@ -148,9 +148,9 @@ git branch -M main
 git push -u origin main
 ```
 
-### 7. Set Up CI/CD (Optional)
+### 7. Set Up CI/CD
 
-The template includes comprehensive GitHub Actions workflows. To use them:
+The template includes comprehensive GitHub Actions workflows that handle PR validation, releases, and publishing:
 
 #### For npm publishing (optional):
 
