@@ -20,12 +20,17 @@ jobs:
     with:
       upload-coverage: true
 
-  security:
+  # CodeQL security scanning
+  codeql:
     uses: ./.github/workflows/reusable-security.yml
     with:
       generate-sbom: false
-      run-osv-scan: true
+      run-osv-scan: false
       run-codeql: true
+
+  # OSV vulnerability scanning using official Google action
+  osv-scan-pr:
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable-pr.yml@v2.2.2
 
   # Changeset check - runs in parallel with other jobs
   changeset:
@@ -60,14 +65,15 @@ jobs:
 
   # Final status check - ensures all jobs passed
   pr-status:
-    needs: [validate, security, changeset]
+    needs: [validate, codeql, osv-scan-pr, changeset]
     if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Check status
         run: |
           if [ "${{ needs.validate.result }}" != "success" ] || \
-             [ "${{ needs.security.result }}" != "success" ] || \
+             [ "${{ needs.codeql.result }}" != "success" ] || \
+             [ "${{ needs.osv-scan-pr.result }}" != "success" ] || \
              [ "${{ needs.changeset.result }}" != "success" ]; then
             echo "❌ PR validation failed"
             exit 1

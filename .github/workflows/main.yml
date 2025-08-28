@@ -19,8 +19,27 @@ jobs:
   validate:
     uses: ./.github/workflows/reusable-validate.yml
 
+  # CodeQL security scanning
+  codeql:
+    uses: ./.github/workflows/reusable-security.yml
+    with:
+      generate-sbom: false
+      run-osv-scan: false
+      run-codeql: true
+
+  # OSV vulnerability scanning using official Google action
+  osv-scan:
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v2.2.1
+    with:
+      # Scan the entire project directory
+      scan-args: |-
+        ./
+    permissions:
+      # Require writing security events to upload SARIF file to security tab
+      security-events: write
+
   version-and-release:
-    needs: validate
+    needs: [validate, codeql, osv-scan]
     runs-on: ubuntu-latest
     outputs:
       released: ${{ steps.release.outputs.released }}
