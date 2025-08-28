@@ -131,6 +131,23 @@ Coverage thresholds are enforced:
 
 Tests will fail with clear error messages if coverage drops below 80%.
 
+### Container Security
+
+- `pnpm scan:container` - Scan Docker image for vulnerabilities
+- `pnpm scan:container:sarif` - Generate SARIF report for GitHub Security
+- `./scripts/scan-container.sh --help` - View all scanning options
+
+#### Features
+
+- **Automated Scanning**: Runs on every PR and before Docker Hub publication
+- **Trivy Scanner**: Industry-standard vulnerability scanner
+- **Configurable Thresholds**: Default fails on HIGH/CRITICAL vulnerabilities
+- **GitHub Security Integration**: Results appear in Security tab via SARIF
+- **Local Development**: Same scanning available locally as in CI
+- **False Positive Handling**: `.trivyignore` file for exclusions
+- **Scan Caching**: Efficient layer-based caching for performance
+- **Attestations**: Generates signed attestations for clean scans
+
 ### Release & Security
 
 - `pnpm changeset` - Create a changeset for your changes

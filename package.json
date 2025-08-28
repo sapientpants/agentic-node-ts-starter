@@ -22,6 +22,8 @@
     "verify": "pnpm precommit",
     "lint-staged": "lint-staged",
     "sbom": "pnpm dlx @cyclonedx/cdxgen -o sbom.cdx.json",
+    "scan:container": "./scripts/scan-container.sh",
+    "scan:container:sarif": "./scripts/scan-container.sh --format sarif --output container-scan.sarif",
     "prepare": "husky",
     "release": "changeset version && pnpm build",
     "release:publish": "pnpm build && changeset publish",

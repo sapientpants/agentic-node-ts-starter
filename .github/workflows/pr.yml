@@ -27,6 +27,17 @@ jobs:
       run-osv-scan: true
       run-codeql: true
 
+  # Container security scan - runs in parallel with other jobs
+  container-scan:
+    uses: ./.github/workflows/reusable-container-scan.yml
+    with:
+      build-image: true
+      severity-threshold: 'CRITICAL,HIGH'
+      upload-sarif: true
+    permissions:
+      contents: read
+      security-events: write
+
   # Changeset check - runs in parallel with other jobs
   changeset:
     runs-on: ubuntu-latest
@@ -60,7 +71,7 @@ jobs:
 
   # Final status check - ensures all jobs passed
   pr-status:
-    needs: [validate, security, changeset]
+    needs: [validate, security, container-scan, changeset]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -68,6 +79,7 @@ jobs:
         run: |
           if [ "${{ needs.validate.result }}" != "success" ] || \
              [ "${{ needs.security.result }}" != "success" ] || \
+             [ "${{ needs.container-scan.result }}" != "success" ] || \
              [ "${{ needs.changeset.result }}" != "success" ]; then
             echo "❌ PR validation failed"
             exit 1

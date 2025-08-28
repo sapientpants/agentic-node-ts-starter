@@ -1,0 +1,206 @@
+name: Reusable Container Security Scan
+
+on:
+  workflow_call:
+    inputs:
+      image-ref:
+        description: 'Image reference to scan (e.g., myapp:latest)'
+        type: string
+        required: false
+      dockerfile-path:
+        description: 'Path to Dockerfile'
+        type: string
+        default: './Dockerfile'
+      severity-threshold:
+        description: 'Severity threshold for failing the scan (UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL)'
+        type: string
+        default: 'HIGH,CRITICAL'
+      upload-sarif:
+        description: 'Upload results to GitHub Security'
+        type: boolean
+        default: true
+      scan-type:
+        description: 'Type of scan (image, filesystem, config)'
+        type: string
+        default: 'image'
+      ignore-unfixed:
+        description: 'Ignore unpatched/unfixed vulnerabilities'
+        type: boolean
+        default: false
+      cache-dir:
+        description: 'Cache directory for vulnerability DB'
+        type: string
+        default: '.trivy'
+      build-image:
+        description: 'Build Docker image before scanning'
+        type: boolean
+        default: true
+      platforms:
+        description: 'Platforms for multi-arch builds'
+        type: string
+        default: 'linux/amd64'
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  container-scan:
+    runs-on: ubuntu-latest
+    outputs:
+      vulnerability-count: ${{ steps.scan.outputs.vulnerability-count }}
+      critical-count: ${{ steps.scan.outputs.critical-count }}
+      high-count: ${{ steps.scan.outputs.high-count }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        if: inputs.build-image && contains(inputs.platforms, 'arm')
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        if: inputs.build-image
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        if: inputs.build-image && inputs.image-ref == ''
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ inputs.dockerfile-path }}
+          platforms: ${{ inputs.platforms }}
+          push: false
+          load: true
+          tags: scan-target:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Determine image to scan
+        id: image
+        run: |
+          if [ -n "${{ inputs.image-ref }}" ]; then
+            echo "ref=${{ inputs.image-ref }}" >> $GITHUB_OUTPUT
+          else
+            echo "ref=scan-target:${{ github.sha }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run Trivy vulnerability scanner
+        id: scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ steps.image.outputs.ref }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: ${{ inputs.severity-threshold }}
+          ignore-unfixed: ${{ inputs.ignore-unfixed }}
+          vuln-type: 'os,library'
+          cache-dir: ${{ inputs.cache-dir }}
+          timeout: '10m'
+
+      - name: Parse scan results
+        if: always()
+        run: |
+          # Install jq if not available
+          which jq || sudo apt-get install -y jq
+
+          # Parse SARIF for summary
+          if [ -f trivy-results.sarif ]; then
+            CRITICAL=$(jq '[.runs[0].results[]? | select(.level == "error")] | length' trivy-results.sarif)
+            HIGH=$(jq '[.runs[0].results[]? | select(.level == "warning")] | length' trivy-results.sarif)
+            MEDIUM=$(jq '[.runs[0].results[]? | select(.level == "note")] | length' trivy-results.sarif)
+            LOW=$(jq '[.runs[0].results[]? | select(.level == "none")] | length' trivy-results.sarif)
+            
+            echo "## Container Security Scan Results" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "| Severity | Count |" >> $GITHUB_STEP_SUMMARY
+            echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+            echo "| CRITICAL | $CRITICAL |" >> $GITHUB_STEP_SUMMARY
+            echo "| HIGH | $HIGH |" >> $GITHUB_STEP_SUMMARY
+            echo "| MEDIUM | $MEDIUM |" >> $GITHUB_STEP_SUMMARY
+            echo "| LOW | $LOW |" >> $GITHUB_STEP_SUMMARY
+            
+            # Set outputs
+            echo "critical-count=$CRITICAL" >> $GITHUB_OUTPUT
+            echo "high-count=$HIGH" >> $GITHUB_OUTPUT
+            echo "vulnerability-count=$((CRITICAL + HIGH + MEDIUM + LOW))" >> $GITHUB_OUTPUT
+            
+            # Check against threshold
+            THRESHOLD="${{ inputs.severity-threshold }}"
+            FAIL=0
+            
+            if [[ "$THRESHOLD" == *"CRITICAL"* ]] && [ "$CRITICAL" -gt 0 ]; then
+              echo "❌ Found $CRITICAL CRITICAL vulnerabilities" >> $GITHUB_STEP_SUMMARY
+              FAIL=1
+            fi
+            
+            if [[ "$THRESHOLD" == *"HIGH"* ]] && [ "$HIGH" -gt 0 ]; then
+              echo "❌ Found $HIGH HIGH vulnerabilities" >> $GITHUB_STEP_SUMMARY
+              FAIL=1
+            fi
+            
+            if [ "$FAIL" -eq 1 ]; then
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "**Scan failed due to vulnerabilities exceeding threshold**" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "To view detailed results, check the Security tab or download the SARIF file from artifacts." >> $GITHUB_STEP_SUMMARY
+            else
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "✅ **Scan passed** - No vulnerabilities exceeding threshold found" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+
+      - name: Upload Trivy results to GitHub Security
+        if: inputs.upload-sarif && always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+          category: 'container-scan'
+
+      - name: Upload scan results as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: container-scan-results-${{ github.sha }}
+          path: trivy-results.sarif
+          retention-days: 30
+
+      - name: Generate attestation for clean scan
+        if: success() && inputs.build-image
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ${{ steps.image.outputs.ref }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          predicate-type: 'https://cyclonedx.org/bom'
+          predicate: |
+            {
+              "scanner": "trivy",
+              "scan_timestamp": "${{ github.event.head_commit.timestamp }}",
+              "vulnerabilities": {
+                "critical": ${{ steps.scan.outputs.critical-count || 0 }},
+                "high": ${{ steps.scan.outputs.high-count || 0 }},
+                "total": ${{ steps.scan.outputs.vulnerability-count || 0 }}
+              },
+              "threshold": "${{ inputs.severity-threshold }}",
+              "passed": true
+            }
+
+      # Check threshold and fail if needed
+      - name: Check vulnerability threshold
+        run: |
+          THRESHOLD="${{ inputs.severity-threshold }}"
+          CRITICAL=${{ steps.scan.outputs.critical-count || 0 }}
+          HIGH=${{ steps.scan.outputs.high-count || 0 }}
+
+          if [[ "$THRESHOLD" == *"CRITICAL"* ]] && [ "$CRITICAL" -gt 0 ]; then
+            echo "::error::Found $CRITICAL CRITICAL vulnerabilities, exceeding threshold"
+            exit 1
+          fi
+
+          if [[ "$THRESHOLD" == *"HIGH"* ]] && [ "$HIGH" -gt 0 ]; then
+            echo "::error::Found $HIGH HIGH vulnerabilities, exceeding threshold"
+            exit 1
+          fi
+
+          echo "✅ Container security scan passed"
