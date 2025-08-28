@@ -2,10 +2,13 @@
 'agentic-node-ts-starter': minor
 ---
 
-Remove unused directories to simplify project structure
+Remove unused directories and add spec-feature command
 
 - Removed `artifacts/` directory (unused)
 - Removed `openapi/` directory (unused)
-- Removed `specs/` directory (moved to test-driven approach)
-- Updated all documentation to reflect simplified structure
-- Streamlined project for better clarity and maintainability
+- Removed `specs/` directory (replaced with GitHub issues)
+- Added `/spec-feature` Claude command to create Gherkin specs as GitHub issues
+- Specs are now managed as GitHub issues instead of filesystem
+- Issues created are ready for `/implement-github-issue` command
+- Updated all documentation to reflect new workflow
+- Maintains spec-first approach without filesystem clutter
