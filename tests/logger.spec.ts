@@ -204,6 +204,22 @@ describe('Logger', () => {
       expect(child2).toBeDefined();
       expect(() => child2.info('nested context')).not.toThrow();
     });
+
+    it('should preserve withContext method on child loggers', () => {
+      const child = logger.withContext({ test: 'context' });
+      expect(child.withContext).toBeDefined();
+      expect(typeof child.withContext).toBe('function');
+
+      // Verify nested children also have the method
+      const grandchild = child.withContext({ nested: true });
+      expect(grandchild.withContext).toBeDefined();
+      expect(typeof grandchild.withContext).toBe('function');
+
+      // And can continue chaining
+      const greatGrandchild = grandchild.withContext({ deep: 'very' });
+      expect(greatGrandchild.withContext).toBeDefined();
+      expect(() => greatGrandchild.info('deep nested logging')).not.toThrow();
+    });
   });
 
   describe('logger configuration', () => {

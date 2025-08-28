@@ -86,18 +86,23 @@ export interface Logger extends PinoLogger {
 }
 
 /**
+ * Wrap a Pino logger with the withContext method
+ */
+const wrapLoggerWithContext = (baseLogger: PinoLogger): Logger => {
+  const logger = baseLogger as Logger;
+  logger.withContext = function (context: LogContext): Logger {
+    // Recursively wrap the child logger to ensure it also has withContext
+    return wrapLoggerWithContext(baseLogger.child(context));
+  };
+  return logger;
+};
+
+/**
  * Create a logger instance with the provided configuration
  */
 const createLogger = (): Logger => {
   const baseLogger = pino(getLoggerConfig());
-
-  // Add withContext method for structured context
-  const logger = baseLogger as Logger;
-  logger.withContext = function (context: LogContext): Logger {
-    return baseLogger.child(context) as Logger;
-  };
-
-  return logger;
+  return wrapLoggerWithContext(baseLogger);
 };
 
 /**
