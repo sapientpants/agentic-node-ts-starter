@@ -1,1 +1,3 @@
-pnpm verify
+#!/usr/bin/env sh
+
+pnpm precommit

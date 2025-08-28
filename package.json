@@ -18,15 +18,16 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --reporter=verbose --coverage",
     "coverage:report": "vitest run --coverage --reporter=verbose",
-    "verify": "pnpm audit --audit-level critical && pnpm typecheck && pnpm lint && pnpm format && pnpm test",
+    "precommit": "pnpm audit --audit-level critical && pnpm typecheck && pnpm lint && pnpm format && pnpm test",
+    "verify": "pnpm precommit",
+    "lint-staged": "lint-staged",
     "sbom": "pnpm dlx @cyclonedx/cdxgen -o sbom.cdx.json",
     "prepare": "husky",
     "release": "changeset version && pnpm build",
     "release:publish": "pnpm build && changeset publish",
     "release:tag": "git add -A && git commit -m \"chore(release): version packages\" && git tag -a v$(node -p \"require('./package.json').version\") -m \"Release\"",
     "changeset": "changeset",
-    "changeset:status": "changeset status --since=main",
-    "precommit": "lint-staged"
+    "changeset:status": "changeset status --since=main"
   },
   "lint-staged": {
     "*.{ts,tsx,js,json,md,yml,yaml}": [

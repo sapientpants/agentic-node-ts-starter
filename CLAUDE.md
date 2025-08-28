@@ -13,7 +13,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `pnpm lint:fix` - Auto-fix linting issues
 - `pnpm format` - Check Prettier formatting
 - `pnpm format:fix` - Apply Prettier formatting
-- `pnpm verify` - Run all checks (audit, typecheck, lint, format, test)
+- `pnpm precommit` - Run all checks (audit, typecheck, lint, format, test)
+- `pnpm verify` - Alias for pnpm precommit (for backwards compatibility)
 
 ### Testing
 
@@ -36,7 +37,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `pnpm release` - Version packages with Changesets and build
 - `pnpm release:publish` - Build and publish packages
 - `pnpm release:tag` - Commit changes and create git tag for release
-- `pnpm precommit` - Run lint-staged (automatically triggered by Husky)
+- `pnpm lint-staged` - Run lint-staged (formats and lints staged files only)
 
 ## Architecture & Patterns
 
