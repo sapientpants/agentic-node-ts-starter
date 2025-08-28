@@ -45,6 +45,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **Test-as-contract**: Property-based testing with fast-check for invariants, unit tests with Vitest
 - **Type safety**: Strict TypeScript with runtime validation using Zod for external boundaries
+- **Advanced linting**: TypeScript ESLint with type-aware rules for catching subtle type-safety issues
 - **Module system**: ES modules (`"type": "module"`) with NodeNext resolution
 - **Claude Commands**: Custom commands in `.claude/commands/` for common workflows
 - **Git Hooks**: Custom pre-commit verification via `.claude/hooks/`
@@ -153,7 +154,10 @@ Available slash commands in `.claude/commands/`:
 - **Node Version**: >=22.0.0 (engines requirement)
 - **TypeScript**: Strict mode with NodeNext module resolution
 - **Testing**: Vitest with V8 coverage provider
-- **Linting**: ESLint 9 with TypeScript support
+- **Linting**: ESLint 9 with TypeScript support and type-aware rules enabled
+  - Catches floating promises, unsafe type assertions, and other type-safety issues
+  - Type-aware rules apply to `src/**/*.ts` and `tests/**/*.ts` files
+  - Performance impact: ~1.5s for full project lint (acceptable trade-off for improved safety)
 - **Formatting**: Prettier 3 with ESLint integration
 - **Versioning**: Changesets for automated version management
 
