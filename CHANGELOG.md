@@ -1,5 +1,19 @@
 # agentic-node-ts-starter
 
+## 0.7.0
+
+### Minor Changes
+
+- [#62](https://github.com/sapientpants/agentic-node-ts-starter/pull/62) [`b668240`](https://github.com/sapientpants/agentic-node-ts-starter/commit/b668240dfb59c793179957e03ab0615bf67f58b1) Thanks [@sapientpants](https://github.com/sapientpants)! - feat: Enable TypeScript ESLint rules requiring type information
+  - Added TypeScript ESLint type-aware rules (@typescript-eslint/recommended-type-checked)
+  - Configured ESLint to use TypeScript compiler for enhanced type checking
+  - Type-aware rules now catch floating promises, unsafe type assertions, and other subtle type-safety issues
+  - Rules apply to src/**/\*.ts and tests/**/\*.ts files
+  - Minimal performance impact (~1.5s for full project lint)
+  - Improved code quality and runtime safety through compile-time checks
+
+  Closes #61
+
 ## 0.6.0
 
 ### Minor Changes
