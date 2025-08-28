@@ -139,7 +139,7 @@ Tests will fail with clear error messages if coverage drops below 80%.
 
 #### Features
 
-- **Automated Scanning**: Runs on every PR and before Docker Hub publication
+- **Automated Scanning**: Runs before Docker Hub publication
 - **Trivy Scanner**: Industry-standard vulnerability scanner
 - **Configurable Thresholds**: Default fails on HIGH/CRITICAL vulnerabilities
 - **GitHub Security Integration**: Results appear in Security tab via SARIF

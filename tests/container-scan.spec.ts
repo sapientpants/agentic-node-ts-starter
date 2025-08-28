@@ -100,11 +100,12 @@ describe('Container Security Scanning', () => {
       expect(content).toContain('SARIF');
     });
 
-    it('should integrate container scan in PR workflow', () => {
+    it('should NOT integrate container scan in PR workflow', () => {
+      // Container scanning should only happen during Docker publication, not on PRs
       const prWorkflowPath = join(process.cwd(), '.github', 'workflows', 'pr.yml');
       const content = readFileSync(prWorkflowPath, 'utf-8');
-      expect(content).toContain('container-scan:');
-      expect(content).toContain('reusable-container-scan.yml');
+      expect(content).not.toContain('container-scan:');
+      expect(content).not.toContain('reusable-container-scan.yml');
     });
 
     it('should integrate container scan in publish workflow', () => {

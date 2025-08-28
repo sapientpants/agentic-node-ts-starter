@@ -35,7 +35,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `./scripts/scan-container.sh --help` - View all scanning options
 - **Severity Threshold**: Default fails on HIGH and CRITICAL vulnerabilities
 - **False Positives**: Add CVEs to `.trivyignore` with explanatory comments
-- **CI/CD Integration**: Scans run automatically on PRs and before Docker Hub publication
+- **CI/CD Integration**: Scans run automatically before Docker Hub publication
 
 ### Release & Security
 

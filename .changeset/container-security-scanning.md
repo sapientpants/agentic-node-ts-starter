@@ -5,7 +5,7 @@
 feat: Add container image security scanning to CI/CD pipeline
 
 - Integrated Trivy scanner for vulnerability detection in Docker images
-- Added automatic scanning on PRs and before Docker Hub publication
+- Added automatic scanning before Docker Hub publication
 - Configured SARIF output for GitHub Security tab integration
 - Created local scanning script for developer testing
 - Implemented configurable severity thresholds (default: HIGH/CRITICAL)
