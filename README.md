@@ -26,16 +26,27 @@ A **batteries-included** starting point for building software with an **agentic 
 
 ### CI/CD & Security
 
-- **GitHub Actions:** Comprehensive CI pipeline
+- **GitHub Actions:** Required - comprehensive CI pipeline for PR validation and releases
 - **Security Scanning:** CodeQL analysis, OSV vulnerability scanning
 - **Supply Chain:** SBOM generation (CycloneDX), SLSA provenance attestations
 - **Versioning:** Changesets for semantic versioning
+
+## 📖 Documentation
+
+- **[Getting Started Guide](./docs/GETTING_STARTED.md)** - Step-by-step setup and customization
+- **[Troubleshooting Guide](./docs/TROUBLESHOOTING.md)** - Common issues and solutions
+- **[CLAUDE.md](./CLAUDE.md)** - AI-assisted development with Claude
+- **[Process Guide](./docs/PROCESS.md)** - Development workflow and best practices
+- **[Observability Guide](./docs/OBSERVABILITY.md)** - Logging and monitoring setup
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-- [mise](https://mise.jdx.dev/) - for Node.js and pnpm version management
+- **GitHub repository** - Required for CI/CD workflows
+- [mise](https://mise.jdx.dev/) - for Node.js and pnpm version management (or use nvm/fnm)
+- Node.js >= 22.0.0
+- pnpm 10.15.0
 
 ### Setup
 
@@ -52,6 +63,8 @@ pnpm verify
 # Start development
 pnpm test:watch
 ```
+
+For detailed setup instructions, alternative installation methods, and customization steps, see the **[Getting Started Guide](./docs/GETTING_STARTED.md)**.
 
 ## 🔧 Usage Examples
 

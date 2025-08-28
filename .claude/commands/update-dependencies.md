@@ -61,30 +61,51 @@ pnpm lint
 
 ### 5. Create a Changeset
 
-**IMPORTANT**: The CI/CD pipeline requires changesets for all changes.
+**IMPORTANT**: The CI/CD pipeline requires changesets for all changes. Choose the right type based on impact:
 
-#### For Dev-Only Dependency Updates:
+#### When to Use Empty Changeset
+
+Use `pnpm changeset --empty` for changes that don't affect users:
+
+- Dev dependency updates only
+- CI/CD configuration changes
+- Test-only improvements
+- Internal tooling updates
+- Documentation changes
 
 ```bash
-# Create an empty changeset (no version bump needed)
+# Create an empty changeset (no version bump)
 pnpm changeset --empty
 
-# In the changeset file, document:
+# The changeset message should document:
 # - Which dependencies were updated
 # - Why they were updated
-# - Any breaking changes to be aware of
+# - Any tooling changes developers should know about
 ```
 
-#### For Production Dependency Updates:
+#### When to Use Regular Changeset
+
+Use `pnpm changeset` for changes that affect the package/application:
+
+- Production dependency updates
+- Security fixes visible to users
+- Breaking changes in dependencies
+- Bug fixes from dependency updates
+- New features from dependency updates
 
 ```bash
-# Create a proper changeset (usually patch version)
+# Create a proper changeset (will bump version)
 pnpm changeset
 
-# Select:
-# - patch: for backward-compatible dependency updates
-# - minor: if new features are exposed
-# - major: if breaking changes exist
+# Select version bump:
+# - patch: security updates, bug fixes, minor dependency updates
+# - minor: significant updates with new capabilities
+# - major: breaking changes requiring user action
+
+# Examples:
+# patch: "Update zod to fix validation edge case"
+# minor: "Update Pino with new structured logging features"
+# major: "Update to Node 24 (drops Node 22 support)"
 ```
 
 ### 6. Commit the Changes
