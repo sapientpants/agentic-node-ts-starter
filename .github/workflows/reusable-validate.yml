@@ -10,7 +10,7 @@ on:
       pnpm-version:
         description: 'pnpm version'
         type: string
-        default: '10.0.0'
+        default: '10.15.0'
       run-audit:
         description: 'Run security audit'
         type: boolean
