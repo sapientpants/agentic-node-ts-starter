@@ -1,6 +1,14 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { execSync } from 'child_process';
-import { existsSync, mkdirSync, rmSync, writeFileSync, readFileSync, statSync } from 'fs';
+import { execFileSync } from 'child_process';
+import {
+  existsSync,
+  mkdirSync,
+  rmSync,
+  writeFileSync,
+  readFileSync,
+  statSync,
+  constants,
+} from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 
@@ -28,12 +36,14 @@ describe('Container Security Scanning', () => {
 
   it('should have scan script executable', () => {
     const stats = statSync(scriptPath);
-    const isExecutable = (stats.mode & parseInt('100', 8)) !== 0;
+    // Check if owner has execute permission (S_IXUSR = 0o100)
+    const isExecutable = (stats.mode & constants.S_IXUSR) !== 0;
     expect(isExecutable).toBe(true);
   });
 
   it('should show help when requested', () => {
-    const result = execSync(`${scriptPath} --help`, { encoding: 'utf-8' });
+    // Use execFileSync to avoid shell injection vulnerabilities
+    const result = execFileSync(scriptPath, ['--help'], { encoding: 'utf-8' });
     expect(result).toContain('Container Security Scanning Script');
     expect(result).toContain('USAGE:');
     expect(result).toContain('OPTIONS:');

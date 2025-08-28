@@ -162,8 +162,11 @@ install_trivy() {
     
     # Install to /usr/local/bin or local directory
     if [[ -w /usr/local/bin ]]; then
-        sudo mv "$TEMP_DIR/trivy" /usr/local/bin/
+        mv "$TEMP_DIR/trivy" /usr/local/bin/
         echo -e "${GREEN}Trivy installed to /usr/local/bin/trivy${NC}"
+    elif command -v sudo >/dev/null 2>&1; then
+        sudo mv "$TEMP_DIR/trivy" /usr/local/bin/
+        echo -e "${GREEN}Trivy installed to /usr/local/bin/trivy (using sudo)${NC}"
     else
         mkdir -p "$HOME/.local/bin"
         mv "$TEMP_DIR/trivy" "$HOME/.local/bin/"
