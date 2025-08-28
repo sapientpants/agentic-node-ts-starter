@@ -1,0 +1,25 @@
+---
+'agentic-node-ts-starter': minor
+---
+
+feat: add structured logging with Pino
+
+Implements structured logging foundation with Pino logger:
+
+- Environment-based configuration (development, production, test)
+- Automatic sensitive data redaction for security
+- Child logger creation for module-specific logging with proper method preservation
+- Pretty-print formatting in development, JSON in production
+- OpenTelemetry integration placeholders with documented migration path
+- Comprehensive test coverage (100%) for all logger functionality
+- Fixed withContext method preservation on child loggers (addresses PR feedback)
+
+Documentation:
+
+- Added usage examples and configuration guide to README.md
+- Created Architecture Decision Record (ADR) for logging choice
+- Added logging guidelines to CONTRIBUTING.md
+- Created OBSERVABILITY.md with OpenTelemetry roadmap
+- Enhanced inline documentation with implementation examples
+
+Closes #66

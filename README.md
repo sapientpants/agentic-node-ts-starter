@@ -15,6 +15,7 @@ A **batteries-included** starting point for building software with an **agentic 
 - **Testing:** Vitest 3.2+ with V8 coverage
 - **Property Testing:** fast-check 4.2+
 - **Validation:** Zod 4.1+ for runtime type safety
+- **Logging:** Pino 9.9+ for structured logging with environment-based configuration
 
 ### Code Quality
 
@@ -51,6 +52,48 @@ pnpm verify
 # Start development
 pnpm test:watch
 ```
+
+## 🔧 Usage Examples
+
+### Logging
+
+The project includes structured logging with Pino, configured for different environments:
+
+```typescript
+import { logger, createChildLogger } from './logger.js';
+
+// Basic logging
+logger.info('Application started');
+logger.error({ err: error }, 'An error occurred');
+
+// Module-specific logging
+const moduleLogger = createChildLogger('auth-module');
+moduleLogger.info({ userId: '123' }, 'User authenticated');
+
+// Context-aware logging
+const requestLogger = logger.withContext({
+  requestId: 'abc-123',
+  userId: 'user-456',
+});
+requestLogger.info('Processing request');
+
+// Sensitive data is automatically redacted
+logger.info(
+  {
+    username: 'john',
+    password: 'secret123', // Will be redacted
+    apiKey: 'key-789', // Will be redacted
+  },
+  'User login attempt',
+);
+```
+
+#### Logging Configuration
+
+- **Development**: Pretty-printed, colorized output for readability
+- **Production**: Structured JSON logs with correlation ID support
+- **Test**: Silent by default, configurable via `LOG_LEVEL` env var
+- **Security**: Automatic redaction of sensitive fields (password, token, api_key, etc.)
 
 ## 📚 Available Scripts
 

@@ -1,5 +1,12 @@
+import { createChildLogger } from './logger.js';
+
+const logger = createChildLogger('index');
+
 export function add(a: number, b: number): number {
-  return a + b;
+  logger.debug({ a, b }, 'Adding two numbers');
+  const result = a + b;
+  logger.debug({ result }, 'Addition result');
+  return result;
 }
 
 // Example of a zod-validated function input
