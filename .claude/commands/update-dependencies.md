@@ -199,27 +199,9 @@ pnpm audit --fix
 # document in PR and consider alternatives
 ```
 
-### Best Practices
-
-1. **Update Regularly**: Monthly updates prevent large, risky jumps
-2. **Review Changelogs**: Check major dependency changelogs before updating
-3. **Test Thoroughly**: Don't rely solely on passing tests; manually verify key features
-4. **Document Changes**: Use descriptive changeset messages
-5. **Group Logically**: Consider separating major updates into individual PRs
-
 ### Security Considerations
 
 - Always run `pnpm audit` after updates
 - Review security advisories for updated packages
 - Be cautious with major version updates
 - Consider the security track record of new dependencies
-
-## Automation Opportunities
-
-Consider setting up:
-
-- Dependabot for automated PR creation
-- Renovate bot for more control over update scheduling
-- GitHub Actions workflow for scheduled dependency updates
-
-Remember: This workflow ensures that dependency updates are tracked, tested, and properly integrated into the project's release cycle.
