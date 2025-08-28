@@ -1,5 +1,16 @@
 # agentic-node-ts-starter
 
+## 0.5.7
+
+### Patch Changes
+
+- [#55](https://github.com/sapientpants/agentic-node-ts-starter/pull/55) [`edf6c4d`](https://github.com/sapientpants/agentic-node-ts-starter/commit/edf6c4d7bb174b7491ad0b68962e032d108ea77e) Thanks [@sapientpants](https://github.com/sapientpants)! - Update dependencies to latest versions
+  - zod: 4.1.1 → 4.1.4
+  - @typescript-eslint/eslint-plugin: 8.40.0 → 8.41.0
+  - @typescript-eslint/parser: 8.40.0 → 8.41.0
+
+- [#56](https://github.com/sapientpants/agentic-node-ts-starter/pull/56) [`adb4b3c`](https://github.com/sapientpants/agentic-node-ts-starter/commit/adb4b3c4b920aa83445c64886be01dd393b991fe) Thanks [@sapientpants](https://github.com/sapientpants)! - Update pnpm package manager to version 10.15.0
+
 ## 0.5.6
 
 ### Patch Changes
