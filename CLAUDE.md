@@ -84,14 +84,14 @@ specs/            # Feature specifications in Gherkin format
 - **Single-user workflow**: Simplified for individual developers without branch protection
 - **Release automation**: Automatically creates version PRs and manages releases
 
-### Development Process (Simplified)
+### Development Process
 
 1. Write/update specifications in `specs/SPEC.md`
 2. Implement with tests (property-based for core logic)
 3. Run `pnpm verify` before committing
 4. Use Conventional Commits format (`feat:`, `fix:`, etc.)
-5. **Optional**: Create changeset for detailed release notes
-6. Push directly to main or create PR for review
+5. Add a changeset for your changes: `pnpm changeset`
+6. Create a pull request for review - **never push directly to main**
 
 ## GitHub CLI Commands
 
@@ -108,12 +108,12 @@ Common gh commands for this repository:
 Available slash commands in `.claude/commands/`:
 
 - `/analyze-and-fix-github-issue` - Analyze and fix a GitHub issue with full workflow
-- `/release` - Create a new version release following semantic versioning
+- `/release` - Guide for the automated Changesets release process
 - `/update-dependencies` - Update all dependencies to latest versions with PR workflow
 
 ## Configuration
 
-- **Package Manager**: pnpm 10.0.0 (specified in package.json)
+- **Package Manager**: pnpm 10.15.0 (specified in package.json)
 - **Node Version**: >=22.0.0 (engines requirement)
 - **TypeScript**: Strict mode with NodeNext module resolution
 - **Testing**: Vitest with V8 coverage provider
@@ -169,26 +169,27 @@ The CI will validate that a changeset is present, and the release workflow will 
 
 1. **Always run `pnpm verify`** - Ensures all checks pass (typecheck, lint, format, tests)
 2. **Use conventional commits** - Format: `type(scope): description` (e.g., `feat: add dark mode`)
-3. **Changesets are optional** - Create one for detailed release notes, or let CI auto-generate from commits
+3. **Add changesets** - Run `pnpm changeset` to document your changes for the release notes
 4. **Use the correct import syntax** - Always use `.js` extension for local ES module imports
 
-### CI/CD Workflow (Simplified)
+### CI/CD Workflow
 
-- **Ultra-simple workflow**: `.github/workflows/ci-cd.yml` - Streamlined single-user workflow (~260 lines, 70% reduction)
-- **Three jobs only**: `validate` (all checks), `release` (auto-changelog), `publish-npm` (optional)
-- **Direct commits to main**: No PR creation for releases, immediate push
-- **Hybrid changelog**: Uses changesets if present, auto-generates from conventional commits if not
+- **PR validation**: `.github/workflows/pr.yml` - Runs all checks on pull requests
+- **Release automation**: `.github/workflows/main.yml` - Handles releases when PRs are merged
 - **Parallel validation**: All checks run simultaneously for faster CI
+- **Changeset-driven releases**: Uses changesets for version management and changelog generation
+- **Security scanning**: CodeQL and OSV vulnerability scanning on all PRs
 
 ### Automatic Release Process
 
-The simplified workflow automatically handles releases on every push to main:
+The workflow automatically handles releases when PRs with changesets are merged to main:
 
-1. **Checks for changesets** or conventional commits (`feat:`, `fix:`, etc.)
-2. **Auto-generates changelog** from commits if no changeset exists
-3. **Versions and tags** directly on main (no PR needed)
-4. **Creates GitHub release** with changelog and SBOM
-5. **Publishes to npm** if NPM_TOKEN is configured
+1. **PR merge triggers workflow** - Main workflow runs after PR is merged
+2. **Checks for changesets** - Determines if a release is needed
+3. **Versions and tags automatically** - Updates version, generates CHANGELOG.md
+4. **Creates GitHub release** - With changelog, build artifacts, and SBOM
+5. **Publishes to npm** - If NPM_TOKEN is configured
+6. **Uses [skip actions]** - Prevents release commits from triggering duplicate workflows
 
 Key principle: **No duplicate builds** - The workflow checks out code at the release tag and builds only what's needed for each distribution channel.
 
