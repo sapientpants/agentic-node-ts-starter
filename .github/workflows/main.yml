@@ -28,7 +28,7 @@ jobs:
       run-codeql: true
 
   # OSV vulnerability scanning using official Google action
-  osv-scan:
+  vulnerability:
     uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v2.2.1
     with:
       # Scan the entire project directory
@@ -39,7 +39,7 @@ jobs:
       security-events: write
 
   version-and-release:
-    needs: [validate, codeql, osv-scan]
+    needs: [validate, codeql, vulnerability]
     runs-on: ubuntu-latest
     outputs:
       released: ${{ steps.release.outputs.released }}
