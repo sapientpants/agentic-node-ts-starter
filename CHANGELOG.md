@@ -1,5 +1,21 @@
 # agentic-node-ts-starter
 
+## 0.8.0
+
+### Minor Changes
+
+- [#65](https://github.com/sapientpants/agentic-node-ts-starter/pull/65) [`531ca40`](https://github.com/sapientpants/agentic-node-ts-starter/commit/531ca40a7c05589c4073d489ba9505577e8965a0) Thanks [@sapientpants](https://github.com/sapientpants)! - feat: enforce minimum test coverage thresholds at 80%
+  - Added coverage thresholds to Vitest configuration (80% for lines, branches, functions, statements)
+  - Configured proper coverage exclusions for non-source files
+  - Added json-summary reporter for better CI integration
+  - Updated documentation to reflect coverage requirements
+  - CI/CD pipeline now enforces coverage thresholds on all PRs
+  - Tests will fail locally and in CI if coverage drops below 80%
+
+  This ensures code quality is maintained through quantitative metrics and supports the project's test-as-contract philosophy.
+
+  Closes #64
+
 ## 0.7.0
 
 ### Minor Changes
