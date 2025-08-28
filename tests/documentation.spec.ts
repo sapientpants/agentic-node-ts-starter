@@ -48,7 +48,7 @@ describe('Documentation', () => {
 
       internalLinks.forEach((link) => {
         // Remove anchors for file existence check
-        const cleanUrl = link.url.split('#')[0] ?? '';
+        const cleanUrl = link.url.split('#')[0];
         const linkPath = join(projectRoot, cleanUrl);
         expect(existsSync(linkPath), `Broken link in README: [${link.text}](${link.url})`).toBe(
           true,
