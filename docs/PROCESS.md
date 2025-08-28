@@ -24,7 +24,7 @@
 ## 4) Verify automatically
 
 - Run: typecheck → lint → unit + property tests → contract validation (Zod/OpenAPI) → OSV scan → SBOM generation.
-- CI enforces gates; outputs include coverage report, SBOM, and SLSA provenance.
+- CI enforces gates; artifacts include coverage report, SBOM, and SLSA provenance.
 
 ## 5) Review
 
