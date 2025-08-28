@@ -1,5 +1,16 @@
 # agentic-node-ts-starter
 
+## 0.5.8
+
+### Patch Changes
+
+- [#57](https://github.com/sapientpants/agentic-node-ts-starter/pull/57) [`1edb9b9`](https://github.com/sapientpants/agentic-node-ts-starter/commit/1edb9b94ec89fc73f5a6af60fff0ae262e201d4c) Thanks [@sapientpants](https://github.com/sapientpants)! - Fix release documentation to reflect automated Changesets workflow
+  - Updated `.claude/commands/release.md` to accurately describe the automated release process
+  - Removed outdated manual version bumping and changelog editing instructions
+  - Emphasized PR-only workflow (no direct pushes to main)
+  - Added proper troubleshooting steps for the automated workflow
+  - Clarified that releases are fully automated via GitHub Actions when changesets are merged
+
 ## 0.5.7
 
 ### Patch Changes
