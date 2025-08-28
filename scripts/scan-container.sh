@@ -22,7 +22,6 @@ OUTPUT_FILE=""
 IGNORE_UNFIXED=false
 SKIP_BUILD=false
 VERBOSE=false
-TRIVY_VERSION="0.57.1"
 
 # Help function
 show_help() {
@@ -110,88 +109,45 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Function to check if command exists
-command_exists() {
-    command -v "$1" >/dev/null 2>&1
-}
-
-# Function to install Trivy
-install_trivy() {
-    echo -e "${YELLOW}Trivy not found. Installing...${NC}"
+# Check for required tools
+check_requirements() {
+    local missing_tools=()
     
-    # Detect OS and architecture
-    OS=$(uname -s | tr '[:upper:]' '[:lower:]')
-    ARCH=$(uname -m)
+    if ! command -v docker >/dev/null 2>&1; then
+        missing_tools+=("docker")
+    fi
     
-    case "$ARCH" in
-        x86_64|amd64)
-            ARCH="64bit"
-            ;;
-        aarch64|arm64)
-            ARCH="ARM64"
-            ;;
-        *)
-            echo -e "${RED}Unsupported architecture: $ARCH${NC}"
-            exit 1
-            ;;
-    esac
+    if ! command -v trivy >/dev/null 2>&1; then
+        missing_tools+=("trivy")
+    fi
     
-    case "$OS" in
-        linux)
-            OS="Linux"
-            ;;
-        darwin)
-            OS="macOS"
-            ;;
-        *)
-            echo -e "${RED}Unsupported OS: $OS${NC}"
-            exit 1
-            ;;
-    esac
-    
-    # Download URL
-    DOWNLOAD_URL="https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_${OS}-${ARCH}.tar.gz"
-    
-    # Create temp directory
-    TEMP_DIR=$(mktemp -d)
-    trap "rm -rf $TEMP_DIR" EXIT
-    
-    # Download and extract
-    echo -e "${BLUE}Downloading Trivy from: $DOWNLOAD_URL${NC}"
-    curl -sfL "$DOWNLOAD_URL" | tar -xz -C "$TEMP_DIR"
-    
-    # Install to /usr/local/bin or local directory
-    if [[ -w /usr/local/bin ]]; then
-        mv "$TEMP_DIR/trivy" /usr/local/bin/
-        echo -e "${GREEN}Trivy installed to /usr/local/bin/trivy${NC}"
-    elif command -v sudo >/dev/null 2>&1; then
-        sudo mv "$TEMP_DIR/trivy" /usr/local/bin/
-        echo -e "${GREEN}Trivy installed to /usr/local/bin/trivy (using sudo)${NC}"
-    else
-        mkdir -p "$HOME/.local/bin"
-        mv "$TEMP_DIR/trivy" "$HOME/.local/bin/"
-        echo -e "${GREEN}Trivy installed to $HOME/.local/bin/trivy${NC}"
-        echo -e "${YELLOW}Please add $HOME/.local/bin to your PATH${NC}"
-        export PATH="$HOME/.local/bin:$PATH"
+    if [ ${#missing_tools[@]} -gt 0 ]; then
+        echo -e "${RED}Error: Required tools are not installed:${NC}"
+        for tool in "${missing_tools[@]}"; do
+            echo -e "  - $tool"
+        done
+        echo ""
+        echo -e "${YELLOW}Installation instructions:${NC}"
+        echo ""
+        if [[ " ${missing_tools[@]} " =~ " docker " ]]; then
+            echo "Docker:"
+            echo "  - macOS/Windows: Download Docker Desktop from https://docker.com"
+            echo "  - Linux: Follow instructions at https://docs.docker.com/engine/install/"
+            echo ""
+        fi
+        if [[ " ${missing_tools[@]} " =~ " trivy " ]]; then
+            echo "Trivy:"
+            echo "  - macOS: brew install aquasecurity/trivy/trivy"
+            echo "  - Linux: See https://aquasecurity.github.io/trivy/latest/getting-started/installation/"
+            echo "  - Docker: docker run --rm aquasecurity/trivy:latest"
+            echo ""
+        fi
+        exit 1
     fi
 }
 
-# Check for Docker
-if ! command_exists docker; then
-    echo -e "${RED}Docker is not installed or not in PATH${NC}"
-    exit 1
-fi
-
-# Check for Trivy
-if ! command_exists trivy; then
-    install_trivy
-fi
-
-# Verify Trivy installation
-if ! command_exists trivy; then
-    echo -e "${RED}Failed to install Trivy${NC}"
-    exit 1
-fi
+# Check requirements before proceeding
+check_requirements
 
 # Build Docker image if needed
 if [[ "$SKIP_BUILD" == "false" ]]; then

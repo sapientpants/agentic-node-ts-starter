@@ -30,12 +30,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Container Security
 
+**Prerequisites**: Docker and Trivy must be installed locally (`brew install aquasecurity/trivy/trivy` on macOS).
+
 - `pnpm scan:container` - Run container security scan locally (builds and scans Docker image)
 - `pnpm scan:container:sarif` - Generate SARIF report for GitHub Security integration
 - `./scripts/scan-container.sh --help` - View all scanning options
 - **Severity Threshold**: Default fails on HIGH and CRITICAL vulnerabilities
 - **False Positives**: Add CVEs to `.trivyignore` with explanatory comments
-- **CI/CD Integration**: Scans run automatically before Docker Hub publication
+- **CI/CD Integration**: Scans run automatically before Docker Hub publication (Trivy installed automatically in CI)
 
 ### Release & Security
 

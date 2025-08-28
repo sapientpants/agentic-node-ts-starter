@@ -133,6 +133,8 @@ Tests will fail with clear error messages if coverage drops below 80%.
 
 ### Container Security
 
+**Prerequisites**: Docker and [Trivy](https://github.com/aquasecurity/trivy#installation) must be installed locally.
+
 - `pnpm scan:container` - Scan Docker image for vulnerabilities
 - `pnpm scan:container:sarif` - Generate SARIF report for GitHub Security
 - `./scripts/scan-container.sh --help` - View all scanning options

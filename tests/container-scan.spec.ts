@@ -144,7 +144,7 @@ describe('Container Security Scanning', () => {
   describe('Local Development Support', () => {
     it('should support local scanning with script', () => {
       const scriptContent = readFileSync(scriptPath, 'utf-8');
-      expect(scriptContent).toContain('install_trivy()');
+      expect(scriptContent).toContain('check_requirements()');
       expect(scriptContent).toContain('docker build');
       expect(scriptContent).toContain('trivy image');
     });
