@@ -133,7 +133,7 @@ jobs:
           chmod +x osv-scanner
 
           # Run OSV Scanner and generate SARIF report
-          # || true prevents workflow failure, results still uploaded
+          # '|| true' prevents this step from failing; results are always uploaded in the next step due to 'always()'
           ./osv-scanner --format sarif --output results.sarif . || true
 
       - name: Upload OSV results to GitHub Security
