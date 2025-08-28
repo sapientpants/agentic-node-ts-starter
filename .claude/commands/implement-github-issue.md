@@ -1,21 +1,140 @@
-# Analyze and implement GitHub Issue
+# Implement GitHub Issue
 
-Please analyze and implement the GitHub issue: $ARGUMENTS.
+You are about to implement GitHub issue: $ARGUMENTS
 
-Follow these steps:
+## Implementation Workflow
 
-1. Use `gh issue view` to get the issue details
-2. Understand the problem described in the issue
-3. Search the codebase for relevant files
-4. Create a detailed plan to address the issue
-5. Create a new branch for the implementation
-6. Implement the necessary changes to implement the issue
-7. Ensure that any new code is well-documented and follows the project's coding standards
-8. Write tests to cover the changes made, if applicable
-9. Ensure code passes formatting, linting, type checking, and tests using `pnpm run ci`
-10. Create a descriptive commit message
-11. Push and create a PR
-12. Wait for code review and address any feedback provided by reviewers.
-13. Merge the pull request once it has been approved. Use the "Squash and merge" option to keep the commit history clean.
+### 1. Analyze the Issue
 
-Remember to use the GitHub CLI (`gh`) for all GitHub-related tasks.
+```bash
+gh issue view $ARGUMENTS
+```
+
+- Review the full issue description
+- If it contains Gherkin specs, parse acceptance criteria carefully
+- Identify non-goals and constraints
+- Note any technical requirements
+
+### 2. Research Codebase
+
+- Search for relevant existing code
+- Identify files needing modification
+- Look for similar patterns to maintain consistency
+- Review existing tests for patterns
+
+### 3. Plan Implementation
+
+Create a plan with:
+
+- Core functionality breakdown
+- Test strategy (unit + property-based)
+- Files to create/modify
+- Edge cases and risks
+
+### 4. Create Feature Branch
+
+```bash
+# Follow branch naming from CLAUDE.md
+git checkout -b <type>/<issue-number>-<description>
+# Example: feat/42-user-authentication
+```
+
+### 5. Implement Solution
+
+- Follow patterns in CLAUDE.md (validation, testing, imports)
+- Write clean, focused functions
+- Add TypeScript types and Zod validation
+- Document public APIs with JSDoc
+
+### 6. Write Tests
+
+Required test coverage:
+
+- **Unit tests** in `tests/*.spec.ts`
+- **Property-based tests** in `tests/*.property.spec.ts` for business logic
+- Test both success and failure cases
+- Verify edge cases
+
+### 7. Verify Quality
+
+```bash
+pnpm verify  # Runs all checks
+```
+
+### 8. Create Changeset
+
+```bash
+pnpm changeset
+# Select: patch (fixes), minor (features), major (breaking)
+```
+
+### 9. Commit Changes
+
+```bash
+git add .
+git commit -m "<type>: <description>
+
+<body-if-needed>
+
+Closes #<issue-number>"
+```
+
+### 10. Create Pull Request
+
+```bash
+git push -u origin <branch-name>
+
+gh pr create \
+  --title "<type>: <description>" \
+  --body "## Summary
+  <what-and-why>
+
+  ## Changes
+  - <list-changes>
+
+  ## Testing
+  - <how-tested>
+
+  Closes #<issue-number>" \
+  --assignee @me
+```
+
+### 11. Monitor CI
+
+```bash
+gh pr checks --watch
+```
+
+### 12. Address Feedback
+
+- Respond to review comments
+- Make requested changes
+- Re-verify after changes
+
+### 13. Merge PR
+
+```bash
+# After approval and passing checks
+gh pr merge --squash --delete-branch
+```
+
+## Key Points
+
+- **Follow coding standards** in CLAUDE.md
+- **Test thoroughly** - Unit + property-based tests required
+- **Use changesets** for version management
+- **Conventional commits** for clear history
+- **Quality first** - All checks must pass
+
+## Success Checklist
+
+Before completing:
+
+- [ ] All acceptance criteria met
+- [ ] Tests comprehensive (unit + property)
+- [ ] `pnpm verify` passes
+- [ ] Documentation updated
+- [ ] Changeset created
+- [ ] PR reviewed and approved
+
+See CLAUDE.md for detailed patterns, troubleshooting, and coding standards.
