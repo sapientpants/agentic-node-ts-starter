@@ -2,7 +2,7 @@
 FROM node:22-alpine AS builder
 
 # Install pnpm
-RUN corepack enable && corepack prepare pnpm@10.0.0 --activate
+RUN corepack enable && corepack prepare pnpm@10.15.0 --activate
 
 # Set working directory
 WORKDIR /app
@@ -23,7 +23,7 @@ RUN pnpm build
 FROM node:22-alpine
 
 # Install pnpm
-RUN corepack enable && corepack prepare pnpm@10.0.0 --activate
+RUN corepack enable && corepack prepare pnpm@10.15.0 --activate
 
 # Install dumb-init for proper signal handling
 RUN apk add --no-cache dumb-init

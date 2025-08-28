@@ -10,7 +10,7 @@ A **batteries-included** starting point for building software with an **agentic 
 ### Core Technologies
 
 - **Runtime:** Node.js 22+ via **mise** (`mise.toml`)
-- **Package Manager:** **pnpm 10.0.0** (pinned in package.json)
+- **Package Manager:** **pnpm 10.15.0** (pinned in package.json)
 - **Language:** TypeScript 5.9+ with strict mode
 - **Testing:** Vitest 3.2+ with V8 coverage
 - **Property Testing:** fast-check 4.2+
@@ -39,7 +39,7 @@ A **batteries-included** starting point for building software with an **agentic 
 ### Setup
 
 ```bash
-# Install Node 22 + pnpm 10 via mise
+# Install Node 22 + pnpm 10.15.0 via mise
 mise install
 
 # Install dependencies
