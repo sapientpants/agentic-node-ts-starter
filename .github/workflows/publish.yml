@@ -130,6 +130,10 @@ jobs:
     name: Publish to Docker Hub
     runs-on: ubuntu-latest
     if: vars.ENABLE_DOCKER_RELEASE == 'true'
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
     steps:
       - name: Determine version
         id: version
@@ -183,7 +187,40 @@ jobs:
             type=semver,pattern={{major}},value=${{ steps.version.outputs.version }}
             type=raw,value=latest
 
-      - name: Build and push
+      - name: Build Docker image
+        if: steps.check-docker.outputs.has_credentials == 'true'
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          push: false
+          load: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: VERSION=${{ steps.version.outputs.version }}
+
+      - name: Scan Docker image for vulnerabilities
+        if: steps.check-docker.outputs.has_credentials == 'true'
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}:${{ steps.version.outputs.version }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: false
+          exit-code: '1'
+
+      - name: Upload Trivy results to GitHub Security
+        if: always() && steps.check-docker.outputs.has_credentials == 'true'
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+          category: 'container-scan'
+
+      - name: Push Docker image to Docker Hub
         if: steps.check-docker.outputs.has_credentials == 'true'
         uses: docker/build-push-action@v6
         with:

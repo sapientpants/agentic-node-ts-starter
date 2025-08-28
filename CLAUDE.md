@@ -28,6 +28,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Coverage Requirements**: This project enforces 80% minimum coverage for lines, branches, functions, and statements. Coverage checks will fail in CI if thresholds are not met.
 
+### Container Security
+
+**Prerequisites**: Docker and Trivy must be installed locally (`brew install aquasecurity/trivy/trivy` on macOS).
+
+- `pnpm scan:container` - Run container security scan locally (builds and scans Docker image)
+- `pnpm scan:container:sarif` - Generate SARIF report for GitHub Security integration
+- `./scripts/scan-container.sh --help` - View all scanning options
+- **Severity Threshold**: Default fails on HIGH and CRITICAL vulnerabilities
+- **False Positives**: Add CVEs to `.trivyignore` with explanatory comments
+- **CI/CD Integration**: Scans run automatically before Docker Hub publication (Trivy installed automatically in CI)
+
 ### Release & Security
 
 - `pnpm changeset` - Create a changeset for your changes (interactive)
@@ -133,10 +144,11 @@ import { myFunction } from './module'; // ✗ Wrong
 
 ### CI/CD Pipeline
 
-- **GitHub Actions** enforces: audit → typecheck → lint → format → test → OSV scan → SBOM generation
-- **Security scanning**: CodeQL analysis and OSV vulnerability scanning
+- **GitHub Actions** enforces: audit → typecheck → lint → format → test → OSV scan → container scan → SBOM generation
+- **Security scanning**: CodeQL analysis, OSV vulnerability scanning, and Trivy container image scanning
+- **Container security**: Automatic vulnerability scanning of Docker images with configurable severity thresholds
 - **Pre-commit hooks** via Husky run lint-staged (Prettier and ESLint)
-- **Attestations**: SLSA provenance and SBOM attestations for build artifacts
+- **Attestations**: SLSA provenance and SBOM attestations for build artifacts, including container scan results
 - **Single-user workflow**: Simplified for individual developers without branch protection
 - **Release automation**: Automatically creates version PRs and manages releases
 
