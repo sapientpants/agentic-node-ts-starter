@@ -106,7 +106,6 @@ See [CLAUDE.md](./CLAUDE.md) for detailed Claude Code guidance.
 │   └── hooks/         # Git hook scripts
 ├── .github/           # GitHub Actions workflows
 ├── docs/              # Documentation
-├── specs/             # Feature specifications
 ├── src/               # Source code
 ├── tests/             # Test files
 │   ├── *.spec.ts      # Unit tests
@@ -246,7 +245,7 @@ To enable GitHub Pages documentation:
 - **SBOM Generation**: CycloneDX format for supply chain transparency
 - **CodeQL Analysis**: Static security analysis
 - **OSV Scanning**: Open Source Vulnerability detection
-- **SLSA Provenance**: Build attestations for artifacts
+- **SLSA Provenance**: Build attestations
 - **Container Attestations**: SBOM and provenance for Docker images
 
 ## 📖 Documentation
@@ -254,7 +253,6 @@ To enable GitHub Pages documentation:
 - [Contributing Guide](./CONTRIBUTING.md) - How to contribute to this project
 - [Development Process](./docs/PROCESS.md) - End-to-end workflow and checklists
 - [Architecture Decisions](./docs/architecture/decisions/) - ADR records
-- [Specifications](./specs/SPEC.md) - Feature specifications
 
 ## 📄 License
 

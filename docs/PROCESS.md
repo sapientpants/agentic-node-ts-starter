@@ -7,8 +7,7 @@
 
 ## 1) Specify (SPEC-first)
 
-- Write or update `specs/SPEC.md` with clear scope, non-goals, risks, acceptance criteria (Given/When/Then). Prefer **executable specs** via tests.
-- Define API with OpenAPI if relevant; generate types from schema.
+- Define clear scope, non-goals, risks, and acceptance criteria (Given/When/Then). Prefer **executable specs** via tests.
 
 ## 2) Plan & slice
 
@@ -23,7 +22,7 @@
 ## 4) Verify automatically
 
 - Run: typecheck → lint → unit + property tests → contract validation (Zod/OpenAPI) → OSV scan → SBOM generation.
-- CI enforces gates; artifacts include coverage report, SBOM, and SLSA provenance.
+- CI enforces gates; outputs include coverage report, SBOM, and SLSA provenance.
 
 ## 5) Review
 

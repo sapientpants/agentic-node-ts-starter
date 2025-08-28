@@ -245,7 +245,6 @@ src/          # Source code
 tests/        # Test files
   *.spec.ts   # Unit tests
   *.property.spec.ts # Property-based tests
-specs/        # Feature specifications
 docs/         # Documentation
 .changeset/   # Changeset files
 ```

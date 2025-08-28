@@ -43,7 +43,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Project Structure
 
-- **Spec-first approach**: Features start with specifications in `specs/SPEC.md` using Gherkin-style acceptance criteria
 - **Test-as-contract**: Property-based testing with fast-check for invariants, unit tests with Vitest
 - **Type safety**: Strict TypeScript with runtime validation using Zod for external boundaries
 - **Module system**: ES modules (`"type": "module"`) with NodeNext resolution
@@ -56,7 +55,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 src/               # Source code - ES modules with .ts extension
 tests/            # Test files - *.spec.ts (unit), *.property.spec.ts (property-based)
 dist/             # Build output (gitignored)
-specs/            # Feature specifications in Gherkin format
 .claude/          # Claude Code configurations and commands
 ```
 
@@ -87,12 +85,11 @@ specs/            # Feature specifications in Gherkin format
 
 ### Development Process
 
-1. Write/update specifications in `specs/SPEC.md`
-2. Implement with tests (property-based for core logic)
-3. Run `pnpm verify` before committing
-4. Use Conventional Commits format (`feat:`, `fix:`, etc.)
-5. Add a changeset for your changes: `pnpm changeset`
-6. Create a pull request for review - **never push directly to main**
+1. Implement with tests (property-based for core logic)
+2. Run `pnpm verify` before committing
+3. Use Conventional Commits format (`feat:`, `fix:`, etc.)
+4. Add a changeset for your changes: `pnpm changeset`
+5. Create a pull request for review - **never push directly to main**
 
 ## GitHub CLI Commands
 
