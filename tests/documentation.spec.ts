@@ -176,7 +176,7 @@ describe('Documentation', () => {
         packageManager?: string;
       };
       const requiredNodeVersion = packageJson.engines?.node || '';
-      const requiredPnpmVersion = packageJson.packageManager?.split('@')[1] || '';
+      const requiredPnpmVersion = packageJson.packageManager?.split('@')[1] ?? '';
 
       const docsToCheck = ['README.md', 'docs/GETTING_STARTED.md'];
 
