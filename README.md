@@ -68,8 +68,25 @@ pnpm test:watch
 
 - `pnpm test` - Run tests
 - `pnpm test:watch` - Run tests in watch mode
-- `pnpm test:coverage` - Run tests with coverage report
+- `pnpm test:coverage` - Run tests with coverage report and **80% minimum threshold enforcement**
 - `pnpm coverage:report` - Generate detailed coverage report
+
+#### Coverage Requirements
+
+This project enforces **minimum 80% code coverage** across all metrics:
+
+- **Lines**: 80% minimum
+- **Branches**: 80% minimum
+- **Functions**: 80% minimum
+- **Statements**: 80% minimum
+
+Coverage thresholds are enforced:
+
+- Locally via `pnpm test:coverage` (fails if below 80%)
+- In CI/CD pipeline on all pull requests
+- During pre-commit via `pnpm verify`
+
+Tests will fail with clear error messages if coverage drops below 80%.
 
 ### Release & Security
 

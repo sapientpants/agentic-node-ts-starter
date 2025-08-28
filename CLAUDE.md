@@ -20,11 +20,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - `pnpm test` - Run tests without coverage
 - `pnpm test:watch` - Run tests in watch mode
-- `pnpm test:coverage` - Run tests with coverage report
+- `pnpm test:coverage` - Run tests with coverage report and **80% minimum threshold enforcement**
 - `pnpm coverage:report` - Generate detailed coverage report
 - `vitest run tests/specific.spec.ts` - Run a single test file
 - `vitest -t "test name"` - Run tests matching a pattern
 - Test files: `tests/*.spec.ts` for unit tests, `tests/*.property.spec.ts` for property-based tests
+
+**Coverage Requirements**: This project enforces 80% minimum coverage for lines, branches, functions, and statements. Coverage checks will fail in CI if thresholds are not met.
 
 ### Release & Security
 
@@ -215,10 +217,11 @@ The CI will validate that a changeset is present, and the release workflow will 
 
 - **Unit tests** (`tests/*.spec.ts`) - Test functions in isolation
 - **Property-based tests** (`tests/*.property.spec.ts`) - Required for business logic
-- **Test coverage** - Aim for high coverage of new code
+- **Test coverage** - **Minimum 80% coverage enforced** for lines, branches, functions, and statements
 - **Test naming** - Use descriptive names that explain what is being tested
 - **Test independence** - Tests should not depend on execution order
 - **Assertions** - Use multiple assertions to thoroughly verify behavior
+- **Coverage enforcement** - Tests fail if coverage drops below 80% in any metric
 
 ### Code Quality Guidelines
 
