@@ -43,9 +43,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - `pnpm changeset` - Create a changeset for your changes (interactive)
 - `pnpm changeset --empty` - Create empty changeset for non-release changes
-- `pnpm changeset:from-commits` - Generate changeset from conventional commits
-- `pnpm release:auto` - Auto-generate changeset and version
-- `pnpm changeset status` - Check status of changesets
+- `pnpm changeset:status` - Check status of changesets
 - `pnpm sbom` - Generate SBOM file in CycloneDX format (sbom.cdx.json)
 - `pnpm release` - Version packages with Changesets and build
 - `pnpm release:publish` - Build and publish packages

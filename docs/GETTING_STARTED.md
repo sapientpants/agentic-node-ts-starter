@@ -1,0 +1,260 @@
+# Getting Started Guide
+
+Welcome to the Agentic Node + TypeScript Starter! This guide will walk you through transforming this template into your own project in under 10 minutes.
+
+## Quick Setup Checklist
+
+Follow these steps in order to customize the template for your project:
+
+### 1. Clone and Initialize
+
+```bash
+# Clone the template (replace with your project name)
+git clone https://github.com/sapientpants/agentic-node-ts-starter.git your-project-name
+cd your-project-name
+
+# Remove template history and start fresh
+rm -rf .git
+git init
+git add .
+git commit -m "Initial commit from agentic-node-ts-starter template"
+```
+
+### 2. Install Development Environment
+
+Choose your preferred Node.js version manager:
+
+#### Option A: Using mise (Recommended)
+
+```bash
+# Install mise: https://mise.jdx.dev/getting-started.html
+mise install        # Installs Node 22 and pnpm 10.15.0
+pnpm install       # Install dependencies
+```
+
+#### Option B: Using nvm or fnm
+
+```bash
+# Using nvm
+nvm install 22
+nvm use 22
+npm install -g pnpm@10.15.0
+
+# OR using fnm
+fnm install 22
+fnm use 22
+npm install -g pnpm@10.15.0
+
+# Then install dependencies
+pnpm install
+```
+
+#### Option C: Manual Installation
+
+1. Install [Node.js 22+](https://nodejs.org/) directly
+2. Install pnpm: `npm install -g pnpm@10.15.0`
+3. Install dependencies: `pnpm install`
+
+⚠️ **Important**: This project requires:
+
+- Node.js >= 22.0.0
+- pnpm 10.15.0 (exact version)
+
+### 3. Update Project Metadata
+
+Edit `package.json`:
+
+```json
+{
+  "name": "your-project-name",
+  "version": "0.1.0",
+  "description": "Your project description",
+  "private": true, // or false if publishing to npm
+  "author": {
+    "name": "Your Name",
+    "email": "your.email@example.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/your-project.git"
+  },
+  "keywords": ["your", "keywords"],
+  "license": "MIT" // or your preferred license
+}
+```
+
+### 4. Clean Up Example Code
+
+Remove the example files and create your own:
+
+```bash
+# Remove example source files
+rm src/index.ts
+
+# Remove example tests
+rm tests/index.spec.ts
+rm tests/add.property.spec.ts
+
+# Keep the logger if you want structured logging
+# Or remove it: rm src/logger.ts tests/logger.spec.ts
+```
+
+### 5. Update README
+
+Replace the template README with your project-specific content:
+
+```bash
+# Backup the template README for reference
+mv README.md TEMPLATE_README.md
+
+# Create your project README
+cat > README.md << 'EOF'
+# Your Project Name
+
+Brief description of your project.
+
+## Installation
+
+\`\`\`bash
+pnpm install
+\`\`\`
+
+## Usage
+
+Describe how to use your project.
+
+## Development
+
+\`\`\`bash
+pnpm build       # Build the project
+pnpm test        # Run tests
+pnpm verify      # Run all checks
+\`\`\`
+
+## License
+
+Your license here.
+EOF
+```
+
+### 6. Configure GitHub Repository
+
+If using GitHub:
+
+```bash
+# Create a new repository on GitHub, then:
+git remote add origin https://github.com/yourusername/your-project.git
+git branch -M main
+git push -u origin main
+```
+
+### 7. Set Up CI/CD (Optional)
+
+The template includes comprehensive GitHub Actions workflows. To use them:
+
+#### For npm publishing (optional):
+
+1. Generate an npm token at https://www.npmjs.com/
+2. Add it as `NPM_TOKEN` in your GitHub repository secrets
+
+#### For Docker publishing (optional):
+
+1. Add `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` secrets
+2. Set repository variable `ENABLE_DOCKER_RELEASE` to `true`
+
+#### For documentation deployment (optional):
+
+1. Configure your documentation hosting
+2. Set repository variable `ENABLE_DOCS_RELEASE` to `true`
+
+### 8. Start Building Your Project
+
+Now that your template is customized, you can start building your project. The template provides a solid foundation for any Node.js TypeScript project.
+
+## Verify Your Setup
+
+After customization, ensure everything works:
+
+```bash
+# Run all quality checks
+pnpm verify
+
+# This runs:
+# - Security audit
+# - TypeScript type checking
+# - ESLint linting
+# - Prettier formatting
+# - Test suite
+```
+
+## Next Steps
+
+1. **Write your first feature**: Start with a test, then implement
+2. **Set up your IDE**: Configure VS Code or your preferred editor
+3. **Review documentation**:
+   - [CLAUDE.md](../CLAUDE.md) - AI-assisted development with Claude
+   - [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) - Common issues and solutions
+   - [PROCESS.md](./PROCESS.md) - Development workflow
+   - [OBSERVABILITY.md](./OBSERVABILITY.md) - Logging and monitoring
+
+## Common Customizations
+
+### Change Test Framework
+
+The template uses Vitest. To switch to Jest:
+
+```bash
+pnpm remove vitest @vitest/coverage-v8
+pnpm add -D jest @types/jest ts-jest
+# Update test scripts in package.json
+# Create jest.config.js
+```
+
+### Add a Web Framework
+
+For Express:
+
+```bash
+pnpm add express
+pnpm add -D @types/express
+```
+
+For Fastify:
+
+```bash
+pnpm add fastify
+```
+
+### Add a Database
+
+For PostgreSQL with Prisma:
+
+```bash
+pnpm add @prisma/client
+pnpm add -D prisma
+npx prisma init
+```
+
+### Change License
+
+1. Update `LICENSE` file with your preferred license text
+2. Update `license` field in `package.json`
+3. Update license badge in `README.md` if present
+
+## Time-Saving Tips
+
+- **Keep the pre-commit hooks** to maintain code quality
+- **Use changesets** for version management from the start
+- **Review CLAUDE.md** to leverage AI-assisted development effectively
+- **Check existing patterns** in the template before adding new ones
+- **Follow the checklist** above for systematic customization
+
+## Getting Help
+
+- Check [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) for common issues
+- Review the [template documentation](https://github.com/sapientpants/agentic-node-ts-starter)
+- Open an issue if you find bugs in the template
+
+---
+
+**Estimated time to complete**: 5-10 minutes for basic setup, depending on familiarity with the tools.

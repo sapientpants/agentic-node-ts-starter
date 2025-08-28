@@ -63,10 +63,35 @@ pnpm verify  # Runs all checks
 
 ### 8. Create Changeset
 
+**Changeset Guidance for Features:**
+
 ```bash
+# For bug fixes
 pnpm changeset
-# Select: patch (fixes), minor (features), major (breaking)
+# Select: patch
+# Message: "Fix: [brief description of what was fixed]"
+
+# For new features
+pnpm changeset
+# Select: minor
+# Message: "Add [feature name]: [brief description]"
+
+# For breaking changes
+pnpm changeset
+# Select: major
+# Message: "BREAKING: [what changed and migration required]"
+
+# For non-code changes (docs, tests, refactoring)
+pnpm changeset --empty
+# Message: "Internal: [what was changed]"
 ```
+
+**Decision Guide:**
+
+- **patch**: Bug fixes, security patches, performance improvements
+- **minor**: New features, new APIs, significant enhancements
+- **major**: Breaking changes, API removals, incompatible updates
+- **--empty**: Documentation, tests, CI/CD, internal refactoring
 
 ### 9. Commit Changes
 
