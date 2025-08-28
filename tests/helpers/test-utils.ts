@@ -88,19 +88,8 @@ export async function expectAsyncThrow<T = any>(
 }
 
 /**
- * Generate test data with optional overrides
+ * Generate test data for any entity with optional overrides
  */
-export function createTestUser(overrides: Partial<TestUser> = {}): TestUser {
-  return {
-    id: 'test-user-id',
-    email: 'test@example.com',
-    age: 25,
-    ...overrides,
-  };
-}
-
-interface TestUser {
-  id: string;
-  email: string;
-  age: number;
+export function createTestEntity<T>(defaults: T, overrides: Partial<T> = {}): T {
+  return { ...defaults, ...overrides };
 }

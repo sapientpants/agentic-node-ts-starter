@@ -103,7 +103,11 @@ if [ "$SKIP_SECURITY" = false ]; then
     # Check if OSV scanner is available
     if command -v osv-scanner &> /dev/null; then
         echo "  → OSV vulnerability scan..."
-        osv-scanner --lockfile=pnpm-lock.yaml
+        if [ -r pnpm-lock.yaml ]; then
+            osv-scanner --lockfile=pnpm-lock.yaml
+        else
+            warn "pnpm-lock.yaml not found or not readable. Skipping OSV scan."
+        fi
     else
         warn "OSV scanner not installed. Run: go install github.com/google/osv-scanner/cmd/osv-scanner@latest"
     fi

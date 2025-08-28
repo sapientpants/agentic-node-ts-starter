@@ -55,6 +55,13 @@ export function timed(target: any, propertyName: string, descriptor: PropertyDes
 
   const method = descriptor.value;
 
+  // Validate that we're decorating a method
+  if (typeof method !== 'function') {
+    throw new Error(
+      `@timed decorator can only be applied to methods, but ${propertyName} is not a function`,
+    );
+  }
+
   descriptor.value = function (...args: any[]) {
     const timer = new PerformanceTimer(`${target.constructor.name}.${propertyName}`);
     try {
@@ -123,6 +130,13 @@ export function trace(target: any, propertyName: string, descriptor: PropertyDes
   }
 
   const method = descriptor.value;
+
+  // Validate that we're decorating a method
+  if (typeof method !== 'function') {
+    throw new Error(
+      `@trace decorator can only be applied to methods, but ${propertyName} is not a function`,
+    );
+  }
 
   descriptor.value = function (...args: any[]) {
     const functionName = `${target.constructor.name}.${propertyName}`;
