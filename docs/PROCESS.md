@@ -7,7 +7,9 @@
 
 ## 1) Specify (SPEC-first)
 
-- Define clear scope, non-goals, risks, and acceptance criteria (Given/When/Then). Prefer **executable specs** via tests.
+- Use `/spec-feature` Claude command to create a GitHub issue with Gherkin specification
+- Define clear scope, non-goals, risks, and acceptance criteria (Given/When/Then)
+- Prefer **executable specs** via tests
 
 ## 2) Plan & slice
 

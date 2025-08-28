@@ -1,6 +1,6 @@
-# Analyze and fix GitHub Issue
+# Analyze and implement GitHub Issue
 
-Please analyze and fix the GitHub issue: $ARGUMENTS.
+Please analyze and implement the GitHub issue: $ARGUMENTS.
 
 Follow these steps:
 
@@ -8,8 +8,8 @@ Follow these steps:
 2. Understand the problem described in the issue
 3. Search the codebase for relevant files
 4. Create a detailed plan to address the issue
-5. Create a new branch for the fix, e.g., `fix/issue-123`
-6. Implement the necessary changes to fix the issue
+5. Create a new branch for the implementation
+6. Implement the necessary changes to implement the issue
 7. Ensure that any new code is well-documented and follows the project's coding standards
 8. Write tests to cover the changes made, if applicable
 9. Ensure code passes formatting, linting, type checking, and tests using `pnpm run ci`

@@ -85,11 +85,12 @@ dist/             # Build output (gitignored)
 
 ### Development Process
 
-1. Implement with tests (property-based for core logic)
-2. Run `pnpm verify` before committing
-3. Use Conventional Commits format (`feat:`, `fix:`, etc.)
-4. Add a changeset for your changes: `pnpm changeset`
-5. Create a pull request for review - **never push directly to main**
+1. (Optional) Use `/spec-feature` to create a feature spec as a GitHub issue
+2. Implement with tests (property-based for core logic)
+3. Run `pnpm verify` before committing
+4. Use Conventional Commits format (`feat:`, `fix:`, etc.)
+5. Add a changeset for your changes: `pnpm changeset`
+6. Create a pull request for review - **never push directly to main**
 
 ## GitHub CLI Commands
 
@@ -105,8 +106,8 @@ Common gh commands for this repository:
 
 Available slash commands in `.claude/commands/`:
 
-- `/analyze-and-fix-github-issue` - Analyze and fix a GitHub issue with full workflow
-- `/release` - Guide for the automated Changesets release process
+- `/spec-feature` - Create a feature specification in Gherkin format as a GitHub issue
+- `/implement-github-issue` - Implement a GitHub issue with full workflow
 - `/update-dependencies` - Update all dependencies to latest versions with PR workflow
 
 ## Configuration
