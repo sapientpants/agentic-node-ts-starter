@@ -52,11 +52,13 @@ git checkout -b fix/your-fix-name
 
 ### 3. Run Quality Checks
 
-Before committing, ensure all checks pass:
+Before committing, you can manually run all checks:
 
 ```bash
 pnpm verify  # Runs all checks: audit, typecheck, lint, format, test
 ```
+
+Note: The pre-commit hook will automatically run all these checks when you commit.
 
 Individual checks:
 
@@ -120,9 +122,14 @@ git commit -m "feat: add new validation for user input"
 
 Pre-commit hooks will automatically:
 
-- Format your code with Prettier
-- Lint with ESLint
-- Validate commit message format
+- Run security audit
+- Type check your code
+- Run ESLint checks
+- Run Prettier format checks
+- Run all tests
+- Validate commit message format (via commit-msg hook)
+
+Note: The pre-commit hook runs `pnpm precommit` which executes ALL quality checks. This ensures code quality but may take longer than typical pre-commit hooks.
 
 ### 6. Push and Create a Pull Request
 
