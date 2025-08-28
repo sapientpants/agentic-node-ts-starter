@@ -41,7 +41,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Release & Security
 
-- `pnpm changeset` - Create a changeset for your changes (interactive)
+- `pnpm changeset` - Create a changeset for your changes
 - `pnpm changeset --empty` - Create empty changeset for non-release changes
 - `pnpm changeset:status` - Check status of changesets
 - `pnpm sbom` - Generate SBOM file in CycloneDX format (sbom.cdx.json)
@@ -210,6 +210,39 @@ Use `pnpm changeset --empty` when:
 - Internal refactoring with no API changes
 - Updating dev dependencies
 
+### Creating and Editing Changesets
+
+Use `pnpm changeset` to create a changeset file, then edit it as needed:
+
+```bash
+# Create a changeset (generates a file in .changeset/)
+pnpm changeset
+
+# The command creates a file like: .changeset/fuzzy-pandas-dance.md
+# Edit the generated file to adjust version bump or description:
+
+# Example 1: Change to minor version for a feature
+cat > .changeset/fuzzy-pandas-dance.md << 'EOF'
+---
+"agentic-node-ts-starter": minor
+---
+
+feat: Add new authentication system with JWT support
+EOF
+
+# Example 2: Change to patch for a bug fix
+cat > .changeset/fuzzy-pandas-dance.md << 'EOF'
+---
+"agentic-node-ts-starter": patch
+---
+
+fix: Resolve memory leak in logger initialization
+EOF
+
+# For non-release changes
+pnpm changeset --empty
+```
+
 ### Example Workflow
 
 ```bash
@@ -220,7 +253,8 @@ git checkout -b feature/my-feature
 pnpm verify  # Ensure all checks pass
 
 # Add a changeset
-pnpm changeset  # Interactive prompt
+pnpm changeset
+# Then edit the generated .changeset/*.md file if needed
 
 # Commit with conventional commit message
 git add .

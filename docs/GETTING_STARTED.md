@@ -247,7 +247,6 @@ npx prisma init
 - **Use changesets** for version management from the start
 - **Review CLAUDE.md** to leverage AI-assisted development effectively
 - **Check existing patterns** in the template before adding new ones
-- **Follow the checklist** above for systematic customization
 
 ## Getting Help
 
