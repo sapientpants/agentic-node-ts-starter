@@ -1,5 +1,22 @@
 # agentic-node-ts-starter
 
+## 0.10.0
+
+### Minor Changes
+
+- [#74](https://github.com/sapientpants/agentic-node-ts-starter/pull/74) [`b10aa51`](https://github.com/sapientpants/agentic-node-ts-starter/commit/b10aa51a8f5dafe3d9b7b7c2b967f9f1dc0ed054) Thanks [@sapientpants](https://github.com/sapientpants)! - feat: Add container image security scanning to CI/CD pipeline
+  - Integrated Trivy scanner for vulnerability detection in Docker images
+  - Added automatic scanning before Docker Hub publication
+  - Configured SARIF output for GitHub Security tab integration
+  - Created local scanning script for developer testing
+  - Implemented configurable severity thresholds (default: HIGH/CRITICAL)
+  - Added `.trivyignore` file for false positive exclusions
+  - Included scan result caching for performance optimization
+  - Generated attestations for clean scans
+  - Added comprehensive test coverage for scanning functionality
+
+  This enhancement completes the security supply chain by providing end-to-end security coverage from source code to deployed artifacts, enabling early detection of vulnerabilities in base images and dependencies.
+
 ## 0.9.0
 
 ### Minor Changes
