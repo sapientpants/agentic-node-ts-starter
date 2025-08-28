@@ -23,6 +23,7 @@ export default defineConfig({
         '.changeset/**',
         '.claude/**',
         'node_modules/**',
+        'src/dev/**', // Development utilities - no coverage required
       ],
       thresholds: {
         branches: 80,
