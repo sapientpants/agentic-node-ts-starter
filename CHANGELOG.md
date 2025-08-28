@@ -1,5 +1,15 @@
 # agentic-node-ts-starter
 
+## 0.5.9
+
+### Patch Changes
+
+- [#58](https://github.com/sapientpants/agentic-node-ts-starter/pull/58) [`c676b92`](https://github.com/sapientpants/agentic-node-ts-starter/commit/c676b92a39fbf2c2f63a443d669773b05229d4c5) Thanks [@sapientpants](https://github.com/sapientpants)! - Fix version inconsistencies in documentation
+  - Updated README.md to show pnpm 10.15.0 instead of 10.0.0
+  - Updated Dockerfile to use pnpm 10.15.0 for consistency
+  - Updated mise.toml to specify exact pnpm version 10.15.0
+  - Ensures all configuration files and documentation reference the same tool versions
+
 ## 0.5.8
 
 ### Patch Changes
