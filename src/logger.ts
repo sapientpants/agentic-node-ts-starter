@@ -63,9 +63,13 @@ const getLoggerConfig = (): LoggerOptions => {
     // Add correlation ID support for production
     mixin() {
       return {
-        // This would typically come from request context
-        // Leaving as placeholder for OpenTelemetry integration
+        // Correlation ID placeholder - will be replaced with OpenTelemetry trace ID
+        // Future: correlationId: trace.getActiveSpan()?.spanContext().traceId
         correlationId: process.env.CORRELATION_ID,
+        // Future OpenTelemetry fields:
+        // - span_id: trace.getActiveSpan()?.spanContext().spanId
+        // - service_name: process.env.OTEL_SERVICE_NAME
+        // - service_version: process.env.OTEL_SERVICE_VERSION
       };
     },
     formatters: {
@@ -122,8 +126,24 @@ export const createChildLogger = (name: string, context: LogContext = {}): Logge
 };
 
 /**
- * OpenTelemetry integration helper (placeholder)
- * This function demonstrates how to integrate with OpenTelemetry when needed
+ * OpenTelemetry integration helper
+ *
+ * This function provides a bridge for future OpenTelemetry integration.
+ * Once OpenTelemetry is implemented, this will automatically extract
+ * trace context from the active span.
+ *
+ * Future usage:
+ * ```typescript
+ * import { trace } from '@opentelemetry/api';
+ * const span = trace.getActiveSpan();
+ * const spanContext = span?.spanContext();
+ * const tracedLogger = withTraceContext(logger, spanContext?.traceId, spanContext?.spanId);
+ * ```
+ *
+ * @param log - The logger instance to enhance with trace context
+ * @param traceId - The trace ID from OpenTelemetry context
+ * @param spanId - The span ID from OpenTelemetry context
+ * @returns Logger instance with trace context attached
  */
 export const withTraceContext = (log: Logger, traceId?: string, spanId?: string): Logger => {
   if (!traceId) return log;
@@ -131,7 +151,10 @@ export const withTraceContext = (log: Logger, traceId?: string, spanId?: string)
   return log.withContext({
     trace_id: traceId,
     span_id: spanId,
-    // OpenTelemetry trace flags could go here
+    // Future OpenTelemetry fields:
+    // - trace_flags: span?.spanContext().traceFlags
+    // - trace_state: span?.spanContext().traceState?.serialize()
+    // - baggage: propagation.getBaggage(context.active())
   });
 };
 
