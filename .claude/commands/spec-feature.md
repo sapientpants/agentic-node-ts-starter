@@ -26,7 +26,6 @@ You are about to create a feature specification in Gherkin format and turn it in
    - Labels: `enhancement`, `needs-implementation`
    - Milestone (if applicable)
    - Complete Gherkin specification in the body
-   - Implementation checklist
    - Testing requirements
 
 4. **Create the Issue**
@@ -108,16 +107,6 @@ Feature: [Feature Name]
 - Security considerations: [if any]
 - Dependencies: [external dependencies or prerequisites]
 
-### Implementation Checklist
-
-- [ ] Implement core functionality
-- [ ] Add comprehensive unit tests
-- [ ] Add property-based tests for invariants
-- [ ] Add integration tests if needed
-- [ ] Update documentation
-- [ ] Add changeset for release notes
-- [ ] Ensure all quality checks pass (`pnpm verify`)
-
 ### Testing Requirements
 
 - Unit test coverage for all new functions
@@ -162,10 +151,7 @@ I want to securely log in to the application
 So that I can access my personal data and features
 
 ### Gherkin Specification
-[... full specification ...]
-
-### Implementation Checklist
-[... checklist items ...]" \
+[... full specification ...]" \
   --label enhancement \
   --label needs-implementation
 ````
