@@ -15,6 +15,7 @@ A **batteries-included** starting point for building software with an **agentic 
 - **Testing:** Vitest 3.2+ with V8 coverage
 - **Property Testing:** fast-check 4.2+
 - **Validation:** Zod 4.1+ for runtime type safety
+- **Logging:** Pino 9.9+ for structured logging with environment-based configuration
 
 ### Code Quality
 

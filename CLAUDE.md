@@ -105,7 +105,24 @@ Common properties to test:
 - Idempotence: `f(f(a)) === f(a)`
 - Round-trip: `decode(encode(a)) === a`
 
-#### 3. Import Extensions
+#### 3. Structured Logging Pattern
+
+Use Pino logger for structured logging:
+
+```typescript
+import { createChildLogger } from './logger.js';
+
+const logger = createChildLogger('module-name');
+
+// Log with context
+logger.info({ userId: '123', action: 'login' }, 'User logged in');
+
+// Sensitive data is automatically redacted
+logger.info({ password: 'secret', safe: 'data' }, 'Request processed');
+// Output will redact password field
+```
+
+#### 4. Import Extensions
 
 Always use `.js` extension in imports for ES modules:
 
