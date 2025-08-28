@@ -73,31 +73,15 @@ describe('Container Security Scanning', () => {
   });
 
   describe('GitHub Actions Integration', () => {
-    it('should have reusable container scan workflow', () => {
+    it('should NOT have a separate reusable container scan workflow', () => {
+      // Container scanning is inlined in publish.yml for simplicity
       const workflowPath = join(
         process.cwd(),
         '.github',
         'workflows',
         'reusable-container-scan.yml',
       );
-      expect(existsSync(workflowPath)).toBe(true);
-    });
-
-    it('should have proper workflow configuration', () => {
-      const workflowPath = join(
-        process.cwd(),
-        '.github',
-        'workflows',
-        'reusable-container-scan.yml',
-      );
-      const content = readFileSync(workflowPath, 'utf-8');
-
-      // Check for required workflow components
-      expect(content).toContain('workflow_call:');
-      expect(content).toContain('aquasecurity/trivy-action');
-      expect(content).toContain('severity-threshold:');
-      expect(content).toContain('upload-sarif:');
-      expect(content).toContain('SARIF');
+      expect(existsSync(workflowPath)).toBe(false);
     });
 
     it('should NOT integrate container scan in PR workflow', () => {
@@ -105,64 +89,45 @@ describe('Container Security Scanning', () => {
       const prWorkflowPath = join(process.cwd(), '.github', 'workflows', 'pr.yml');
       const content = readFileSync(prWorkflowPath, 'utf-8');
       expect(content).not.toContain('container-scan:');
-      expect(content).not.toContain('reusable-container-scan.yml');
+      expect(content).not.toContain('trivy');
     });
 
-    it('should integrate container scan in publish workflow', () => {
+    it('should integrate container scan directly in publish workflow', () => {
       const publishWorkflowPath = join(process.cwd(), '.github', 'workflows', 'publish.yml');
       const content = readFileSync(publishWorkflowPath, 'utf-8');
-      expect(content).toContain('docker-scan:');
-      expect(content).toContain('needs: docker-scan');
+      expect(content).toContain('Scan Docker image for vulnerabilities');
+      expect(content).toContain('aquasecurity/trivy-action');
+      expect(content).toContain('Upload Trivy results to GitHub Security');
+      expect(content).toContain('Build Docker image');
+      expect(content).toContain('Push Docker image to Docker Hub');
     });
   });
 
   describe('Scan Configuration', () => {
     it('should support configurable severity thresholds', () => {
-      const workflowPath = join(
-        process.cwd(),
-        '.github',
-        'workflows',
-        'reusable-container-scan.yml',
-      );
+      const workflowPath = join(process.cwd(), '.github', 'workflows', 'publish.yml');
       const content = readFileSync(workflowPath, 'utf-8');
-      expect(content).toContain("default: 'HIGH,CRITICAL'");
-      expect(content).toContain('severity-threshold:');
+      expect(content).toContain("severity: 'CRITICAL,HIGH'");
     });
 
     it('should support SARIF output format', () => {
-      const workflowPath = join(
-        process.cwd(),
-        '.github',
-        'workflows',
-        'reusable-container-scan.yml',
-      );
+      const workflowPath = join(process.cwd(), '.github', 'workflows', 'publish.yml');
       const content = readFileSync(workflowPath, 'utf-8');
       expect(content).toContain("format: 'sarif'");
       expect(content).toContain('github/codeql-action/upload-sarif');
     });
 
-    it('should support scan result caching', () => {
-      const workflowPath = join(
-        process.cwd(),
-        '.github',
-        'workflows',
-        'reusable-container-scan.yml',
-      );
+    it('should support Docker build caching', () => {
+      const workflowPath = join(process.cwd(), '.github', 'workflows', 'publish.yml');
       const content = readFileSync(workflowPath, 'utf-8');
-      expect(content).toContain('cache-dir:');
       expect(content).toContain('cache-from: type=gha');
+      expect(content).toContain('cache-to: type=gha,mode=max');
     });
 
-    it('should generate attestations for clean scans', () => {
-      const workflowPath = join(
-        process.cwd(),
-        '.github',
-        'workflows',
-        'reusable-container-scan.yml',
-      );
+    it('should fail on vulnerabilities by default', () => {
+      const workflowPath = join(process.cwd(), '.github', 'workflows', 'publish.yml');
       const content = readFileSync(workflowPath, 'utf-8');
-      expect(content).toContain('Generate attestation for clean scan');
-      expect(content).toContain('actions/attest-build-provenance');
+      expect(content).toContain("exit-code: '1'");
     });
   });
 
