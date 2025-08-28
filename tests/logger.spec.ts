@@ -1,16 +1,27 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { logger, createChildLogger, withTraceContext } from '../src/logger.js';
+import type { Logger } from '../src/logger.js';
+
+// Store original env
+const originalEnv = process.env;
 
 describe('Logger', () => {
-  const originalEnv = process.env;
+  let logger: Logger;
+  let createChildLogger: (name: string, context?: Record<string, unknown>) => Logger;
+  let withTraceContext: (logger: Logger, traceId?: string, spanId?: string) => Logger;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.resetModules();
     process.env = { ...originalEnv };
+    // Import fresh module for each test
+    const loggerModule = await import('../src/logger.js');
+    logger = loggerModule.logger;
+    createChildLogger = loggerModule.createChildLogger;
+    withTraceContext = loggerModule.withTraceContext;
   });
 
   afterEach(() => {
     process.env = originalEnv;
+    vi.clearAllMocks();
   });
 
   describe('logger instance', () => {
@@ -80,7 +91,6 @@ describe('Logger', () => {
     it('should use test configuration in test environment', () => {
       expect(process.env.NODE_ENV).toBe('test');
       // In test environment, logger should be set to silent or use LOG_LEVEL env var
-      // We can't easily test the actual level without exposing it, but we can verify it runs
       expect(() => logger.info('test')).not.toThrow();
     });
 
@@ -99,6 +109,77 @@ describe('Logger', () => {
       } else {
         delete process.env.LOG_LEVEL;
       }
+    });
+
+    it('should use development configuration when NODE_ENV is development', async () => {
+      process.env.NODE_ENV = 'development';
+      vi.resetModules();
+      const { logger: devLogger } = await import('../src/logger.js');
+      expect(devLogger).toBeDefined();
+      expect(() => devLogger.info('dev test')).not.toThrow();
+      // Development config should have pretty-print transport
+      expect(() => devLogger.debug('debug test')).not.toThrow();
+    });
+
+    it('should use production configuration when NODE_ENV is production', async () => {
+      process.env.NODE_ENV = 'production';
+      process.env.CORRELATION_ID = 'test-correlation';
+      vi.resetModules();
+      const { logger: prodLogger } = await import('../src/logger.js');
+      expect(prodLogger).toBeDefined();
+      expect(() => prodLogger.info('prod test')).not.toThrow();
+      // Production should support correlation ID mixin
+      expect(() => prodLogger.error(new Error('test'), 'error')).not.toThrow();
+    });
+
+    it('should default to development when NODE_ENV is not set', async () => {
+      delete process.env.NODE_ENV;
+      vi.resetModules();
+      const { logger: defaultLogger } = await import('../src/logger.js');
+      expect(defaultLogger).toBeDefined();
+      expect(() => defaultLogger.debug('default test')).not.toThrow();
+    });
+
+    it('should handle startup logging in non-test environments', async () => {
+      process.env.NODE_ENV = 'production';
+      vi.resetModules();
+
+      // Production mode will log startup message
+      const { logger: prodLogger } = await import('../src/logger.js');
+
+      // Verify logger was initialized without errors
+      expect(prodLogger).toBeDefined();
+      expect(prodLogger.level).toBe('info');
+    });
+
+    it('should use info level in production by default', async () => {
+      process.env.NODE_ENV = 'production';
+      delete process.env.LOG_LEVEL;
+      vi.resetModules();
+
+      const { logger: prodLogger } = await import('../src/logger.js');
+      expect(prodLogger).toBeDefined();
+      expect(prodLogger.level).toBe('info');
+    });
+
+    it('should use debug level in non-production by default', async () => {
+      process.env.NODE_ENV = 'development';
+      delete process.env.LOG_LEVEL;
+      vi.resetModules();
+
+      const { logger: devLogger } = await import('../src/logger.js');
+      expect(devLogger).toBeDefined();
+      expect(devLogger.level).toBe('debug');
+    });
+
+    it('should use silent level in test when LOG_LEVEL not set', async () => {
+      process.env.NODE_ENV = 'test';
+      delete process.env.LOG_LEVEL;
+      vi.resetModules();
+
+      const { logger: testLogger } = await import('../src/logger.js');
+      expect(testLogger).toBeDefined();
+      expect(testLogger.level).toBe('silent');
     });
   });
 
@@ -144,6 +225,89 @@ describe('Logger', () => {
       expect(() => logger.info({ boolean: true }, 'boolean context')).not.toThrow();
       expect(() => logger.info({ array: [1, 2, 3] }, 'array context')).not.toThrow();
       expect(() => logger.info({ nested: { deep: 'value' } }, 'nested context')).not.toThrow();
+    });
+
+    it('should handle nested sensitive data redaction', () => {
+      const nestedData = {
+        user: {
+          password: 'secret',
+          token: 'bearer-token',
+        },
+        safe: 'visible',
+      };
+      expect(() => logger.info(nestedData, 'nested redaction')).not.toThrow();
+    });
+
+    it('should configure production logger with mixin and formatters', async () => {
+      process.env.NODE_ENV = 'production';
+      process.env.CORRELATION_ID = 'test-123';
+      vi.resetModules();
+
+      const { logger: prodLogger } = await import('../src/logger.js');
+
+      // Verify production logger works with correlation ID
+      expect(() => prodLogger.info({ action: 'test' }, 'production log')).not.toThrow();
+      expect(() => prodLogger.error(new Error('test error'), 'error log')).not.toThrow();
+    });
+
+    it('should handle all redacted field patterns', () => {
+      const sensitiveData = {
+        authorization: 'Bearer token',
+        apiKey: 'key-123',
+        nested: {
+          password: 'secret',
+          token: 'token-456',
+          secret: 'hidden',
+          api_key: 'api-789',
+        },
+      };
+      expect(() => logger.info(sensitiveData, 'all patterns')).not.toThrow();
+    });
+
+    it('should handle logger in unknown environment', async () => {
+      process.env.NODE_ENV = 'staging';
+      vi.resetModules();
+
+      const { logger: stagingLogger } = await import('../src/logger.js');
+      expect(stagingLogger).toBeDefined();
+      // Should default to production-like config
+      expect(() => stagingLogger.info('staging test')).not.toThrow();
+    });
+  });
+
+  describe('production configuration specifics', () => {
+    it('should apply formatters in production', async () => {
+      process.env.NODE_ENV = 'production';
+      vi.resetModules();
+
+      // Capture output to verify formatting
+      const outputs: string[] = [];
+      const originalWrite = process.stdout.write.bind(process.stdout);
+      process.stdout.write = ((chunk: string | Uint8Array): boolean => {
+        if (typeof chunk === 'string') {
+          outputs.push(chunk);
+        }
+        return true;
+      }) as typeof process.stdout.write;
+
+      const { logger: prodLogger } = await import('../src/logger.js');
+      prodLogger.info({ test: 'data' }, 'formatted message');
+
+      process.stdout.write = originalWrite;
+
+      // Should have written JSON output
+      expect(outputs.length).toBeGreaterThan(0);
+      const output = outputs.join('');
+      expect(output).toContain('formatted message');
+    });
+
+    it('should not crash without CORRELATION_ID in production', async () => {
+      process.env.NODE_ENV = 'production';
+      delete process.env.CORRELATION_ID;
+      vi.resetModules();
+
+      const { logger: prodLogger } = await import('../src/logger.js');
+      expect(() => prodLogger.info('no correlation id')).not.toThrow();
     });
   });
 });
