@@ -1,5 +1,17 @@
 # agentic-node-ts-starter
 
+## 0.5.10
+
+### Patch Changes
+
+- [#59](https://github.com/sapientpants/agentic-node-ts-starter/pull/59) [`be7fa33`](https://github.com/sapientpants/agentic-node-ts-starter/commit/be7fa335ce96f76f540875d5b1b7c00410c92621) Thanks [@sapientpants](https://github.com/sapientpants)! - Fix Husky pre-commit hook configuration and rename scripts for clarity
+  - Fixed missing shebang line in `.husky/pre-commit` hook
+  - Renamed `verify` script to `precommit` to better indicate its purpose
+  - Created `verify` as an alias to `precommit` for backwards compatibility
+  - Renamed old `precommit` script to `lint-staged` for clarity
+  - Updated documentation to reflect that pre-commit runs ALL checks
+  - Pre-commit hook now correctly runs comprehensive checks on every commit
+
 ## 0.5.9
 
 ### Patch Changes
