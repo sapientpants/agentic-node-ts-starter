@@ -38,7 +38,7 @@ describe('Documentation', () => {
       let match;
 
       while ((match = linkPattern.exec(readmeContent)) !== null) {
-        links.push({ text: match[1] ?? '', url: match[2] ?? '' });
+        links.push({ text: match[1], url: match[2] });
       }
 
       // Check internal links (starting with ./ or ../)
