@@ -75,7 +75,7 @@ jobs:
         # Automatically detects all workflow files in .github/workflows/
         uses: reviewdog/action-actionlint@v1
         with:
-          fail_on_error: true # Fail the job if errors are found
+          fail_level: error # Fail the job if errors are found
           reporter: github-pr-check # Report errors as PR checks
 
   # =============================================================================
