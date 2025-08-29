@@ -42,6 +42,10 @@ on:
         description: 'Generate and upload test coverage reports'
         type: boolean
         default: false
+    secrets:
+      SONAR_TOKEN:
+        description: 'SonarCloud authentication token'
+        required: false
 
 # EXAMPLE USAGE:
 # jobs:
