@@ -1,5 +1,18 @@
 # agentic-node-ts-starter
 
+## 0.19.1
+
+### Patch Changes
+
+- [#90](https://github.com/sapientpants/agentic-node-ts-starter/pull/90) [`9ceb406`](https://github.com/sapientpants/agentic-node-ts-starter/commit/9ceb40611178e4342a8fabe34eb7df381b54b954) Thanks [@sapientpants](https://github.com/sapientpants)! - fix: resolve SonarQube issues
+
+  Fixed 18 SonarQube issues to improve code quality:
+  - Fixed 2 MINOR issues: Updated deprecated Zod methods (uuid and email) with proper options
+  - Fixed 1 MAJOR issue: Marked startTime field as readonly in PerformanceTimer class
+  - Excluded test template files from SonarQube analysis (15 BLOCKER false positives)
+
+  The template files are intentionally incomplete examples and should not be analyzed for test assertions.
+
 ## 0.19.0
 
 ### Minor Changes
