@@ -34,8 +34,8 @@ fi
 # Run actionlint with provided arguments or default to checking .github/workflows/
 if [ $# -eq 0 ]; then
     echo -e "${GREEN}Running actionlint on .github/workflows/...${NC}"
-    # Run actionlint and capture output, ignoring SC2086 shellcheck warnings
-    OUTPUT=$(actionlint -ignore 'SC2086:' 2>&1)
+    # Run actionlint and capture output
+    OUTPUT=$(actionlint 2>&1)
     EXIT_CODE=$?
     
     if [ -n "$OUTPUT" ]; then
