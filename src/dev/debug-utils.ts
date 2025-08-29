@@ -14,7 +14,7 @@ const logger = createChildLogger('debug-utils');
  * Performance timer for debugging slow operations
  */
 export class PerformanceTimer {
-  private startTime: number;
+  private readonly startTime: number;
   private readonly label: string;
 
   constructor(label: string) {
