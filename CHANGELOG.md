@@ -1,5 +1,15 @@
 # agentic-node-ts-starter
 
+## 0.14.1
+
+### Patch Changes
+
+- [#82](https://github.com/sapientpants/agentic-node-ts-starter/pull/82) [`b24e2ea`](https://github.com/sapientpants/agentic-node-ts-starter/commit/b24e2ea0513d94413b1e2c66074cdfde66613148) Thanks [@sapientpants](https://github.com/sapientpants)! - ci: always generate test coverage in validation workflow
+  - Remove conditional coverage generation
+  - Always run tests with coverage in CI for better visibility
+  - Upload coverage artifacts for all builds
+  - Ensure SonarQube always receives coverage data
+
 ## 0.14.0
 
 ### Minor Changes
