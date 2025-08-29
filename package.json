@@ -19,6 +19,7 @@
     "lint:workflows": "./scripts/actionlint.sh",
     "lint:markdown": "markdownlint-cli2 \"**/*.md\" \"#node_modules\"",
     "lint:markdown:fix": "markdownlint-cli2 --fix \"**/*.md\" \"#node_modules\"",
+    "lint:yaml": "yamllint '**/*.{yml,yaml}' --ignore='node_modules/**' --ignore='.github/workflows/**' --ignore='pnpm-lock.yaml'",
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
     "test": "vitest run --reporter=verbose",
@@ -31,7 +32,7 @@
     "clean": "rimraf dist coverage",
     "reset": "pnpm clean && pnpm install",
     "quick-check": "pnpm typecheck && pnpm lint && pnpm test",
-    "precommit": "pnpm audit --audit-level critical && pnpm typecheck && pnpm lint && pnpm lint:workflows && pnpm lint:markdown && pnpm format && pnpm test",
+    "precommit": "pnpm audit --audit-level critical && pnpm typecheck && pnpm lint && pnpm lint:workflows && pnpm lint:markdown && pnpm lint:yaml && pnpm format && pnpm test",
     "verify": "pnpm precommit",
     "setup": "./scripts/setup.sh",
     "lint-staged": "lint-staged",
@@ -58,6 +59,9 @@
     ],
     "*.md": [
       "markdownlint-cli2 --fix"
+    ],
+    "*.{yml,yaml}": [
+      "yamllint"
     ]
   },
   "dependencies": {
@@ -87,6 +91,7 @@
     "prettier": "^3.6.2",
     "rimraf": "^6.0.1",
     "typescript": "^5.9.2",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "yaml-lint": "1.7.0"
   }
 }
