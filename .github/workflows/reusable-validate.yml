@@ -86,8 +86,6 @@ jobs:
         # To fix: Run 'pnpm format:fix' to auto-format
         run: pnpm format
 
-      - name: Tests
-        if: inputs.run-tests
         # Run test suite with coverage
         # Coverage enforces 80% minimum threshold for all metrics
         # FAILS IF: Tests fail or coverage below 80% (when coverage enabled)
