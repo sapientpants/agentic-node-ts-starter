@@ -42,10 +42,20 @@ if [ $# -eq 0 ]; then
         # Always show the output for transparency
         echo "$OUTPUT"
         
-        # Check if output only contains shellcheck info warnings
+        # Store grep results in variables to avoid redundant processing
+        HAS_SHELLCHECK_INFO=0
+        HAS_SHELLCHECK_ERRORS=0
         if echo "$OUTPUT" | grep -q "SC[0-9]*:info:"; then
+            HAS_SHELLCHECK_INFO=1
+        fi
+        if echo "$OUTPUT" | grep -qE "SC[0-9]*:(error|warning):"; then
+            HAS_SHELLCHECK_ERRORS=1
+        fi
+
+        # Check if output only contains shellcheck info warnings
+        if [ "$HAS_SHELLCHECK_INFO" -eq 1 ]; then
             # Has shellcheck info warnings - check if there are also errors
-            if echo "$OUTPUT" | grep -qE "SC[0-9]*:(error|warning):"; then
+            if [ "$HAS_SHELLCHECK_ERRORS" -eq 1 ]; then
                 # There are actual errors or warnings beyond info level
                 echo ""
                 echo -e "${RED}✗ Workflow validation failed - errors or warnings found${NC}"
