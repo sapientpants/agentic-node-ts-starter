@@ -1,5 +1,24 @@
 # agentic-node-ts-starter
 
+## 0.13.0
+
+### Minor Changes
+
+- [#79](https://github.com/sapientpants/agentic-node-ts-starter/pull/79) [`9744372`](https://github.com/sapientpants/agentic-node-ts-starter/commit/9744372b16b66bb05d6d039a4dc21e070f76ab55) Thanks [@sapientpants](https://github.com/sapientpants)! - feat: enhance developer experience with comprehensive DX improvements
+  - Add one-command setup script reducing onboarding from 30min to <5min
+  - Implement VS Code configuration with optimized settings and debugging
+  - Create Makefile shortcuts for common development tasks
+  - Add local CI simulation to catch issues before pushing
+  - Enhance testing experience with utilities, templates, and UI mode
+  - Implement debugging utilities with performance monitoring and tracing
+  - Add comprehensive development documentation and command discovery
+  - Optimize npm scripts for faster development workflows
+  - Add robust error handling for OSV scanner and decorator validation
+  - Create generic test utilities replacing specific domain examples
+  - Exclude dev utilities from coverage requirements
+
+  This is a significant improvement to developer experience that adds new functionality and workflows for developers while maintaining code quality and robustness.
+
 ## 0.12.0
 
 ### Minor Changes
