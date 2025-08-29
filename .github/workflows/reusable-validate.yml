@@ -42,6 +42,10 @@ on:
         description: 'Generate and upload test coverage reports'
         type: boolean
         default: false
+    secrets:
+      SONAR_TOKEN:
+        description: 'SonarCloud authentication token'
+        required: false
 
 # EXAMPLE USAGE:
 # jobs:
@@ -124,6 +128,12 @@ jobs:
             # Run without coverage for speed
             pnpm test
           fi
+
+      - name: SonarQube Scan
+        if: inputs.run-tests && inputs.upload-coverage
+        uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: Upload coverage
         # Make coverage reports available for review

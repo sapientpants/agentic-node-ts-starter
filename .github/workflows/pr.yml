@@ -40,6 +40,8 @@ jobs:
     uses: ./.github/workflows/reusable-validate.yml
     with:
       upload-coverage: true # Generate coverage artifacts for review
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   # CodeQL: Static security analysis for TypeScript/JavaScript
   # Scans for: XSS, injection attacks, insecure patterns
