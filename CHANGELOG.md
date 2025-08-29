@@ -1,5 +1,15 @@
 # agentic-node-ts-starter
 
+## 0.14.0
+
+### Minor Changes
+
+- [#80](https://github.com/sapientpants/agentic-node-ts-starter/pull/80) [`a9dffcc`](https://github.com/sapientpants/agentic-node-ts-starter/commit/a9dffcc3fdda75c72e946babcd46f67e643a2c7e) Thanks [@sapientpants](https://github.com/sapientpants)! - feat: Add SonarCloud integration for continuous code quality monitoring
+  - Integrate SonarQube scan in CI/CD pipeline for automated code analysis
+  - Configure sonar-project.properties with TypeScript and coverage settings
+  - Enable quality gate enforcement with existing LCOV coverage reports
+  - Provide continuous feedback on code maintainability, security, and reliability
+
 ## 0.13.0
 
 ### Minor Changes
