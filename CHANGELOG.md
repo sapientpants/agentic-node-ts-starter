@@ -1,5 +1,16 @@
 # agentic-node-ts-starter
 
+## 0.16.0
+
+### Minor Changes
+
+- [#86](https://github.com/sapientpants/agentic-node-ts-starter/pull/86) [`0cdbb73`](https://github.com/sapientpants/agentic-node-ts-starter/commit/0cdbb733fe665ff664552c646b9e04826f09a696) Thanks [@sapientpants](https://github.com/sapientpants)! - feat: add JSON linting with eslint-plugin-jsonc
+  - Integrate eslint-plugin-jsonc for comprehensive JSON/JSONC/JSON5 linting
+  - Configure specific rules for package.json (key ordering) and tsconfig files (allow comments)
+  - Add JSON files to lint-staged for automatic formatting on commit
+  - Exclude auto-generated files (sbom.cdx.json) from linting
+  - Enforce consistent JSON formatting: 2-space indentation, double quotes, proper key spacing
+
 ## 0.15.0
 
 ### Minor Changes
