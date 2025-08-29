@@ -1,5 +1,36 @@
 # agentic-node-ts-starter
 
+## 0.15.0
+
+### Minor Changes
+
+- [#83](https://github.com/sapientpants/agentic-node-ts-starter/pull/83) [`0fdb55c`](https://github.com/sapientpants/agentic-node-ts-starter/commit/0fdb55c34d93765de2a426b05715341be4841f98) Thanks [@sapientpants](https://github.com/sapientpants)! - feat: add actionlint for GitHub Actions workflow validation
+  - Add actionlint wrapper script to check for workflow installation
+  - Integrate actionlint into precommit validation process
+  - Add actionlint job to PR workflow for CI validation
+  - Add configuration file for customizing actionlint rules
+  - Ensure workflow files are validated both locally and in CI
+
+  This helps catch workflow errors early, including:
+  - Syntax errors in YAML
+  - Undefined outputs and secrets
+  - Incorrect action inputs
+  - Shell script issues via shellcheck integration
+  - Best practice violations
+
+### Patch Changes
+
+- [#84](https://github.com/sapientpants/agentic-node-ts-starter/pull/84) [`a38af6b`](https://github.com/sapientpants/agentic-node-ts-starter/commit/a38af6b7d910d42cfde7815cb464b7937d1b31cf) Thanks [@sapientpants](https://github.com/sapientpants)! - fix: add actionlint installation to reusable validate workflow
+  - Install actionlint in CI using official download script from rhysd/actionlint
+  - Add workflow linting step to validation pipeline after format checking
+  - Ensures lint:workflows script works properly in CI environments
+  - Uses the same validation that runs locally via precommit hooks
+
+- [#85](https://github.com/sapientpants/agentic-node-ts-starter/pull/85) [`cc86f88`](https://github.com/sapientpants/agentic-node-ts-starter/commit/cc86f88ed994a6c8bffadd8a65a5088a31d96011) Thanks [@sapientpants](https://github.com/sapientpants)! - fix: skip actionlint in CI when not installed during release
+  - Skip actionlint validation in CI environments when not installed
+  - Workflows are already validated during PR checks, no need to re-validate
+  - Prevents release workflow failures while maintaining local development checks
+
 ## 0.14.1
 
 ### Patch Changes
