@@ -86,6 +86,20 @@ jobs:
         # To fix: Run 'pnpm format:fix' to auto-format
         run: pnpm format
 
+      - name: Install actionlint
+        # Install actionlint for workflow validation
+        # Uses the official installer script from rhysd/actionlint
+        run: |
+          echo "Installing actionlint..."
+          bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          echo "${PWD}" >> $GITHUB_PATH
+
+      - name: Workflow linting
+        # Validate GitHub Actions workflow files
+        # FAILS IF: Workflow syntax errors or issues found
+        # To debug: Run 'pnpm lint:workflows' locally
+        run: pnpm lint:workflows
+
       - name: Tests with coverage
         # Run test suite with coverage
         # Coverage enforces 80% minimum threshold for all metrics
