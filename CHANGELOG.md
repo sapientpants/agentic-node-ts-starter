@@ -1,5 +1,13 @@
 # agentic-node-ts-starter
 
+## 0.19.0
+
+### Minor Changes
+
+- [#89](https://github.com/sapientpants/agentic-node-ts-starter/pull/89) [`cdf0649`](https://github.com/sapientpants/agentic-node-ts-starter/commit/cdf06491dfcd151bd95a90cdc63f804bc02663e1) Thanks [@sapientpants](https://github.com/sapientpants)! - feat: add Claude command to fix SonarQube issues
+
+  Add `/fix-sonarqube-issues` command that automates the process of identifying and fixing SonarQube issues. The command first checks if issues exist before creating a branch, then fixes issues by priority (BLOCKER → CRITICAL → MAJOR → MINOR → INFO), validates changes, creates a changeset, commits, and creates a PR. Streamlines code quality improvements by automating the entire workflow from issue detection to PR creation.
+
 ## 0.18.0
 
 ### Minor Changes
