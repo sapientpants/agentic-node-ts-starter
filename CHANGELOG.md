@@ -1,5 +1,18 @@
 # agentic-node-ts-starter
 
+## 0.17.0
+
+### Minor Changes
+
+- [#87](https://github.com/sapientpants/agentic-node-ts-starter/pull/87) [`48f93a4`](https://github.com/sapientpants/agentic-node-ts-starter/commit/48f93a459fa22ad3a86e05f1ce672e3cb574ad9f) Thanks [@sapientpants](https://github.com/sapientpants)! - feat: add markdown linting with markdownlint-cli2
+  - Integrate markdownlint-cli2 for comprehensive markdown validation
+  - Configure sensible markdown rules with flexibility for documentation needs
+  - Add markdown linting to npm scripts (lint:markdown and lint:markdown:fix)
+  - Integrate with lint-staged for automatic markdown formatting on commit
+  - Include markdown linting in precommit validation pipeline
+  - Create .markdownlintignore for excluding generated files
+  - Fix duplicate heading in README.md to comply with linting rules
+
 ## 0.16.0
 
 ### Minor Changes
