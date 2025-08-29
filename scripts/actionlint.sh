@@ -14,6 +14,13 @@ NC='\033[0m' # No Color
 
 # Check if actionlint is installed
 if ! command -v actionlint &> /dev/null; then
+    # In CI environments during release, skip actionlint since workflows were already validated in PR
+    if [ "${CI:-false}" = "true" ] || [ "${GITHUB_ACTIONS:-false}" = "true" ]; then
+        echo -e "${YELLOW}Skipping actionlint in CI (already validated in PR workflow)${NC}"
+        exit 0
+    fi
+    
+    # In local development, provide installation instructions
     echo -e "${RED}Error: actionlint is not installed${NC}"
     echo ""
     echo -e "${YELLOW}Please install actionlint using one of the following methods:${NC}"

@@ -162,6 +162,15 @@ jobs:
       # Commit version changes and create release tag
       # =============================================================================
 
+      - name: Install actionlint for pre-commit validation
+        # Install actionlint so pre-commit hooks can run workflow validation
+        # Uses the official installer script from rhysd/actionlint
+        if: steps.version.outputs.changed == 'true'
+        run: |
+          echo "Installing actionlint for pre-commit validation..."
+          bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          echo "${PWD}" >> $GITHUB_PATH
+
       - name: Commit version changes
         # Creates release commit with updated package.json and CHANGELOG.md
         # [skip actions] prevents infinite loop by skipping this workflow on the commit
