@@ -17,6 +17,8 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "lint:workflows": "./scripts/actionlint.sh",
+    "lint:markdown": "markdownlint-cli2 \"**/*.md\" \"#node_modules\"",
+    "lint:markdown:fix": "markdownlint-cli2 --fix \"**/*.md\" \"#node_modules\"",
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
     "test": "vitest run --reporter=verbose",
@@ -29,7 +31,7 @@
     "clean": "rimraf dist coverage",
     "reset": "pnpm clean && pnpm install",
     "quick-check": "pnpm typecheck && pnpm lint && pnpm test",
-    "precommit": "pnpm audit --audit-level critical && pnpm typecheck && pnpm lint && pnpm lint:workflows && pnpm format && pnpm test",
+    "precommit": "pnpm audit --audit-level critical && pnpm typecheck && pnpm lint && pnpm lint:workflows && pnpm lint:markdown && pnpm format && pnpm test",
     "verify": "pnpm precommit",
     "setup": "./scripts/setup.sh",
     "lint-staged": "lint-staged",
@@ -53,6 +55,9 @@
     ],
     "*.{ts,tsx,js,json,jsonc,json5}": [
       "eslint --fix"
+    ],
+    "*.md": [
+      "markdownlint-cli2 --fix"
     ]
   },
   "dependencies": {
@@ -77,6 +82,7 @@
     "husky": "^9.1.7",
     "jsonc-eslint-parser": "2.4.0",
     "lint-staged": "^16.1.5",
+    "markdownlint-cli2": "0.18.1",
     "pino-pretty": "13.1.1",
     "prettier": "^3.6.2",
     "rimraf": "^6.0.1",
