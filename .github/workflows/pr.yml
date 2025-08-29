@@ -58,6 +58,27 @@ jobs:
     uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable-pr.yml@v2.2.2
 
   # =============================================================================
+  # WORKFLOW VALIDATION
+  # Lint GitHub Actions workflow files for errors
+  # =============================================================================
+
+  # Actionlint: Validate GitHub Actions workflow syntax and best practices
+  # Catches: undefined outputs, typos, bash errors, incorrect action inputs
+  actionlint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run actionlint
+        # Uses the official actionlint Docker action
+        # Automatically detects all workflow files in .github/workflows/
+        uses: reviewdog/action-actionlint@v1
+        with:
+          fail_level: error # Fail the job if errors are found
+          reporter: github-pr-check # Report errors as PR checks
+
+  # =============================================================================
   # CHANGESET VALIDATION
   # Ensures features and fixes have proper changelog entries
   # =============================================================================
@@ -106,7 +127,7 @@ jobs:
   # Final status check - ensures all jobs passed
   # Required for branch protection rules
   pr-status:
-    needs: [validate, codeql, vulnerability, changeset]
+    needs: [validate, codeql, vulnerability, actionlint, changeset]
     if: always() # Run even if previous jobs failed
     runs-on: ubuntu-latest
     steps:
@@ -118,17 +139,20 @@ jobs:
         #   - validate: Tests fail, coverage below 80%, lint errors
         #   - codeql: Security vulnerabilities detected
         #   - vulnerability: Vulnerable dependencies found
+        #   - actionlint: Workflow syntax errors or best practice violations
         #   - changeset: Missing changeset for feat/fix commits
         run: |
           if [ "${{ needs.validate.result }}" != "success" ] || \
              [ "${{ needs.codeql.result }}" != "success" ] || \
              [ "${{ needs.vulnerability.result }}" != "success" ] || \
+             [ "${{ needs.actionlint.result }}" != "success" ] || \
              [ "${{ needs.changeset.result }}" != "success" ]; then
             echo "❌ PR validation failed"
             # Check individual job results for debugging
             echo "Validate: ${{ needs.validate.result }}"
             echo "CodeQL: ${{ needs.codeql.result }}"
             echo "Vulnerability: ${{ needs.vulnerability.result }}"
+            echo "Actionlint: ${{ needs.actionlint.result }}"
             echo "Changeset: ${{ needs.changeset.result }}"
             exit 1
           fi
