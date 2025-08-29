@@ -1,5 +1,13 @@
 # agentic-node-ts-starter
 
+## 0.18.0
+
+### Minor Changes
+
+- [#88](https://github.com/sapientpants/agentic-node-ts-starter/pull/88) [`cd5ef4a`](https://github.com/sapientpants/agentic-node-ts-starter/commit/cd5ef4ac60275ba8259319b412cbf4392d6d24e7) Thanks [@sapientpants](https://github.com/sapientpants)! - feat: add YAML linting with yaml-lint
+
+  Integrate yaml-lint package for comprehensive YAML validation across the codebase. Configure appropriate exclusions for node_modules, GitHub workflows (already handled by actionlint), and auto-generated lock files. Add lint:yaml npm script and integrate with lint-staged for automatic validation on commit. Create .yamllintignore and .yaml-lint.yml configuration files using FAILSAFE_SCHEMA for maximum compatibility.
+
 ## 0.17.0
 
 ### Minor Changes
