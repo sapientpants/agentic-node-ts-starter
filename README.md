@@ -340,7 +340,7 @@ To enable GitHub Pages documentation:
 - **SLSA Provenance**: Build attestations
 - **Container Attestations**: SBOM and provenance for Docker images
 
-## 📖 Documentation
+## 📚 Additional Resources
 
 - [Contributing Guide](./CONTRIBUTING.md) - How to contribute to this project
 - [Development Process](./docs/PROCESS.md) - End-to-end workflow and checklists
