@@ -18,30 +18,6 @@ on:
         description: 'pnpm version (should match package.json packageManager)'
         type: string
         default: '10.15.0' # UPDATE: When upgrading pnpm
-      run-audit:
-        description: 'Run security audit for dependencies'
-        type: boolean
-        default: true
-      run-typecheck:
-        description: 'Run TypeScript type checking'
-        type: boolean
-        default: true
-      run-lint:
-        description: 'Run ESLint checks'
-        type: boolean
-        default: true
-      run-format:
-        description: 'Run Prettier format checking'
-        type: boolean
-        default: true
-      run-tests:
-        description: 'Run test suite'
-        type: boolean
-        default: true
-      upload-coverage:
-        description: 'Generate and upload test coverage reports'
-        type: boolean
-        default: false
     secrets:
       SONAR_TOKEN:
         description: 'SonarCloud authentication token'
@@ -87,28 +63,24 @@ jobs:
       # =============================================================================
 
       - name: Security audit
-        if: inputs.run-audit
         # Check for known vulnerabilities in dependencies
         # FAILS IF: Critical vulnerabilities found
         # To fix: Run 'pnpm update' or add overrides in package.json
         run: pnpm audit --audit-level critical
 
       - name: Type checking
-        if: inputs.run-typecheck
         # Validate TypeScript types without emitting files
         # FAILS IF: Type errors in any .ts file
         # To debug: Run 'pnpm typecheck' locally for detailed errors
         run: pnpm typecheck
 
       - name: Linting
-        if: inputs.run-lint
         # Run ESLint with type-aware rules
         # FAILS IF: Linting errors (not warnings)
         # To fix: Run 'pnpm lint:fix' for auto-fixable issues
         run: pnpm lint
 
       - name: Format checking
-        if: inputs.run-format
         # Verify code follows Prettier formatting
         # FAILS IF: Any file not formatted
         # To fix: Run 'pnpm format:fix' to auto-format
@@ -116,21 +88,13 @@ jobs:
 
       - name: Tests
         if: inputs.run-tests
-        # Run test suite with or without coverage
+        # Run test suite with coverage
         # Coverage enforces 80% minimum threshold for all metrics
         # FAILS IF: Tests fail or coverage below 80% (when coverage enabled)
         # To debug: Check test output and coverage/index.html
-        run: |
-          if [ "${{ inputs.upload-coverage }}" = "true" ]; then
-            # Run with coverage for PRs
-            pnpm test:coverage
-          else
-            # Run without coverage for speed
-            pnpm test
-          fi
+        run: pnpm test:coverage
 
       - name: SonarQube Scan
-        if: inputs.run-tests && inputs.upload-coverage
         uses: SonarSource/sonarqube-scan-action@v5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -138,7 +102,6 @@ jobs:
       - name: Upload coverage
         # Make coverage reports available for review
         # Download from Actions tab to view detailed HTML report
-        if: inputs.run-tests && inputs.upload-coverage
         uses: actions/upload-artifact@v4
         with:
           name: coverage-${{ github.sha }}

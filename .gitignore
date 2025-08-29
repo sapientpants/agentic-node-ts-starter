@@ -5,3 +5,4 @@ coverage
 .DS_Store
 sbom.cdx.json
 .claude/settings.local.json
+tmp/
