@@ -9,6 +9,10 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 /** @type {import('eslint').Linter.FlatConfig[]} */
 export default [
+  // Ignore patterns
+  {
+    ignores: ['dist/**', 'coverage/**', 'node_modules/**'],
+  },
   // Base configuration for all JS/TS files
   {
     files: ['**/*.{ts,tsx,js}'],
