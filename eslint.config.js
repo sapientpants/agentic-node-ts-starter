@@ -2,6 +2,8 @@
 import tseslint from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
 import eslintConfigPrettier from 'eslint-config-prettier';
+import * as jsonc from 'eslint-plugin-jsonc';
+import jsoncParser from 'jsonc-eslint-parser';
 import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
 
@@ -11,7 +13,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 export default [
   // Ignore patterns
   {
-    ignores: ['dist/**', 'coverage/**', 'node_modules/**'],
+    ignores: ['dist/**', 'coverage/**', 'node_modules/**', 'sbom.cdx.json'],
   },
   // Base configuration for all JS/TS files
   {
@@ -44,6 +46,59 @@ export default [
     },
     rules: {
       ...tseslint.configs['recommended-type-checked'].rules,
+    },
+  },
+  // JSON/JSONC/JSON5 linting configuration
+  {
+    files: ['**/*.json', '**/*.json5', '**/*.jsonc'],
+    languageOptions: {
+      parser: jsoncParser,
+    },
+    plugins: {
+      jsonc,
+    },
+    rules: {
+      ...jsonc.configs['recommended-with-json'].rules,
+      'jsonc/sort-keys': 'off', // Keep keys in logical order, not alphabetical
+      'jsonc/indent': ['error', 2], // Enforce 2-space indentation in JSON files
+      'jsonc/key-spacing': 'error', // Enforce consistent spacing between keys and values
+      'jsonc/comma-dangle': ['error', 'never'], // No trailing commas in JSON
+      'jsonc/quotes': ['error', 'double'], // Enforce double quotes in JSON
+      'jsonc/quote-props': ['error', 'always'], // Always quote property names
+      'jsonc/no-comments': 'off', // Allow comments in JSONC files
+    },
+  },
+  // Specific rules for package.json
+  {
+    files: ['**/package.json'],
+    rules: {
+      'jsonc/sort-keys': [
+        'error',
+        {
+          pathPattern: '^$', // Root object
+          order: [
+            'name',
+            'version',
+            'private',
+            'type',
+            'packageManager',
+            'engines',
+            'scripts',
+            'lint-staged',
+            'dependencies',
+            'devDependencies',
+            'peerDependencies',
+            'optionalDependencies',
+          ],
+        },
+      ],
+    },
+  },
+  // Specific rules for tsconfig files
+  {
+    files: ['**/tsconfig*.json'],
+    rules: {
+      'jsonc/no-comments': 'off', // Allow comments in tsconfig files
     },
   },
   // Keep Prettier last

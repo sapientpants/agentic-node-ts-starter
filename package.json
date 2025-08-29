@@ -51,7 +51,7 @@
     "*.{ts,tsx,js,json,md,yml,yaml}": [
       "prettier --write"
     ],
-    "*.{ts,tsx,js}": [
+    "*.{ts,tsx,js,json,jsonc,json5}": [
       "eslint --fix"
     ]
   },
@@ -72,8 +72,10 @@
     "@vitest/coverage-v8": "^3.2.4",
     "eslint": "^9.34.0",
     "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-jsonc": "2.20.1",
     "fast-check": "^4.2.0",
     "husky": "^9.1.7",
+    "jsonc-eslint-parser": "2.4.0",
     "lint-staged": "^16.1.5",
     "pino-pretty": "13.1.1",
     "prettier": "^3.6.2",
