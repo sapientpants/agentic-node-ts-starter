@@ -1,0 +1,13 @@
+# actionlint configuration
+# https://github.com/rhysd/actionlint/blob/main/docs/config.md
+
+# Self-hosted runner labels used in this project
+# Add any custom runner labels here if using self-hosted runners
+self-hosted-runner:
+  labels: []
+
+# Configuration variables used in workflows
+# This helps actionlint validate variable references
+config-variables:
+  - ENABLE_DOCKER_RELEASE
+  - ENABLE_DOCS_RELEASE
