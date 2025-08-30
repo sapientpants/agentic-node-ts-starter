@@ -241,12 +241,79 @@ npx prisma init
 2. Update `license` field in `package.json`
 3. Update license badge in `README.md` if present
 
+## After Setup - Start Building Your Application
+
+### Next Steps
+
+1. **Clean up example code**:
+
+   ```bash
+   # Remove example source and test files
+   rm -rf src/example/ tests/example/
+
+   # Create your entry point
+   echo "console.log('Hello from my app!');" > src/index.ts
+   ```
+
+2. **Update project metadata**:
+   - Edit `package.json` with your project name and description
+   - Update README.md with your project information
+   - Configure CLAUDE.md for your specific needs
+
+3. **Start developing**:
+
+   ```bash
+   # Watch TypeScript changes
+   pnpm dev
+
+   # Watch tests
+   pnpm test:watch
+   ```
+
+4. **Add your first feature**:
+   - Create source files in `src/`
+   - Add tests in `tests/`
+   - Follow patterns in [docs/PATTERNS.md](./PATTERNS.md)
+
+5. **Before your first commit**:
+
+   ```bash
+   # Run all quality checks
+   pnpm verify
+
+   # Create a changeset
+   pnpm changeset
+   ```
+
+### What to Keep vs What to Change
+
+**Keep These**:
+
+- All configuration files (they're optimized)
+- Pre-commit hooks (maintains quality)
+- GitHub Actions workflows (CI/CD ready)
+- Testing setup (comprehensive coverage)
+
+**Customize These**:
+
+- `src/` - Replace with your code
+- `tests/` - Replace with your tests
+- `README.md` - Your project description
+- `CLAUDE.md` - Your AI instructions
+
+**Optional to Remove**:
+
+- `.claude/` directory (if not using Claude Code)
+- ADR records (if you prefer different documentation)
+- Makefile (if you only use pnpm commands)
+
 ## Time-Saving Tips
 
 - **Keep the pre-commit hooks** to maintain code quality
 - **Use changesets** for version management from the start
 - **Review CLAUDE.md** to leverage AI-assisted development effectively
 - **Check existing patterns** in the template before adding new ones
+- **Use the documentation** - [docs/](../docs/) has examples for everything
 
 ## Getting Help
 
