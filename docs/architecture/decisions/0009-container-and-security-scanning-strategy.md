@@ -4,7 +4,7 @@ Date: 2025-08-28
 
 ## Status
 
-Accepted
+Extended by [ADR-0017](./0017-comprehensive-security-strategy.md)
 
 ## Context
 
@@ -97,38 +97,3 @@ We implemented a multi-layered security scanning strategy:
 - [Trivy Documentation](https://aquasecurity.github.io/trivy/)
 - [SLSA Framework](https://slsa.dev/)
 - [SARIF Format](https://sarifweb.azurewebsites.net/)
-
-## Addendum (2025-08-30)
-
-The security scanning strategy has been enhanced with additional code quality and security analysis:
-
-### SonarQube Security Integration (see ADR-0011)
-
-Added SonarCloud security analysis to complement existing security scanning:
-
-- Detection of security vulnerabilities in TypeScript/JavaScript code
-- Security hotspot identification for sensitive code patterns
-- OWASP Top 10 vulnerability detection
-- CWE (Common Weakness Enumeration) classification
-- Integration with existing SARIF reporting
-
-### Comprehensive Security Approach
-
-The security strategy now includes:
-
-1. **Static Analysis**: CodeQL + SonarQube for source code
-2. **Dependency Scanning**: OSV Scanner for known vulnerabilities
-3. **Container Scanning**: Trivy for Docker images
-4. **Code Quality**: SonarQube for security-related code smells
-5. **Supply Chain**: SLSA attestations and SBOM generation
-
-### Automated Remediation
-
-- SonarQube issues can be automatically fixed via Claude commands
-- Prioritization based on severity (BLOCKER, CRITICAL, HIGH)
-- Integration with pull request workflow for immediate feedback
-
-### Related ADRs
-
-- ADR-0011: SonarQube Code Quality Integration
-- ADR-0013: Claude Code Development Environment

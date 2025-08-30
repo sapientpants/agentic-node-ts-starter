@@ -2,13 +2,20 @@
 'agentic-node-ts-starter': patch
 ---
 
-docs: comprehensive ADR updates to reflect current project state
+docs: comprehensive ADR updates following proper ADR patterns
 
-- Added ADR-0010: Extended Linting Strategy for markdown, YAML, JSON, and GitHub Actions linting
-- Added ADR-0011: SonarQube Code Quality Integration for continuous monitoring
-- Added ADR-0012: Runtime Validation with Zod for type-safe validation
-- Added ADR-0013: Claude Code Development Environment for AI-assisted development
-- Added ADR-0014: Node Version Management Strategy using mise
-- Updated ADR-0006: Added addendum for extended linting and SonarQube integration
-- Updated ADR-0008: Added addendum for enhanced CI/CD validations
-- Updated ADR-0009: Added addendum for comprehensive security approach
+New ADRs documenting recent decisions:
+
+- ADR-0010: Extended Linting Strategy for markdown, YAML, JSON, and GitHub Actions linting
+- ADR-0011: SonarQube Code Quality Integration for continuous monitoring
+- ADR-0012: Runtime Validation with Zod for type-safe validation
+- ADR-0013: Claude Code Development Environment for AI-assisted development
+- ADR-0014: Node Version Management Strategy using mise
+
+New ADRs superseding/extending previous decisions:
+
+- ADR-0015: Extended Code Quality Toolchain (supersedes ADR-0006)
+- ADR-0016: Enhanced CI/CD Platform (extends ADR-0008)
+- ADR-0017: Comprehensive Security Strategy (extends ADR-0009)
+
+Updated original ADRs to reference new ones following proper immutable ADR patterns
