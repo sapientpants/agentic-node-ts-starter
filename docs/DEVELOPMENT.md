@@ -1,17 +1,13 @@
 # Development Guide
 
-> **Quick Start**: Run `pnpm setup` for one-command project initialization, then `make dev` or `pnpm dev` to start development.
+> **Quick Start**: Run `pnpm install` to install dependencies, then `pnpm dev` to start development.
 
 ## Daily Development Workflow
 
 ### 🚀 Starting Development
 
 ```bash
-# Option 1: Use Make (recommended for speed)
-make dev        # Start TypeScript watching + rebuild on changes
-make test       # Run tests in watch mode
-
-# Option 2: Use pnpm directly
+# Start development
 pnpm dev        # TypeScript watch mode
 pnpm test:watch # Test watch mode
 ```
@@ -19,20 +15,17 @@ pnpm test:watch # Test watch mode
 ### 🔍 Quick Quality Checks
 
 ```bash
-# Fast check before committing (30 seconds)
-make check      # typecheck + lint + test (no audit/format)
-pnpm quick-check
+# Fast check before committing
+pnpm quick-check  # typecheck + lint + test
 
-# Full verification (like CI, 60+ seconds)
-make verify     # All quality gates including audit + format
-pnpm verify
+# Full verification (like CI)
+pnpm verify       # All quality gates including audit + format
 ```
 
 ### 🧪 Testing
 
 ```bash
 # Watch mode (development)
-make test
 pnpm test:watch
 
 # Single run
@@ -52,7 +45,6 @@ pnpm test:ui
 
 ```bash
 # Production build
-make build
 pnpm build
 
 # Watch build (rebuilds on file changes)
@@ -61,18 +53,7 @@ pnpm build:watch
 
 ## Development Tools
 
-### 🛠️ Available Make Commands
-
-Run `make help` to see all available commands:
-
-- `make dev` - Start development mode
-- `make test` - Run tests in watch mode
-- `make check` - Quick quality check
-- `make verify` - Full verification
-- `make clean` - Clean build artifacts
-- `make reset` - Clean + reinstall dependencies
-
-### 📦 NPM Scripts
+### 📦 Available Scripts
 
 Run `pnpm help` to see all available scripts, or check these key ones:
 
@@ -209,9 +190,9 @@ pnpm ci:local
 # Fast CI simulation (skip security scans)
 pnpm ci:local:fast
 
-# Make shortcuts
-make verify     # Full verification
-make check      # Quick check
+# Quick commands
+pnpm verify       # Full verification
+pnpm quick-check  # Fast quality check
 ```
 
 ### Pre-commit Hooks
@@ -237,7 +218,7 @@ git commit --no-verify -m "emergency fix"
 **TypeScript errors after pulling changes:**
 
 ```bash
-make reset  # Clean + reinstall dependencies
+pnpm reset  # Clean + reinstall dependencies
 ```
 
 **Tests failing randomly:**
@@ -264,7 +245,7 @@ node --max-old-space-size=4096 ./node_modules/.bin/vitest
 
 1. **Check documentation**: All guides are in `docs/`
 2. **Run diagnostics**: `pnpm doctor`
-3. **View available commands**: `make help` or `pnpm help`
+3. **View available commands**: Check package.json scripts or this documentation
 4. **Check CI logs**: Compare local vs CI behavior with `pnpm ci:local`
 
 ## Environment Variables
