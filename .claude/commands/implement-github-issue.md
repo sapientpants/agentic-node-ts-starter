@@ -159,7 +159,7 @@ Before completing:
 - [ ] Tests comprehensive (unit + property)
 - [ ] `pnpm verify` passes
 - [ ] Documentation updated
-- [ ] Changeset created
+- [ ] Changeset created and up to date
 - [ ] PR reviewed and approved
 
 See CLAUDE.md for detailed patterns, troubleshooting, and coding standards.
