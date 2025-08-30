@@ -4,7 +4,7 @@ Date: 2025-08-28
 
 ## Status
 
-Accepted
+Extended by [ADR-0016](./0016-enhanced-ci-cd-platform.md)
 
 ## Context
 

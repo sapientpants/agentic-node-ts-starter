@@ -4,7 +4,7 @@ Date: 2025-08-28
 
 ## Status
 
-Accepted
+Extended by [ADR-0017](./0017-comprehensive-security-strategy.md)
 
 ## Context
 
