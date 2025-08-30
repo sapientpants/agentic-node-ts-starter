@@ -91,3 +91,35 @@ We implemented a comprehensive code quality toolchain:
 - [ESLint Flat Config](https://eslint.org/docs/latest/use/configure/configuration-files-new)
 - [TypeScript ESLint](https://typescript-eslint.io/)
 - [Prettier Integration](https://prettier.io/docs/en/integrating-with-linters.html)
+
+## Addendum (2025-08-30)
+
+The code quality toolchain has been extended with additional linting tools and continuous monitoring:
+
+### Extended Linting (see ADR-0010)
+
+The toolchain now includes comprehensive linting for all file types:
+
+- **Markdown**: markdownlint-cli2 for documentation consistency
+- **YAML**: yamllint for configuration validation
+- **JSON**: ESLint with jsonc-parser for JSON/JSONC files
+- **GitHub Actions**: actionlint for workflow validation
+
+These tools are integrated into the same pre-commit hooks and CI/CD pipeline, providing a unified quality enforcement mechanism across all project files.
+
+### SonarQube Integration (see ADR-0011)
+
+Added SonarCloud for continuous code quality monitoring:
+
+- Real-time analysis on pull requests
+- Historical tracking of code quality metrics
+- Automated issue remediation via Claude commands
+- Quality gates enforcement before merge
+
+This extends our local toolchain with cloud-based analysis, providing deeper insights into code quality trends and technical debt.
+
+### Related ADRs
+
+- ADR-0010: Extended Linting Strategy
+- ADR-0011: SonarQube Code Quality Integration
+- ADR-0012: Runtime Validation with Zod

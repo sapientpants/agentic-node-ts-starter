@@ -87,3 +87,41 @@ We chose **GitHub Actions** as our CI/CD platform because:
 - [GitHub Actions Documentation](https://docs.github.com/en/actions)
 - [Workflow Syntax](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions)
 - [Security Features](https://docs.github.com/en/code-security)
+
+## Addendum (2025-08-30)
+
+The CI/CD platform has been enhanced with additional quality and validation tools:
+
+### SonarQube Analysis Integration (see ADR-0011)
+
+Added SonarCloud analysis to the PR validation workflow:
+
+- Automatic code quality analysis on every pull request
+- Quality gate checks before allowing merge
+- Pull request decoration with inline comments
+- Integration with GitHub Security tab via SARIF reports
+
+### Extended Validation (see ADR-0010)
+
+The CI/CD pipeline now validates all file types:
+
+- Markdown linting for documentation
+- YAML linting for configuration files
+- JSON linting for data files
+- GitHub Actions workflow linting with actionlint
+
+These validations run in parallel to minimize pipeline duration while ensuring comprehensive quality checks.
+
+### Automated Remediation
+
+Integration with Claude Code commands enables:
+
+- Automated fixing of SonarQube issues
+- Dependency updates with automated PR creation
+- Feature implementation from GitHub issues
+
+### Related ADRs
+
+- ADR-0010: Extended Linting Strategy
+- ADR-0011: SonarQube Code Quality Integration
+- ADR-0013: Claude Code Development Environment
