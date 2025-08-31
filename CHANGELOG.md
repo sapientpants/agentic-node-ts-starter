@@ -1,5 +1,15 @@
 # agentic-node-ts-starter
 
+## 0.19.3
+
+### Patch Changes
+
+- [#93](https://github.com/sapientpants/agentic-node-ts-starter/pull/93) [`a79b2c6`](https://github.com/sapientpants/agentic-node-ts-starter/commit/a79b2c6d155ef21da0169cff908058bf56e46b0e) Thanks [@sapientpants](https://github.com/sapientpants)! - chore: remove Makefile and update documentation to use pnpm commands only
+  - Removed Makefile from the project
+  - Updated DEVELOPMENT.md to use only pnpm commands
+  - Simplified documentation by removing dual command options
+  - This aligns with the template's focus on simplicity for starter projects
+
 ## 0.19.2
 
 ### Patch Changes
