@@ -305,7 +305,6 @@ npx prisma init
 
 - `.claude/` directory (if not using Claude Code)
 - ADR records (if you prefer different documentation)
-- Makefile (if you only use pnpm commands)
 
 ## Time-Saving Tips
 
