@@ -340,7 +340,7 @@ CMD ["node", "dist/index.js"]
 **Change Node/pnpm versions**:
 
 ```yaml
-# .github/workflows/ci-shared.yml
+# .github/workflows/reusable-setup.yml
 - uses: actions/setup-node@v4
   with:
     node-version: '20' # Change version

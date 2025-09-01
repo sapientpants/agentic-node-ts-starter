@@ -19,19 +19,20 @@ This template uses **Vitest** for testing with the following features:
 
 ```
 tests/
-├── unit/              # Unit tests for individual functions
-│   └── *.spec.ts
-├── property/          # Property-based tests
-│   └── *.property.spec.ts
-└── fixtures/          # Test data and helpers
-    └── *.ts
+├── *.spec.ts          # Unit tests
+├── *.property.spec.ts # Property-based tests
+├── helpers/           # Test utilities
+│   └── *.ts
+└── templates/         # Test templates to copy
+    ├── unit-test.template.ts
+    └── property-test.template.ts
 ```
 
 ### Naming Conventions
 
-- Unit tests: `*.spec.ts` or `*.test.ts`
+- Unit tests: `*.spec.ts`
 - Property tests: `*.property.spec.ts`
-- Test files should mirror source structure
+- Test files are placed in the `tests/` directory
 
 ## Writing Tests
 
