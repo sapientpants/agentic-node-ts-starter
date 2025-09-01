@@ -90,7 +90,7 @@ describe('String utilities (property tests)', () => {
   it.prop([fc.string()])('trim removes only leading/trailing whitespace', (str) => {
     const trimmed = str.trim();
     expect(trimmed).not.toMatch(/^\s|\s$/);
-    expect(trimmed).toBe(str.trim()); // Idempotent
+    expect(trimmed.length).toBeLessThanOrEqual(str.length);
   });
 
   it.prop([fc.array(fc.integer())])('sort is idempotent', (arr) => {

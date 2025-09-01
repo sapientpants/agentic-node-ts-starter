@@ -315,7 +315,7 @@ export async function retry<T>(
     }
   }
 
-  throw lastError!;
+  throw lastError || new Error('Unknown error');
 }
 
 // Usage
