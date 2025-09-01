@@ -18,7 +18,6 @@ A **batteries-included** TypeScript starter template with comprehensive testing,
 - **[Development](./docs/DEVELOPMENT.md)** - Workflows and commands
 - **[Testing](./docs/TESTING.md)** - Test patterns and coverage
 - **[Patterns](./docs/PATTERNS.md)** - Copy-paste code examples
-- **[Customization](./docs/CUSTOMIZATION.md)** - Adapt for your project
 - **[Troubleshooting](./docs/TROUBLESHOOTING.md)** - Common issues
 
 ## 🚀 Quick Start

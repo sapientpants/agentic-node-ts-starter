@@ -7,7 +7,6 @@ Welcome to the **Agentic Node + TypeScript Starter** documentation! This templat
 ### Getting Started
 
 - **[GETTING_STARTED.md](./GETTING_STARTED.md)** - Step-by-step setup guide for using this template
-- **[CUSTOMIZATION.md](./CUSTOMIZATION.md)** - How to adapt this template for your project
 - **[TROUBLESHOOTING.md](./TROUBLESHOOTING.md)** - Common setup issues and solutions
 
 ### Development
@@ -54,7 +53,7 @@ Welcome to the **Agentic Node + TypeScript Starter** documentation! This templat
 1. **New to the template?** Start with [GETTING_STARTED.md](./GETTING_STARTED.md)
 2. **Ready to code?** Check [DEVELOPMENT.md](./DEVELOPMENT.md) for workflows
 3. **Need examples?** Find copy-paste patterns in [PATTERNS.md](./PATTERNS.md)
-4. **Customizing?** See [CUSTOMIZATION.md](./CUSTOMIZATION.md) for adaptation guide
+4. **Customizing?** See [GETTING_STARTED.md](./GETTING_STARTED.md) for how to adapt this template
 5. **Having issues?** Consult [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)
 
 ## 🎯 Template Philosophy

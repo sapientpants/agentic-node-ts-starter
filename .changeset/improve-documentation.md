@@ -8,7 +8,6 @@ docs: comprehensive documentation improvements for starter template
 - Streamlined root README.md from 351 to 186 lines
 - Added docs/PATTERNS.md with copy-paste code examples
 - Added docs/TESTING.md with comprehensive testing guide
-- Added docs/CUSTOMIZATION.md for template adaptation
 - Fixed command inconsistencies in DEVELOPMENT.md
 - Enhanced GETTING_STARTED.md with "After Setup" section
 - Simplified OBSERVABILITY.md for starter template context
