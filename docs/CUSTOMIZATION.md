@@ -28,13 +28,10 @@ Edit `package.json`:
 ### 2. Clean Up Example Code
 
 ```bash
-# Remove example source files
-rm -rf src/example/
+# Remove example test files
+rm tests/index.spec.ts tests/add.property.spec.ts
 
-# Remove example tests
-rm -rf tests/example/
-
-# Start fresh with your own entry point
+# Replace the example entry point with your own
 echo "console.log('Hello from my project!');" > src/index.ts
 ```
 

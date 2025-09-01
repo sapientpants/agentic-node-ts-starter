@@ -248,10 +248,10 @@ npx prisma init
 1. **Clean up example code**:
 
    ```bash
-   # Remove example source and test files
-   rm -rf src/example/ tests/example/
+   # Remove example test files
+   rm tests/index.spec.ts tests/add.property.spec.ts
 
-   # Create your entry point
+   # Replace the example entry point with your own
    echo "console.log('Hello from my app!');" > src/index.ts
    ```
 
