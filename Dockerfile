@@ -48,10 +48,17 @@ COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
 # Switch to non-root user
 USER nodejs
 
-# Expose port (adjust as needed)
+# Expose port (adjust as needed for your application)
 EXPOSE 3000
 
-# Add health check
+# Health check configuration
+# ⚠️ IMPORTANT: This healthcheck expects a web server with a /health endpoint on port 3000
+# 
+# For web services: Implement a /health endpoint (see docs/DOCKER.md for examples)
+# For CLI tools: Remove or comment out this healthcheck
+# For workers/daemons: Use alternative healthcheck (see docs/DOCKER.md)
+#
+# To disable: Comment out or replace with HEALTHCHECK NONE
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})" || exit 1
 

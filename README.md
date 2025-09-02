@@ -19,6 +19,7 @@ A **batteries-included** TypeScript starter template with comprehensive testing,
 - **[Getting Started](./docs/GETTING_STARTED.md)** - Setup and installation
 - **[Development](./docs/DEVELOPMENT.md)** - Workflows and commands
 - **[Testing](./docs/TESTING.md)** - Test patterns and coverage
+- **[Docker](./docs/DOCKER.md)** - Docker configuration and healthchecks
 - **[Patterns](./docs/PATTERNS.md)** - Copy-paste code examples
 - **[Troubleshooting](./docs/TROUBLESHOOTING.md)** - Common issues
 
@@ -164,6 +165,8 @@ To enable Docker builds:
    - `DOCKERHUB_USERNAME`
    - `DOCKERHUB_TOKEN`
 3. Images are automatically pushed to GitHub Container Registry
+
+> **⚠️ Important**: The default Dockerfile includes a healthcheck that expects a web server with a `/health` endpoint on port 3000. See [Docker Configuration Guide](./docs/DOCKER.md) for detailed instructions on configuring healthchecks for different application types (web services, CLI tools, workers).
 
 ### Documentation Publishing
 
