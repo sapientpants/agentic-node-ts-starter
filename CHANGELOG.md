@@ -1,5 +1,16 @@
 # agentic-node-ts-starter
 
+## 0.19.6
+
+### Patch Changes
+
+- [#96](https://github.com/sapientpants/agentic-node-ts-starter/pull/96) [`3afa29b`](https://github.com/sapientpants/agentic-node-ts-starter/commit/3afa29bcc484aa4e99bebe99de3f647b772ebb12) Thanks [@sapientpants](https://github.com/sapientpants)! - docs: fix incorrect logger function references in documentation
+  - Fixed docs/OBSERVABILITY.md to use correct logger imports (logger instead of createLogger)
+  - Fixed docs/PATTERNS.md to use correct logger imports (logger instead of createLogger)
+  - Documentation now accurately reflects the actual exports from src/logger.ts
+
+  Closes #95
+
 ## 0.19.5
 
 ### Patch Changes
