@@ -1,5 +1,21 @@
 # agentic-node-ts-starter
 
+## 0.19.4
+
+### Patch Changes
+
+- [#92](https://github.com/sapientpants/agentic-node-ts-starter/pull/92) [`7e93395`](https://github.com/sapientpants/agentic-node-ts-starter/commit/7e933956734849f2226db0d1d1b8e4494e510b7b) Thanks [@sapientpants](https://github.com/sapientpants)! - docs: comprehensive documentation improvements for starter template
+  - Created docs/README.md as central navigation hub
+  - Streamlined root README.md from 351 to 186 lines
+  - Added docs/PATTERNS.md with copy-paste code examples
+  - Added docs/TESTING.md with comprehensive testing guide
+  - Fixed command inconsistencies in DEVELOPMENT.md
+  - Enhanced GETTING_STARTED.md with "After Setup" section
+  - Simplified OBSERVABILITY.md for starter template context
+  - Updated CLAUDE.md with project customization guidance
+
+  Documentation now properly focuses on this being a starter template rather than an end application.
+
 ## 0.19.3
 
 ### Patch Changes
