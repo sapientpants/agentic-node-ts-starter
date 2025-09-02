@@ -1,3 +1,14 @@
+/**
+ * ============================================================================
+ * EXAMPLE CODE - REPLACE WITH YOUR IMPLEMENTATION
+ * ============================================================================
+ * This file contains example code demonstrating the template's capabilities.
+ * It should be removed or replaced with your actual application code.
+ *
+ * See docs/GETTING_STARTED.md#clean-up-example-code for cleanup instructions.
+ * ============================================================================
+ */
+
 import { createChildLogger } from './logger.js';
 
 const logger = createChildLogger('index');

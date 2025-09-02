@@ -1,3 +1,8 @@
+/**
+ * Tests for container security scanning - Template infrastructure.
+ * These tests verify container scanning setup and can be kept/customized.
+ */
+
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { execFileSync } from 'child_process';
 import {

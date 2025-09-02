@@ -1,3 +1,14 @@
+/**
+ * ============================================================================
+ * EXAMPLE TEST - REMOVE OR REPLACE THIS FILE
+ * ============================================================================
+ * This test file demonstrates property-based testing patterns for example code.
+ * It should be removed or replaced with tests for your actual application.
+ *
+ * See docs/GETTING_STARTED.md#clean-up-example-code for cleanup instructions.
+ * ============================================================================
+ */
+
 import { describe, it } from 'vitest';
 import fc from 'fast-check';
 import { add } from '../src/index.js';

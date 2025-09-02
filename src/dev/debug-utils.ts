@@ -1,6 +1,7 @@
 /**
- * Development and debugging utilities
- * Only available in development mode
+ * Development and debugging utilities - Template infrastructure.
+ * This file provides helpful debugging tools and can be kept and customized.
+ * Only available in development mode.
  */
 
 /* eslint-disable no-console, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return */

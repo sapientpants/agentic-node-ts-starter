@@ -1,3 +1,8 @@
+/**
+ * Tests for logger infrastructure - Template code.
+ * These tests verify the production-ready logger and can be kept/customized.
+ */
+
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { Logger } from '../src/logger.js';
 
