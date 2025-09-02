@@ -54,8 +54,15 @@ const server = http.createServer((req, res) => {
   res.end('Not Found');
 });
 
-// Port configuration
-const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+// Port configuration with proper error handling
+let PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+if (isNaN(PORT)) {
+  logger.error(
+    { portEnv: process.env.PORT },
+    'Invalid PORT environment variable, falling back to 3000',
+  );
+  PORT = 3000;
+}
 const HOST = process.env.HOST || '0.0.0.0';
 
 // Start server
