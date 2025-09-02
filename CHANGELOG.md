@@ -1,5 +1,13 @@
 # agentic-node-ts-starter
 
+## 0.19.5
+
+### Patch Changes
+
+- [#94](https://github.com/sapientpants/agentic-node-ts-starter/pull/94) [`2ab4c5a`](https://github.com/sapientpants/agentic-node-ts-starter/commit/2ab4c5a71612eebbf53f2ef3e736e5ed2753a1be) Thanks [@sapientpants](https://github.com/sapientpants)! - docs: fix incorrect PAT environment variable name in README
+  - Changed GH_RELEASE_TOKEN to RELEASE_TOKEN to match actual workflow usage
+  - This corrects the documentation to reflect the actual secret name used in GitHub Actions
+
 ## 0.19.4
 
 ### Patch Changes
