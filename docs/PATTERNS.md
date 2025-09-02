@@ -137,16 +137,16 @@ describe('calculateDiscount', () => {
 ### Basic Logging Setup
 
 ```typescript
-import { createLogger, createChildLogger } from './logger.js';
+import { logger, createChildLogger } from './logger.js';
 
-// Create a root logger
-const logger = createLogger('app');
-
-// Log with structured data
+// Use the default logger for general application logging
 logger.info({ userId: '123', action: 'login' }, 'User logged in');
 logger.error({ err: new Error('Connection failed'), retries: 3 }, 'Database error');
 
-// Create child loggers for modules
+// Create child loggers for module-specific logging
+const appLogger = createChildLogger('app');
+appLogger.info('Application initialized');
+
 const dbLogger = createChildLogger('database');
 dbLogger.debug({ query: 'SELECT * FROM users', duration: 45 }, 'Query executed');
 ```
