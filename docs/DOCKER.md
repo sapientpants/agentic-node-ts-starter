@@ -84,7 +84,7 @@ server.listen(PORT, () => {
 #### Express Example
 
 ```typescript
-// src/server.ts (Express example)
+// src/server.ts (Express example - Simple version)
 import express from 'express';
 
 const app = express();
@@ -93,6 +93,17 @@ const app = express();
 app.get('/health', (req, res) => {
   res.status(200).send('OK');
 });
+
+app.listen(3000);
+```
+
+Or with dependency verification:
+
+```typescript
+// src/server.ts (Express example - With dependency checks)
+import express from 'express';
+
+const app = express();
 
 // Health check with dependency verification
 app.get('/health', async (req, res) => {
