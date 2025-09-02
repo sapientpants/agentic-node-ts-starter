@@ -14,14 +14,16 @@ This template includes **Pino** for structured logging, with patterns ready for 
 ### Using the Logger
 
 ```typescript
-import { createLogger, createChildLogger } from './logger.js';
+import { logger, createChildLogger } from './logger.js';
 
-// Basic logging
-const logger = createLogger('my-module');
+// Basic logging with the default logger
 logger.info('Application started');
 logger.error({ err: error }, 'Operation failed');
 
-// Child loggers for context
+// Child loggers for module-specific context
+const myModuleLogger = createChildLogger('my-module');
+myModuleLogger.info('Module initialized');
+
 const dbLogger = createChildLogger('database');
 dbLogger.debug({ query: 'SELECT *', duration: 45 }, 'Query executed');
 ```
