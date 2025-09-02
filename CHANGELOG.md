@@ -1,5 +1,18 @@
 # agentic-node-ts-starter
 
+## 0.19.7
+
+### Patch Changes
+
+- [#101](https://github.com/sapientpants/agentic-node-ts-starter/pull/101) [`4bfdf9f`](https://github.com/sapientpants/agentic-node-ts-starter/commit/4bfdf9f588695d64548123e021e5990255ac216a) Thanks [@sapientpants](https://github.com/sapientpants)! - docs: Improve clarity of example code marking in starter template
+  - Added prominent header comments to all example files (src/index.ts, tests/\*.spec.ts) marking them as "EXAMPLE CODE - REPLACE WITH YOUR IMPLEMENTATION"
+  - Added subtle header comments to template infrastructure files marking them as production-ready and customizable
+  - Updated GETTING_STARTED.md with an info box clearly distinguishing between example code to remove and template infrastructure to keep
+  - Added note to README.md explaining that the template includes marked example code
+  - All files now have clear visual indicators helping developers quickly identify what to keep vs. what to replace
+
+  This change addresses issue #97 by making it immediately apparent which files are examples versus production-ready template code, reducing confusion for new users adopting the starter template.
+
 ## 0.19.6
 
 ### Patch Changes
