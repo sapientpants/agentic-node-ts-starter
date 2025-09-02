@@ -1,3 +1,8 @@
+/**
+ * Production-ready logger configuration using Pino.
+ * This file is part of the template infrastructure and can be kept and customized.
+ */
+
 import pino, { type Logger as PinoLogger, type LoggerOptions } from 'pino';
 
 /**

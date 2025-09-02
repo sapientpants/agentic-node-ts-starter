@@ -85,6 +85,25 @@ Edit `package.json`:
 
 ### 4. Clean Up Example Code
 
+> [!IMPORTANT]
+> **Understanding Template Files**
+>
+> This template includes two types of files:
+>
+> - **📝 Example Code**: Demonstration files that should be removed or replaced:
+>   - `src/index.ts` - Example add function with validation demos
+>   - `tests/index.spec.ts` - Example unit tests
+>   - `tests/add.property.spec.ts` - Example property-based tests
+> - **🏗️ Template Infrastructure**: Production-ready code that you can keep and customize:
+>   - `src/logger.ts` - Structured logging with Pino
+>   - `src/dev/debug-utils.ts` - Development debugging utilities
+>   - `tests/logger.spec.ts` - Logger tests
+>   - `tests/container-scan.spec.ts` - Container security tests
+>   - `tests/documentation.spec.ts` - Documentation validation tests
+>   - All configuration files (TypeScript, ESLint, Prettier, etc.)
+>
+> Look for header comments in files to identify their purpose.
+
 Remove the example files and create your own:
 
 ```bash

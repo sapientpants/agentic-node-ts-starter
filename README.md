@@ -2,6 +2,8 @@
 
 A **batteries-included** TypeScript starter template with comprehensive testing, code quality automation, and security scanning. Built for modern Node.js development with an agentic coding workflow.
 
+> **Note:** This template includes example code to demonstrate its capabilities. These example files are clearly marked with header comments and should be removed when starting your project. See [Getting Started](./docs/GETTING_STARTED.md#clean-up-example-code) for details.
+
 ## 🛠️ Tech Stack
 
 **Core:** Node.js 22+ • TypeScript 5.9 (strict) • pnpm 10.15  
