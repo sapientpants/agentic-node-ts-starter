@@ -36,9 +36,6 @@ pnpm test:coverage
 
 # Coverage in browser
 pnpm coverage:open
-
-# Visual test UI
-pnpm test:ui
 ```
 
 ### 🏗️ Building

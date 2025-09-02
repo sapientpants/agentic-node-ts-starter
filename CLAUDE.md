@@ -389,3 +389,98 @@ Required variables:
 
 - `ENABLE_DOCKER_RELEASE` - Set to 'true' to enable Docker builds
 - `ENABLE_DOCS_RELEASE` - Set to 'true' to enable documentation deployment
+
+## Customizing CLAUDE.md for Your Project
+
+When adapting this template for your specific project, update this file to include:
+
+### 1. Project-Specific Context
+
+```markdown
+## Project Overview
+
+This is a [your project type] application that [brief description].
+Key technologies: [list your stack]
+Target users: [who will use this]
+```
+
+### 2. Business Rules & Constraints
+
+```markdown
+## Business Rules
+
+1. [Critical rule 1]
+2. [Critical rule 2]
+
+## Technical Constraints
+
+- Must support [requirement]
+- Cannot use [technology] because [reason]
+- Performance requirement: [metric]
+```
+
+### 3. Code Conventions
+
+```markdown
+## Our Conventions
+
+- Component naming: [pattern]
+- File organization: [structure]
+- API design: [style]
+- Error handling: [approach]
+```
+
+### 4. Testing Requirements
+
+```markdown
+## Testing Strategy
+
+- Always test: [critical paths]
+- Property test: [business logic]
+- Mock: [external services]
+- Skip testing: [generated code]
+```
+
+### 5. Common Tasks
+
+```markdown
+## Common Development Tasks
+
+- To add a new API endpoint: [steps]
+- To add a new database model: [steps]
+- To update dependencies: [process]
+```
+
+### Example Project-Specific CLAUDE.md Addition
+
+```markdown
+## Project: E-Commerce API
+
+### Domain Context
+
+- We process payments using Stripe
+- Inventory is managed in real-time
+- Orders must maintain ACID properties
+- Customer data requires GDPR compliance
+
+### Architecture Decisions
+
+- Use PostgreSQL for transactional data
+- Redis for session management
+- Event-driven architecture for order processing
+- RESTful API with OpenAPI documentation
+
+### Code Patterns
+
+- All monetary values use Decimal.js
+- Dates are stored in UTC
+- API responses follow JSend specification
+- Use repository pattern for data access
+
+### Security Requirements
+
+- Never log payment information
+- PII must be encrypted at rest
+- API requires authentication except /health
+- Rate limiting on all endpoints
+```

@@ -1,176 +1,70 @@
-# Agentic Node + TypeScript Starter — **mise + pnpm**
+# Agentic Node + TypeScript Starter
 
-A **batteries-included** starting point for building software with an **agentic coding** workflow on Node.js + TypeScript. This template provides a **spec-first, test-as-contract** approach with comprehensive **quality gates**, **supply-chain security** (SBOM, SLSA provenance), and **CI/CD automation**.
-
-> Created: 2025-08-23  
-> Last Updated: 2025-08-24
+A **batteries-included** TypeScript starter template with comprehensive testing, code quality automation, and security scanning. Built for modern Node.js development with an agentic coding workflow.
 
 ## 🛠️ Tech Stack
 
-### Core Technologies
-
-- **Runtime:** Node.js 22+ via **mise** (`mise.toml`)
-- **Package Manager:** **pnpm 10.15.0** (pinned in package.json)
-- **Language:** TypeScript 5.9+ with strict mode
-- **Testing:** Vitest 3.2+ with V8 coverage
-- **Property Testing:** fast-check 4.2+
-- **Validation:** Zod 4.1+ for runtime type safety
-- **Logging:** Pino 9.9+ for structured logging with environment-based configuration
-
-### Code Quality
-
-- **Linting:** ESLint 9 with TypeScript support
-- **Formatting:** Prettier 3.6+
-- **Pre-commit:** Husky + lint-staged
-- **Commit Convention:** Commitlint with conventional commits
-
-### CI/CD & Security
-
-- **GitHub Actions:** Required - comprehensive CI pipeline for PR validation and releases
-- **Security Scanning:** CodeQL analysis, OSV vulnerability scanning
-- **Supply Chain:** SBOM generation (CycloneDX), SLSA provenance attestations
-- **Versioning:** Changesets for semantic versioning
+**Core:** Node.js 22+ • TypeScript 5.9 (strict) • pnpm 10.15  
+**Testing:** Vitest • fast-check (property testing) • 80% coverage minimum  
+**Quality:** ESLint 9 • Prettier • Husky • Commitlint  
+**Security:** CodeQL • OSV Scanner • SBOM • SLSA attestations  
+**CI/CD:** GitHub Actions • Changesets • Automated releases
 
 ## 📖 Documentation
 
-- **[Getting Started Guide](./docs/GETTING_STARTED.md)** - Step-by-step setup and customization
-- **[Troubleshooting Guide](./docs/TROUBLESHOOTING.md)** - Common issues and solutions
-- **[CLAUDE.md](./CLAUDE.md)** - AI-assisted development with Claude
-- **[Process Guide](./docs/PROCESS.md)** - Development workflow and best practices
-- **[Observability Guide](./docs/OBSERVABILITY.md)** - Logging and monitoring setup
+**[Full Documentation →](./docs/)**
+
+- **[Getting Started](./docs/GETTING_STARTED.md)** - Setup and installation
+- **[Development](./docs/DEVELOPMENT.md)** - Workflows and commands
+- **[Testing](./docs/TESTING.md)** - Test patterns and coverage
+- **[Patterns](./docs/PATTERNS.md)** - Copy-paste code examples
+- **[Troubleshooting](./docs/TROUBLESHOOTING.md)** - Common issues
 
 ## 🚀 Quick Start
 
-### Prerequisites
-
-- **GitHub repository** - Required for CI/CD workflows
-- [mise](https://mise.jdx.dev/) - for Node.js and pnpm version management (or use nvm/fnm)
-- Node.js >= 22.0.0
-- pnpm 10.15.0
-
-### Setup
-
 ```bash
-# Install Node 22 + pnpm 10.15.0 via mise
-mise install
+# Clone and setup
+git clone https://github.com/mfisher87/agentic-node-ts-starter.git my-project
+cd my-project
 
-# Install dependencies
+# Install dependencies (requires Node.js 22+ and pnpm 10.15)
 pnpm install
 
-# Run all quality checks
-pnpm verify
+# Verify everything works
+pnpm test
+pnpm verify  # Full quality check
 
-# Start development
-pnpm test:watch
+# Start developing
+pnpm dev     # TypeScript watch mode
 ```
 
-For detailed setup instructions, alternative installation methods, and customization steps, see the **[Getting Started Guide](./docs/GETTING_STARTED.md)**.
+**Prerequisites:** Node.js 22+, pnpm 10.15, GitHub repo (for CI/CD)  
+**Full setup guide:** [docs/GETTING_STARTED.md](./docs/GETTING_STARTED.md)
 
-## 🔧 Usage Examples
+## 📚 Key Commands
 
-### Logging
+```bash
+# Development
+pnpm dev          # TypeScript watch mode
+pnpm build        # Build to dist/
+pnpm verify       # Run all quality checks
 
-The project includes structured logging with Pino, configured for different environments:
+# Testing (80% coverage required)
+pnpm test         # Run tests
+pnpm test:watch   # Watch mode
+pnpm test:coverage # With coverage report
 
-```typescript
-import { logger, createChildLogger } from './logger.js';
+# Quality
+pnpm lint:fix     # Fix linting issues
+pnpm format:fix   # Fix formatting
+pnpm typecheck    # Type check only
 
-// Basic logging
-logger.info('Application started');
-logger.error({ err: error }, 'An error occurred');
-
-// Module-specific logging
-const moduleLogger = createChildLogger('auth-module');
-moduleLogger.info({ userId: '123' }, 'User authenticated');
-
-// Context-aware logging
-const requestLogger = logger.withContext({
-  requestId: 'abc-123',
-  userId: 'user-456',
-});
-requestLogger.info('Processing request');
-
-// Sensitive data is automatically redacted
-logger.info(
-  {
-    username: 'john',
-    password: 'secret123', // Will be redacted
-    apiKey: 'key-789', // Will be redacted
-  },
-  'User login attempt',
-);
+# Releases
+pnpm changeset    # Create changeset
+pnpm sbom         # Generate SBOM
 ```
 
-#### Logging Configuration
-
-- **Development**: Pretty-printed, colorized output for readability
-- **Production**: Structured JSON logs with correlation ID support
-- **Test**: Silent by default, configurable via `LOG_LEVEL` env var
-- **Security**: Automatic redaction of sensitive fields (password, token, api_key, etc.)
-
-## 📚 Available Scripts
-
-### Development
-
-- `pnpm build` - Build TypeScript to `dist/`
-- `pnpm typecheck` - Type check without emitting
-- `pnpm lint` - Run ESLint checks
-- `pnpm lint:fix` - Auto-fix ESLint issues
-- `pnpm format` - Check Prettier formatting
-- `pnpm format:fix` - Apply Prettier formatting
-- `pnpm verify` - Run all checks (audit, typecheck, lint, format, test)
-
-### Testing
-
-- `pnpm test` - Run tests
-- `pnpm test:watch` - Run tests in watch mode
-- `pnpm test:coverage` - Run tests with coverage report and **80% minimum threshold enforcement**
-- `pnpm coverage:report` - Generate detailed coverage report
-
-#### Coverage Requirements
-
-This project enforces **minimum 80% code coverage** across all metrics:
-
-- **Lines**: 80% minimum
-- **Branches**: 80% minimum
-- **Functions**: 80% minimum
-- **Statements**: 80% minimum
-
-Coverage thresholds are enforced:
-
-- Locally via `pnpm test:coverage` (fails if below 80%)
-- In CI/CD pipeline on all pull requests
-- During pre-commit via `pnpm verify`
-
-Tests will fail with clear error messages if coverage drops below 80%.
-
-### Container Security
-
-**Prerequisites**: Docker and [Trivy](https://github.com/aquasecurity/trivy#installation) must be installed locally.
-
-- `pnpm scan:container` - Scan Docker image for vulnerabilities
-- `pnpm scan:container:sarif` - Generate SARIF report for GitHub Security
-- `./scripts/scan-container.sh --help` - View all scanning options
-
-#### Features
-
-- **Automated Scanning**: Runs before Docker Hub publication
-- **Trivy Scanner**: Industry-standard vulnerability scanner
-- **Configurable Thresholds**: Default fails on HIGH/CRITICAL vulnerabilities
-- **GitHub Security Integration**: Results appear in Security tab via SARIF
-- **Local Development**: Same scanning available locally as in CI
-- **False Positive Handling**: `.trivyignore` file for exclusions
-- **Scan Caching**: Efficient layer-based caching for performance
-- **Attestations**: Generates signed attestations for clean scans
-
-### Release & Security
-
-- `pnpm changeset` - Create a changeset for your changes
-- `pnpm changeset --empty` - Create an empty changeset for non-release changes
-- `pnpm sbom` - Generate SBOM (Software Bill of Materials)
-- `pnpm release` - Version packages with Changesets
-- `pnpm release:publish` - Build and publish packages
-- `pnpm release:tag` - Create git tag for release
+**Full command reference:** [docs/DEVELOPMENT.md](./docs/DEVELOPMENT.md)
 
 ## 🤖 Claude Code Integration
 
@@ -207,101 +101,47 @@ See [CLAUDE.md](./CLAUDE.md) for detailed Claude Code guidance.
 └── tsconfig.json      # TypeScript configuration
 ```
 
-## 🔄 Versioning & Releases
+## 🔄 Features
 
-This project uses [Changesets](https://github.com/changesets/changesets) for version management:
+### Testing & Quality
 
-- **Required for all PRs**: Every PR must include a changeset (CI enforced)
-- **Automated Versioning**: Version bumps based on changeset types
-- **Automated Changelogs**: Generated from changeset descriptions
-- **Release Automation**: GitHub Actions workflow for creating release PRs
-- **Semantic Versioning**: Following semver conventions
+- ✅ **Vitest** with property-based testing (fast-check)
+- ✅ **80% coverage minimum** enforced
+- ✅ **Strict TypeScript** with type-aware linting
+- ✅ **Pre-commit hooks** with Husky & lint-staged
 
-### Adding a Changeset (Required)
+### Security & Supply Chain
 
-Every PR must include a changeset:
+- 🔒 **CodeQL** static analysis
+- 🔒 **OSV Scanner** for dependencies
+- 🔒 **SBOM generation** (CycloneDX)
+- 🔒 **SLSA attestations** for artifacts
 
-```bash
-pnpm changeset  # For user-facing changes
-pnpm changeset --empty  # For internal changes (no release)
-```
+### Automation
 
-### ⚠️ Required Repository Settings
+- 🚀 **GitHub Actions** CI/CD pipeline
+- 🚀 **Changesets** for versioning
+- 🚀 **Automated releases** with changelog
+- 🚀 **Claude Code** integration
 
-For the release automation to work, you must configure the following settings:
+## ⚙️ Required Setup
 
-#### 1. GitHub Actions Permissions
+### GitHub Repository Settings
 
-Go to **Settings** → **Actions** → **General**:
+**Actions permissions** (Settings → Actions → General):
 
-- ✅ Enable **"Allow GitHub Actions to create and approve pull requests"**
+- ✅ Read and write permissions
+- ✅ Allow GitHub Actions to create and approve pull requests
 
-#### 2. Auto-Merge Settings
+**Auto-merge** (Settings → General → Pull Requests):
 
-Go to **Settings** → **General** → **Pull Requests**:
+- ✅ Allow auto-merge
+- ✅ Automatically delete head branches
 
-- ✅ Enable **"Allow auto-merge"**
+**For automated releases**, add secrets:
 
-#### 3. Personal Access Token for Auto-Merge (Optional but Recommended)
-
-For fully automated version PR merging:
-
-1. [Create a Personal Access Token (classic)](https://github.com/settings/tokens/new) with `repo` scope
-2. Go to **Settings** → **Secrets and variables** → **Actions**
-3. Add a new repository secret named `AUTO_MERGE_PAT` with your token
-
-**Note**: Without this token, version PRs will need to be manually merged. The default `GITHUB_TOKEN` cannot enable auto-merge on PRs.
-
-#### 4. Branch Protection Rules (Recommended)
-
-Go to **Settings** → **Branches** → Add rule for `main`:
-
-- ✅ **Require status checks to pass before merging**
-  - Select these status checks: `build-test`, `changeset-validation`
-- ✅ **Require branches to be up to date before merging**
-- Optional: **Dismiss stale pull request approvals when new commits are pushed**
-
-Without these settings, the automated release process will not work correctly.
-
-## 🏗️ Continuous Deployment Architecture
-
-This project implements a streamlined continuous deployment pipeline with automated versioning and multi-channel distribution. For workflow details, see [GitHub Workflows Documentation](.github/WORKFLOWS.md).
-
-## 🚀 Automated Release Process
-
-This project features a fully automated release pipeline:
-
-1. **Developer merges PR** with changesets → triggers CI/CD workflow
-2. **Changesets creates version PR** automatically with updated versions and CHANGELOG
-3. **Auto-merge enables** for the version PR (no manual intervention needed)
-4. **CI runs and passes** → PR merges automatically
-5. **Release workflow detects merge** → creates git tag and GitHub release
-6. **SBOM and attestations** are generated and attached to the release
-7. **Release distribution** → automatically publishes to npm, Docker Hub, and other platforms
-
-### How It Works
-
-- When you merge a PR with changesets, a "Version Packages" PR is automatically created
-- The `auto-merge-version-pr.yml` workflow enables auto-merge for this PR (requires `AUTO_MERGE_PAT`)
-- Once CI checks pass, the PR merges without manual intervention
-- The CI/CD workflow creates a GitHub release with SBOM
-- The `release.yml` workflow triggers on the published release to handle distribution:
-  - Publishes package to npm registry with provenance attestation
-  - Builds and pushes multi-architecture Docker images
-  - Deploys documentation to GitHub Pages
-  - Uploads additional release assets (tarballs, checksums)
-
-### Manual Override
-
-If you need to prevent automatic release:
-
-```bash
-# Disable auto-merge for a specific PR
-gh pr merge --disable-auto PR_NUMBER
-
-# Re-enable when ready
-gh pr merge --auto --squash PR_NUMBER
-```
+- `GH_RELEASE_TOKEN` - PAT with repo/workflow scopes
+- `NPM_TOKEN` - For npm publishing (optional)
 
 ## 📦 Release Distribution Setup
 
