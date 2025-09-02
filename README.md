@@ -140,7 +140,7 @@ See [CLAUDE.md](./CLAUDE.md) for detailed Claude Code guidance.
 
 **For automated releases**, add secrets:
 
-- `GH_RELEASE_TOKEN` - PAT with repo/workflow scopes
+- `RELEASE_TOKEN` - GitHub PAT with repo/workflow scopes (triggers publish workflow)
 - `NPM_TOKEN` - For npm publishing (optional)
 
 ## 📦 Release Distribution Setup
