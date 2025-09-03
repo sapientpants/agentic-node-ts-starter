@@ -2,7 +2,7 @@
  * Production-ready logger configuration using Pino.
  * This file is part of the template infrastructure and can be kept and customized.
  *
- * Supports MCP (Model Context Protocol) mode for stdio-based communication.
+ * Supports multiple output destinations for flexible logging configuration.
  */
 
 import pino, { type Logger as PinoLogger, type LoggerOptions, type DestinationStream } from 'pino';
@@ -15,10 +15,6 @@ const getEnvConfig = () => ({
   NODE_ENV: process.env.NODE_ENV || 'development',
   LOG_LEVEL: process.env.LOG_LEVEL,
   LOG_OUTPUT: process.env.LOG_OUTPUT,
-  MCP_MODE:
-    process.env.MCP_MODE === 'true' ||
-    process.env.MCP_MODE === '1' ||
-    process.env.MCP_MODE === 'yes',
   LOG_FILE_PATH: process.env.LOG_FILE_PATH,
   LOG_FILE_MAX_SIZE: process.env.LOG_FILE_MAX_SIZE,
   LOG_FILE_MAX_FILES: process.env.LOG_FILE_MAX_FILES
@@ -43,18 +39,8 @@ let currentOutputMode: string | null = null;
  */
 const getEffectiveLogOutput = (): string => {
   const envConfig = getEnvConfig();
-  // Explicit LOG_OUTPUT takes precedence
-  if (envConfig.LOG_OUTPUT) {
-    return envConfig.LOG_OUTPUT;
-  }
-
-  // MCP mode auto-detection
-  if (envConfig.MCP_MODE) {
-    return 'stderr';
-  }
-
-  // Default to stdout
-  return 'stdout';
+  // Use configured output or default to stdout
+  return envConfig.LOG_OUTPUT || 'stdout';
 };
 
 /**
@@ -290,18 +276,18 @@ export const logger = (() => {
 })();
 
 /**
- * Enable MCP mode programmatically at runtime
- * Redirects all subsequent logs to stderr to keep stdout clean for protocol messages
+ * Switch logger output to a different destination at runtime
+ * @param outputMode - The destination to switch to (stdout, stderr, file, syslog, null)
  */
-export const enableMCPMode = (): void => {
-  if (currentOutputMode === 'stderr') {
-    logger.debug('MCP mode already enabled');
+export const switchLogOutput = (outputMode: string): void => {
+  if (currentOutputMode === outputMode) {
+    logger.debug(`Logger already using ${outputMode} output`);
     return;
   }
 
-  // Create new logger instance with stderr output
-  currentOutputMode = 'stderr';
-  const newLogger = createLogger('stderr');
+  const previousMode = currentOutputMode;
+  currentOutputMode = outputMode;
+  const newLogger = createLogger(outputMode);
 
   // Replace the exported logger's methods with the new instance
   Object.setPrototypeOf(logger, Object.getPrototypeOf(newLogger) as object);
@@ -311,34 +297,7 @@ export const enableMCPMode = (): void => {
     (logger as any)[key] = (newLogger as any)[key];
   });
 
-  logger.info(
-    { previousMode: currentOutputMode, newMode: 'stderr' },
-    'MCP mode enabled - logs redirected to stderr',
-  );
-};
-
-/**
- * Disable MCP mode and restore default logging behavior
- */
-export const disableMCPMode = (): void => {
-  if (currentOutputMode !== 'stderr' || getEnvConfig().MCP_MODE) {
-    logger.debug('MCP mode not enabled or set via environment');
-    return;
-  }
-
-  // Restore original logging mode
-  currentOutputMode = 'stdout';
-  const newLogger = createLogger('stdout');
-
-  // Replace the exported logger's methods with the new instance
-  Object.setPrototypeOf(logger, Object.getPrototypeOf(newLogger) as object);
-  Object.keys(newLogger).forEach((key) => {
-    // Use type assertion to handle dynamic property assignment
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-    (logger as any)[key] = (newLogger as any)[key];
-  });
-
-  logger.info('MCP mode disabled - logs restored to stdout');
+  logger.info({ previousMode, newMode: outputMode }, `Logger output switched to ${outputMode}`);
 };
 
 /**
@@ -397,7 +356,6 @@ export type { LoggerOptions, LogContext as LoggerContext };
 // Log startup information
 if (getEnvConfig().NODE_ENV !== 'test') {
   const effectiveOutput = getEffectiveLogOutput();
-  const isMCPMode = getEnvConfig().MCP_MODE || effectiveOutput === 'stderr';
 
   logger.info(
     {
@@ -405,10 +363,7 @@ if (getEnvConfig().NODE_ENV !== 'test') {
       log_level: logger.level,
       pid: process.pid,
       log_output: effectiveOutput,
-      mcp_mode: isMCPMode,
     },
-    isMCPMode
-      ? 'Logger initialized in MCP mode - stdout reserved for protocol'
-      : 'Logger initialized',
+    'Logger initialized',
   );
 }

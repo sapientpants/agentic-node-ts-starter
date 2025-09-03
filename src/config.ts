@@ -69,11 +69,7 @@ const ConfigSchema = z.object({
   FORCE_COLOR: BooleanSchema.optional().describe('Force colored output in terminals'),
   DEBUG: z.string().optional().describe('Debug namespaces to enable'),
 
-  // MCP Logging Configuration
-  MCP_MODE: BooleanSchema.optional().describe(
-    'Enable MCP mode - automatically redirects logs to stderr',
-  ),
-
+  // Logging Configuration
   LOG_OUTPUT: z
     .enum(['stdout', 'stderr', 'file', 'syslog', 'null'])
     .optional()

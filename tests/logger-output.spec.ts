@@ -1,6 +1,6 @@
 /**
- * Tests for MCP-compatible logging functionality.
- * Verifies that logging works correctly in MCP mode and various output destinations.
+ * Tests for configurable logging output destinations.
+ * Verifies that logging works correctly with various output destinations.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -11,10 +11,9 @@ import type { Logger } from '../src/logger.js';
 // Store original env
 const originalEnv = process.env;
 
-describe('MCP Logging', () => {
+describe('Logger Output Configuration', () => {
   let logger: Logger;
-  let enableMCPMode: () => void;
-  let disableMCPMode: () => void;
+  let switchLogOutput: (outputMode: string) => void;
   let getLoggerOutputMode: () => string;
   let createChildLogger: (name: string, context?: Record<string, unknown>) => Logger;
 
@@ -42,28 +41,19 @@ describe('MCP Logging', () => {
   });
 
   describe('Output Mode Detection', () => {
-    it('should default to stdout when no MCP configuration', async () => {
+    it('should default to stdout when LOG_OUTPUT not configured', async () => {
       const loggerModule = await import('../src/logger.js');
       getLoggerOutputMode = loggerModule.getLoggerOutputMode;
 
       expect(getLoggerOutputMode()).toBe('stdout');
     });
 
-    it('should use stderr when MCP_MODE is true', async () => {
-      process.env.MCP_MODE = 'true';
+    it('should use stderr when LOG_OUTPUT=stderr', async () => {
+      process.env.LOG_OUTPUT = 'stderr';
       const loggerModule = await import('../src/logger.js');
       getLoggerOutputMode = loggerModule.getLoggerOutputMode;
 
       expect(getLoggerOutputMode()).toBe('stderr');
-    });
-
-    it('should respect explicit LOG_OUTPUT over MCP_MODE', async () => {
-      process.env.MCP_MODE = 'true';
-      process.env.LOG_OUTPUT = 'file';
-      const loggerModule = await import('../src/logger.js');
-      getLoggerOutputMode = loggerModule.getLoggerOutputMode;
-
-      expect(getLoggerOutputMode()).toBe('file');
     });
 
     it('should support all defined output modes', async () => {
@@ -79,88 +69,48 @@ describe('MCP Logging', () => {
     });
   });
 
-  describe('MCP Mode Auto-detection', () => {
-    it('should auto-enable MCP mode when MCP_MODE is set', async () => {
-      process.env.MCP_MODE = 'true';
-      const loggerModule = await import('../src/logger.js');
-      logger = loggerModule.logger;
-      getLoggerOutputMode = loggerModule.getLoggerOutputMode;
-
-      expect(getLoggerOutputMode()).toBe('stderr');
-    });
-
-    it('should log MCP mode activation message', async () => {
-      process.env.NODE_ENV = 'development';
-      process.env.MCP_MODE = 'true';
-
-      const loggerModule = await import('../src/logger.js');
-      logger = loggerModule.logger;
-      getLoggerOutputMode = loggerModule.getLoggerOutputMode;
-
-      // Verify MCP mode is enabled
-      expect(getLoggerOutputMode()).toBe('stderr');
-
-      // Logger should be initialized in MCP mode
-      expect(logger).toBeDefined();
-    });
-  });
-
-  describe('Programmatic Mode Switching', () => {
-    it('should enable MCP mode programmatically', async () => {
+  describe('Programmatic Output Switching', () => {
+    it('should switch output mode programmatically', async () => {
       process.env.NODE_ENV = 'development';
       const loggerModule = await import('../src/logger.js');
       logger = loggerModule.logger;
-      enableMCPMode = loggerModule.enableMCPMode;
+      switchLogOutput = loggerModule.switchLogOutput;
       getLoggerOutputMode = loggerModule.getLoggerOutputMode;
 
       expect(getLoggerOutputMode()).toBe('stdout');
 
-      enableMCPMode();
+      switchLogOutput('stderr');
 
       expect(getLoggerOutputMode()).toBe('stderr');
     });
 
-    it('should disable MCP mode programmatically', async () => {
-      process.env.NODE_ENV = 'development';
+    it('should handle switching to same output mode gracefully', async () => {
       const loggerModule = await import('../src/logger.js');
-      logger = loggerModule.logger;
-      enableMCPMode = loggerModule.enableMCPMode;
-      disableMCPMode = loggerModule.disableMCPMode;
+      switchLogOutput = loggerModule.switchLogOutput;
       getLoggerOutputMode = loggerModule.getLoggerOutputMode;
 
-      enableMCPMode();
-      expect(getLoggerOutputMode()).toBe('stderr');
-
-      disableMCPMode();
-      expect(getLoggerOutputMode()).toBe('stdout');
-    });
-
-    it('should not disable MCP mode if set via environment', async () => {
-      process.env.MCP_MODE = 'true';
-      process.env.NODE_ENV = 'development';
-      const loggerModule = await import('../src/logger.js');
-      disableMCPMode = loggerModule.disableMCPMode;
-      getLoggerOutputMode = loggerModule.getLoggerOutputMode;
-
-      expect(getLoggerOutputMode()).toBe('stderr');
-
-      disableMCPMode();
-
-      // Should still be stderr because MCP_MODE env var is set
-      expect(getLoggerOutputMode()).toBe('stderr');
-    });
-
-    it('should handle repeated enable calls gracefully', async () => {
-      const loggerModule = await import('../src/logger.js');
-      enableMCPMode = loggerModule.enableMCPMode;
-      getLoggerOutputMode = loggerModule.getLoggerOutputMode;
-
-      enableMCPMode();
+      switchLogOutput('stderr');
       expect(getLoggerOutputMode()).toBe('stderr');
 
       // Second call should not cause issues
-      enableMCPMode();
+      switchLogOutput('stderr');
       expect(getLoggerOutputMode()).toBe('stderr');
+    });
+
+    it('should support switching between different modes', async () => {
+      process.env.NODE_ENV = 'development';
+      const loggerModule = await import('../src/logger.js');
+      switchLogOutput = loggerModule.switchLogOutput;
+      getLoggerOutputMode = loggerModule.getLoggerOutputMode;
+
+      switchLogOutput('stderr');
+      expect(getLoggerOutputMode()).toBe('stderr');
+
+      switchLogOutput('file');
+      expect(getLoggerOutputMode()).toBe('file');
+
+      switchLogOutput('stdout');
+      expect(getLoggerOutputMode()).toBe('stdout');
     });
   });
 
@@ -285,7 +235,7 @@ describe('MCP Logging', () => {
       logger = loggerModule.logger;
 
       // In stderr mode, even in development, we shouldn't have pretty printing
-      // This is to avoid terminal escape sequences in MCP mode
+      // This is to avoid terminal escape sequences when stderr is redirected
       expect(logger).toBeDefined();
     });
   });
@@ -317,9 +267,9 @@ describe('MCP Logging', () => {
     });
   });
 
-  describe('Logger Features in MCP Mode', () => {
-    it('should preserve context functionality in MCP mode', async () => {
-      process.env.MCP_MODE = 'true';
+  describe('Logger Features with Different Outputs', () => {
+    it('should preserve context functionality with stderr output', async () => {
+      process.env.LOG_OUTPUT = 'stderr';
       process.env.NODE_ENV = 'development';
 
       const loggerModule = await import('../src/logger.js');
@@ -330,8 +280,8 @@ describe('MCP Logging', () => {
       expect(contextLogger.withContext).toBeDefined();
     });
 
-    it('should preserve child logger functionality in MCP mode', async () => {
-      process.env.MCP_MODE = 'true';
+    it('should preserve child logger functionality with file output', async () => {
+      process.env.LOG_OUTPUT = 'file';
       process.env.NODE_ENV = 'development';
 
       const loggerModule = await import('../src/logger.js');
@@ -342,8 +292,8 @@ describe('MCP Logging', () => {
       expect(childLogger.withContext).toBeDefined();
     });
 
-    it('should preserve redaction in MCP mode', async () => {
-      process.env.MCP_MODE = 'true';
+    it('should preserve redaction with different outputs', async () => {
+      process.env.LOG_OUTPUT = 'stderr';
       process.env.NODE_ENV = 'development';
 
       const loggerModule = await import('../src/logger.js');
@@ -367,8 +317,8 @@ describe('MCP Logging', () => {
       expect(logger).toBeDefined();
     });
 
-    it('should maintain correlation ID support in MCP mode', async () => {
-      process.env.MCP_MODE = 'true';
+    it('should maintain correlation ID support with different outputs', async () => {
+      process.env.LOG_OUTPUT = 'file';
       process.env.NODE_ENV = 'production';
       process.env.CORRELATION_ID = 'test-correlation-123';
 
@@ -438,9 +388,9 @@ describe('MCP Logging', () => {
   });
 
   describe('Environment Integration', () => {
-    it('should work correctly in production with MCP mode', async () => {
+    it('should work correctly in production with stderr output', async () => {
       process.env.NODE_ENV = 'production';
-      process.env.MCP_MODE = 'true';
+      process.env.LOG_OUTPUT = 'stderr';
 
       const loggerModule = await import('../src/logger.js');
       logger = loggerModule.logger;
@@ -450,21 +400,21 @@ describe('MCP Logging', () => {
       expect(logger.level).toBe('info'); // Production default
     });
 
-    it('should work correctly in development with MCP mode', async () => {
+    it('should work correctly in development with file output', async () => {
       process.env.NODE_ENV = 'development';
-      process.env.MCP_MODE = 'true';
+      process.env.LOG_OUTPUT = 'file';
 
       const loggerModule = await import('../src/logger.js');
       logger = loggerModule.logger;
       getLoggerOutputMode = loggerModule.getLoggerOutputMode;
 
-      expect(getLoggerOutputMode()).toBe('stderr');
+      expect(getLoggerOutputMode()).toBe('file');
       expect(logger.level).toBe('debug'); // Development default
     });
 
-    it('should respect LOG_LEVEL override in MCP mode', async () => {
+    it('should respect LOG_LEVEL override with any output', async () => {
       process.env.NODE_ENV = 'production';
-      process.env.MCP_MODE = 'true';
+      process.env.LOG_OUTPUT = 'syslog';
       process.env.LOG_LEVEL = 'debug';
 
       const loggerModule = await import('../src/logger.js');
