@@ -21,15 +21,6 @@ import { createChildLogger } from './logger.js';
 const logger = createChildLogger('config');
 
 /**
- * Custom Zod refinement for port numbers
- */
-const PortSchema = z
-  .union([z.string().regex(/^\d+$/, 'Must be a valid port number').transform(Number), z.number()])
-  .refine((port) => port >= 1 && port <= 65535, {
-    message: 'Port must be between 1 and 65535',
-  });
-
-/**
  * Custom Zod transformer for boolean environment variables
  */
 const BooleanSchema = z
@@ -52,14 +43,6 @@ const ConfigSchema = z.object({
     .default('development')
     .describe('Application environment'),
 
-  // Application configuration
-  PORT: PortSchema.default(3000).describe('Application port number (if applicable)').optional(),
-  HOST: z
-    .string()
-    .default('0.0.0.0')
-    .describe('Application host address (if applicable)')
-    .optional(),
-
   // Application settings
   APP_NAME: z
     .string()
@@ -75,41 +58,12 @@ const ConfigSchema = z.object({
 
   // Feature flags
   ENABLE_METRICS: BooleanSchema.default(false).describe('Enable metrics collection'),
-  ENABLE_HEALTHCHECK: BooleanSchema.default(true).describe('Enable health check endpoint'),
-  ENABLE_GRACEFUL_SHUTDOWN: BooleanSchema.default(true).describe(
-    'Enable graceful shutdown handling',
-  ),
 
-  // External services (optional)
-  DATABASE_URL: z.string().url().optional().describe('PostgreSQL connection string (optional)'),
-
-  REDIS_URL: z.string().url().optional().describe('Redis connection string (optional)'),
-
-  API_BASE_URL: z.string().url().optional().describe('Base URL for external API calls (optional)'),
-
-  // Security settings
-  SESSION_SECRET: z
-    .string()
-    .min(32)
-    .optional()
-    .describe('Session secret for cryptographic operations (min 32 chars)'),
-
-  // API Keys (optional, sensitive)
-  API_KEY: z.string().min(1).optional().describe('API key for external services'),
-
-  JWT_SECRET: z.string().min(32).optional().describe('JWT signing secret (min 32 chars)'),
-
-  // Timeouts and limits
+  // Timeouts
   TIMEOUT_MS: z
     .union([z.string().regex(/^\d+$/).transform(Number), z.number()])
     .default(30000)
     .describe('General operation timeout in milliseconds'),
-
-  MAX_PAYLOAD_SIZE: z
-    .string()
-    .default('10mb')
-    .optional()
-    .describe('Maximum payload size (e.g., 10mb, 1gb)'),
 
   // Development settings
   FORCE_COLOR: BooleanSchema.optional().describe('Force colored output in terminals'),
@@ -124,17 +78,7 @@ export type Config = z.infer<typeof ConfigSchema>;
 /**
  * List of sensitive keys that should be masked in error messages
  */
-const SENSITIVE_KEYS = [
-  'DATABASE_URL',
-  'REDIS_URL',
-  'API_KEY',
-  'JWT_SECRET',
-  'SESSION_SECRET',
-  'PASSWORD',
-  'TOKEN',
-  'SECRET',
-  'KEY',
-];
+const SENSITIVE_KEYS = ['PASSWORD', 'TOKEN', 'SECRET', 'KEY'];
 
 /**
  * Mask sensitive values in error messages
@@ -224,8 +168,6 @@ function loadConfig(): Config {
       logger.info(
         {
           environment: parsed.NODE_ENV,
-          port: parsed.PORT,
-          host: parsed.HOST,
           app: parsed.APP_NAME,
         },
         'Configuration loaded successfully',

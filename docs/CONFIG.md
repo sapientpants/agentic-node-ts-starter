@@ -27,8 +27,8 @@ The configuration module (`src/config.ts`) provides:
 
    ```bash
    NODE_ENV=development
-   PORT=3000
-   DATABASE_URL=postgresql://localhost/myapp
+   APP_NAME=my-app
+   LOG_LEVEL=debug
    ```
 
 3. **Use configuration in your code:**
@@ -42,8 +42,8 @@ The configuration module (`src/config.ts`) provides:
    }
 
    // Check if optional config exists
-   if (config.DATABASE_URL) {
-     await connectDatabase(config.DATABASE_URL);
+   if (config.DEBUG) {
+     enableDebugMode(config.DEBUG);
    }
    ```
 
@@ -56,13 +56,6 @@ The configuration module (`src/config.ts`) provides:
 | `NODE_ENV` | string | `development`             | Environment: development, production, test, staging |
 | `APP_NAME` | string | `agentic-node-ts-starter` | Application name for logging                        |
 
-### Optional Application Settings
-
-| Variable | Type   | Default   | Description                                            |
-| -------- | ------ | --------- | ------------------------------------------------------ |
-| `PORT`   | number | `3000`    | Application port (1-65535) - only if your app needs it |
-| `HOST`   | string | `0.0.0.0` | Application host address - only if your app needs it   |
-
 ### Logging
 
 | Variable    | Type   | Default          | Description                      |
@@ -74,34 +67,22 @@ The configuration module (`src/config.ts`) provides:
 
 ### Feature Flags
 
-| Variable                   | Type    | Default | Description                  |
-| -------------------------- | ------- | ------- | ---------------------------- |
-| `ENABLE_METRICS`           | boolean | `false` | Enable metrics collection    |
-| `ENABLE_HEALTHCHECK`       | boolean | `true`  | Enable health check endpoint |
-| `ENABLE_GRACEFUL_SHUTDOWN` | boolean | `true`  | Enable graceful shutdown     |
+| Variable         | Type    | Default | Description               |
+| ---------------- | ------- | ------- | ------------------------- |
+| `ENABLE_METRICS` | boolean | `false` | Enable metrics collection |
 
-### External Services (Optional)
+### Timeouts
 
-| Variable       | Type   | Required | Description                     |
-| -------------- | ------ | -------- | ------------------------------- |
-| `DATABASE_URL` | string | No       | PostgreSQL connection string    |
-| `REDIS_URL`    | string | No       | Redis connection string         |
-| `API_BASE_URL` | string | No       | Base URL for external API calls |
+| Variable     | Type   | Default | Description                               |
+| ------------ | ------ | ------- | ----------------------------------------- |
+| `TIMEOUT_MS` | number | `30000` | General operation timeout in milliseconds |
 
-### Security
+### Development Settings (Optional)
 
-| Variable         | Type   | Required | Description                                   |
-| ---------------- | ------ | -------- | --------------------------------------------- |
-| `SESSION_SECRET` | string | No       | Session secret for crypto operations (min 32) |
-| `API_KEY`        | string | No       | API key for external services                 |
-| `JWT_SECRET`     | string | No       | JWT signing secret (min 32 chars)             |
-
-### Timeouts & Limits
-
-| Variable           | Type   | Default | Description                     |
-| ------------------ | ------ | ------- | ------------------------------- |
-| `TIMEOUT_MS`       | number | `30000` | General operation timeout in ms |
-| `MAX_PAYLOAD_SIZE` | string | `10mb`  | Maximum payload size (optional) |
+| Variable      | Type    | Description                      |
+| ------------- | ------- | -------------------------------- |
+| `DEBUG`       | string  | Debug namespaces (e.g., `app:*`) |
+| `FORCE_COLOR` | boolean | Force colored terminal output    |
 
 ## Adding Custom Configuration
 
@@ -114,18 +95,16 @@ To add your own environment variables:
      // ... existing configuration ...
 
      // Add your custom variables
-     STRIPE_API_KEY: z.string().min(1).describe('Stripe API key'),
+     MY_CUSTOM_VAR: z.string().min(1).describe('My custom variable'),
 
-     SMTP_HOST: z.string().optional().describe('SMTP server host'),
-
-     MAX_UPLOAD_SIZE: z
+     BATCH_SIZE: z
        .string()
        .regex(/^\d+$/)
        .transform(Number)
-       .default('5242880') // 5MB in bytes
-       .describe('Maximum upload size in bytes'),
+       .default('100')
+       .describe('Processing batch size'),
 
-     FEATURE_NEW_UI: BooleanSchema.default('false').describe('Enable new UI features'),
+     FEATURE_FLAG: BooleanSchema.default('false').describe('Enable new feature'),
    });
    ```
 
@@ -135,27 +114,24 @@ To add your own environment variables:
    import { config } from './config.js';
 
    // TypeScript knows about your new variables
-   const stripe = new Stripe(config.STRIPE_API_KEY);
+   const batchSize = config.BATCH_SIZE;
 
-   if (config.SMTP_HOST) {
-     setupEmailTransport(config.SMTP_HOST);
+   if (config.FEATURE_FLAG) {
+     enableNewFeature();
    }
    ```
 
 3. **Update `.env.example`:**
 
    ```bash
-   # Stripe Configuration
-   STRIPE_API_KEY=sk_test_...
+   # Custom Configuration
+   MY_CUSTOM_VAR=example-value
 
-   # Email Configuration (optional)
-   # SMTP_HOST=smtp.example.com
-
-   # Upload Settings
-   MAX_UPLOAD_SIZE=5242880  # 5MB
+   # Processing Settings
+   BATCH_SIZE=100
 
    # Feature Flags
-   FEATURE_NEW_UI=false
+   FEATURE_FLAG=false
    ```
 
 ## Validation Types
@@ -166,7 +142,7 @@ The configuration module supports various validation types:
 
 ```typescript
 // Basic string
-API_KEY: z.string(),
+MY_VAR: z.string(),
 
 // String with minimum length
 SECRET: z.string().min(32),
@@ -179,7 +155,7 @@ LOCALE: z.string().regex(/^[a-z]{2}-[A-Z]{2}$/),
 
 ```typescript
 // Number from string input
-PORT: z.string().regex(/^\d+$/).transform(Number),
+BATCH_SIZE: z.string().regex(/^\d+$/).transform(Number),
 
 // Number with range validation
 WORKERS: z.string()
@@ -204,16 +180,6 @@ ENVIRONMENT: z.enum(['development', 'staging', 'production']),
 LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
 ```
 
-### URLs
-
-```typescript
-// URL validation
-DATABASE_URL: z.string().url(),
-
-// Optional URL
-WEBHOOK_URL: z.string().url().optional(),
-```
-
 ### Arrays
 
 ```typescript
@@ -231,15 +197,14 @@ When configuration validation fails, the application provides clear error messag
 ❌ Invalid environment configuration:
 
 Missing required variables:
-  • DATABASE_URL: Required but not provided
-  • API_KEY: Required but not provided
+  • MY_CUSTOM_VAR: Required but not provided
 
 Invalid format:
-  • PORT: Must be a valid port number (received: "abc")
+  • TIMEOUT_MS: Must be a valid number (received: "abc")
   • ENABLE_METRICS: Invalid enum value (received: "maybe")
 
 Other errors:
-  • SESSION_SECRET: String must contain at least 32 character(s)
+  • SECRET: String must contain at least 32 character(s)
 
 💡 Tip: Check .env.example for valid configuration examples
 ```
@@ -248,9 +213,8 @@ Other errors:
 
 Sensitive values are automatically masked in error messages:
 
-- `DATABASE_URL`, `REDIS_URL` → Shows only first and last 2 characters
-- `API_KEY`, `JWT_SECRET`, `SESSION_SECRET` → Masked
 - Any variable containing `PASSWORD`, `TOKEN`, `SECRET`, or `KEY` → Masked
+- Shows only first and last 2 characters for longer values
 
 ## Helper Functions
 
@@ -274,9 +238,9 @@ Check if optional configuration exists:
 ```typescript
 import { hasConfig, config } from './config.js';
 
-if (hasConfig('DATABASE_URL')) {
-  // TypeScript knows config.DATABASE_URL is defined here
-  await connectDatabase(config.DATABASE_URL);
+if (hasConfig('DEBUG')) {
+  // TypeScript knows config.DEBUG is defined here
+  enableDebugMode(config.DEBUG);
 }
 ```
 
@@ -328,7 +292,7 @@ CACHE_TTL: z.string()
   .transform(Number)
   .default('3600'), // 1 hour default
 
-// Good: No default for required external service
+// Good: No default for required custom config
 API_ENDPOINT: z.string().url(), // No default, must be provided
 ```
 
@@ -342,9 +306,9 @@ const ConfigSchema = z.object({
   NODE_ENV: /* ... */,
   APP_NAME: /* ... */,
 
-  // Database
-  DATABASE_URL: /* ... */,
-  DATABASE_POOL_SIZE: /* ... */,
+  // Logging
+  LOG_LEVEL: /* ... */,
+  DEBUG: /* ... */,
 
   // Feature Flags
   ENABLE_FEATURE_X: /* ... */,
@@ -360,7 +324,7 @@ Set environment variables in your Dockerfile:
 
 ```dockerfile
 ENV NODE_ENV=production
-ENV PORT=8080
+ENV LOG_LEVEL=info
 ```
 
 Or use docker-compose:
@@ -370,8 +334,8 @@ services:
   app:
     environment:
       - NODE_ENV=production
-      - PORT=8080
-      - DATABASE_URL=postgresql://db/myapp
+      - LOG_LEVEL=info
+      - ENABLE_METRICS=true
 ```
 
 ### Kubernetes
@@ -385,15 +349,14 @@ metadata:
   name: app-config
 data:
   NODE_ENV: production
-  PORT: '8080'
+  LOG_LEVEL: info
 ---
 apiVersion: v1
 kind: Secret
 metadata:
   name: app-secrets
 stringData:
-  DATABASE_URL: postgresql://user:pass@db/myapp
-  JWT_SECRET: your-secret-key
+  MY_SECRET: your-secret-value
 ```
 
 ### Cloud Platforms
@@ -417,8 +380,7 @@ Example GitHub Actions:
 - name: Run tests
   env:
     NODE_ENV: test
-    DATABASE_URL: ${{ secrets.DATABASE_URL }}
-    JWT_SECRET: ${{ secrets.JWT_SECRET }}
+    LOG_LEVEL: silent
   run: pnpm test
 ```
 
@@ -439,7 +401,6 @@ describe('Config', () => {
 
   it('should load production config', async () => {
     process.env.NODE_ENV = 'production';
-    process.env.DATABASE_URL = 'postgresql://prod/db';
     process.env.API_KEY = 'test-api-key';
 
     const { config } = await import('./config.js');
@@ -456,10 +417,9 @@ Use test-specific configuration:
 
 ```typescript
 // test.env
-NODE_ENV=test
-PORT=0  // Let OS assign random port
-DATABASE_URL=postgresql://localhost/test_db
-LOG_LEVEL=silent
+NODE_ENV = test;
+LOG_LEVEL = silent;
+TIMEOUT_MS = 1000;
 ```
 
 ## Troubleshooting
@@ -524,9 +484,9 @@ Before:
 import dotenv from 'dotenv';
 dotenv.config();
 
-const dbUrl = process.env.DATABASE_URL;
-if (!dbUrl) {
-  throw new Error('DATABASE_URL is required');
+const apiKey = process.env.API_KEY;
+if (!apiKey) {
+  throw new Error('API_KEY is required');
 }
 ```
 
@@ -536,7 +496,7 @@ After:
 import { config } from './config.js';
 
 // Validation happens automatically
-const dbUrl = config.DATABASE_URL; // TypeScript knows this exists
+const apiKey = config.API_KEY; // TypeScript knows this exists if required
 ```
 
 ## Summary

@@ -45,23 +45,14 @@ describe('Configuration', () => {
       expect(config.APP_NAME).toBe('agentic-node-ts-starter');
     });
 
-    it('should parse PORT as a number when provided', async () => {
-      process.env.PORT = '8080';
-
-      const { config } = await import('../src/config.js');
-
-      expect(config.PORT).toBe(8080);
-      expect(typeof config.PORT).toBe('number');
-    });
-
     it('should parse boolean environment variables correctly', async () => {
       process.env.ENABLE_METRICS = 'true';
-      process.env.ENABLE_HEALTHCHECK = 'false';
+      process.env.FORCE_COLOR = 'false';
 
       const { config } = await import('../src/config.js');
 
       expect(config.ENABLE_METRICS).toBe(true);
-      expect(config.ENABLE_HEALTHCHECK).toBe(false);
+      expect(config.FORCE_COLOR).toBe(false);
     });
 
     it('should accept various boolean formats', async () => {
@@ -106,22 +97,9 @@ describe('Configuration', () => {
 
       const { config } = await import('../src/config.js');
 
-      expect(config.DATABASE_URL).toBeUndefined();
-      expect(config.REDIS_URL).toBeUndefined();
-      expect(config.API_KEY).toBeUndefined();
-      expect(config.JWT_SECRET).toBeUndefined();
-    });
-
-    it('should validate URL formats for URL fields', async () => {
-      process.env.DATABASE_URL = 'postgresql://user:pass@localhost/db';
-      process.env.REDIS_URL = 'redis://localhost:6379';
-      process.env.API_BASE_URL = 'https://api.example.com';
-
-      const { config } = await import('../src/config.js');
-
-      expect(config.DATABASE_URL).toBe('postgresql://user:pass@localhost/db');
-      expect(config.REDIS_URL).toBe('redis://localhost:6379');
-      expect(config.API_BASE_URL).toBe('https://api.example.com');
+      // Check that optional fields can be undefined
+      expect(config.DEBUG).toBeUndefined();
+      expect(config.FORCE_COLOR).toBeUndefined();
     });
   });
 
@@ -132,8 +110,8 @@ describe('Configuration', () => {
       const { config } = await import('../src/config.js');
 
       expect(config.ENABLE_METRICS).toBe(false);
-      expect(config.ENABLE_HEALTHCHECK).toBe(true);
       expect(config.TIMEOUT_MS).toBe(30000);
+      expect(config.APP_NAME).toBe('agentic-node-ts-starter');
     });
 
     it('should use environment-specific defaults for LOG_LEVEL', async () => {
@@ -158,38 +136,14 @@ describe('Configuration', () => {
   });
 
   describe('validation errors', () => {
-    it('should exit process on invalid PORT format', async () => {
-      process.env.PORT = 'not-a-number';
-
-      await expect(import('../src/config.js')).rejects.toThrow();
-    });
-
-    it('should exit process on PORT out of range', async () => {
-      process.env.PORT = '70000';
-
-      await expect(import('../src/config.js')).rejects.toThrow();
-    });
-
     it('should exit process on invalid NODE_ENV', async () => {
       process.env.NODE_ENV = 'invalid';
 
       await expect(import('../src/config.js')).rejects.toThrow();
     });
 
-    it('should exit process on invalid URL format', async () => {
-      process.env.DATABASE_URL = 'not-a-url';
-
-      await expect(import('../src/config.js')).rejects.toThrow();
-    });
-
     it('should exit process on invalid boolean format', async () => {
       process.env.ENABLE_METRICS = 'maybe';
-
-      await expect(import('../src/config.js')).rejects.toThrow();
-    });
-
-    it('should exit process when SESSION_SECRET is too short', async () => {
-      process.env.SESSION_SECRET = 'short';
 
       await expect(import('../src/config.js')).rejects.toThrow();
     });
@@ -207,11 +161,9 @@ describe('Configuration', () => {
       const { __testExports } = await import('../src/config.js');
       const { maskSensitiveValue } = __testExports;
 
-      expect(maskSensitiveValue('DATABASE_URL', 'postgresql://user:pass@localhost/db')).toBe(
-        'po***db',
-      );
-      expect(maskSensitiveValue('API_KEY', 'sk-1234567890abcdef')).toBe('sk***ef');
-      expect(maskSensitiveValue('JWT_SECRET', 'abc')).toBe('***');
+      expect(maskSensitiveValue('PASSWORD', 'my-secret-password')).toBe('my***rd');
+      expect(maskSensitiveValue('TOKEN', 'sk-1234567890abcdef')).toBe('sk***ef');
+      expect(maskSensitiveValue('SECRET', 'abc')).toBe('***');
       expect(maskSensitiveValue('NORMAL_VAR', 'visible')).toBe('visible');
     });
 
@@ -219,8 +171,8 @@ describe('Configuration', () => {
       const { __testExports } = await import('../src/config.js');
       const { maskSensitiveValue } = __testExports;
 
-      expect(maskSensitiveValue('API_KEY', undefined)).toBe('undefined');
-      expect(maskSensitiveValue('API_KEY', null)).toBe('null');
+      expect(maskSensitiveValue('PASSWORD', undefined)).toBe('undefined');
+      expect(maskSensitiveValue('SECRET', null)).toBe('null');
     });
   });
 
@@ -237,13 +189,13 @@ describe('Configuration', () => {
     });
 
     it('should provide hasConfig helper', async () => {
-      process.env.DATABASE_URL = 'postgresql://localhost/db';
-      // Don't set REDIS_URL
+      process.env.DEBUG = 'app:*';
+      // Don't set FORCE_COLOR
 
       const { hasConfig } = await import('../src/config.js');
 
-      expect(hasConfig('DATABASE_URL')).toBe(true);
-      expect(hasConfig('REDIS_URL')).toBe(false);
+      expect(hasConfig('DEBUG')).toBe(true);
+      expect(hasConfig('FORCE_COLOR')).toBe(false);
       expect(hasConfig('NODE_ENV')).toBe(true); // Has default value
     });
 
@@ -255,7 +207,7 @@ describe('Configuration', () => {
       expect(keys).toBeInstanceOf(Array);
       expect(keys).toContain('NODE_ENV');
       expect(keys).toContain('ENABLE_METRICS');
-      expect(keys.length).toBeGreaterThanOrEqual(10);
+      expect(keys.length).toBeGreaterThanOrEqual(5);
     });
   });
 
@@ -274,27 +226,20 @@ describe('Configuration', () => {
   describe('real-world scenarios', () => {
     it('should handle typical production configuration', async () => {
       process.env.NODE_ENV = 'production';
-      process.env.PORT = '8080';
-      process.env.HOST = '0.0.0.0';
-      process.env.DATABASE_URL = 'postgresql://prod:pass@db.example.com/myapp';
-      process.env.REDIS_URL = 'redis://cache.example.com:6379';
-      process.env.JWT_SECRET = 'super-secret-jwt-key-that-is-at-least-32-chars';
-      process.env.SESSION_SECRET = 'super-secret-session-key-that-is-32-chars-long';
       process.env.ENABLE_METRICS = 'true';
       process.env.LOG_LEVEL = 'warn';
+      process.env.TIMEOUT_MS = '60000';
 
       const { config } = await import('../src/config.js');
 
       expect(config.NODE_ENV).toBe('production');
-      expect(config.PORT).toBe(8080);
       expect(config.ENABLE_METRICS).toBe(true);
       expect(config.LOG_LEVEL).toBe('warn');
+      expect(config.TIMEOUT_MS).toBe(60000);
     });
 
     it('should handle typical development configuration', async () => {
       process.env.NODE_ENV = 'development';
-      process.env.PORT = '3000';
-      process.env.HOST = 'localhost';
       process.env.ENABLE_METRICS = 'false';
       process.env.DEBUG = 'app:*';
       process.env.FORCE_COLOR = 'true';
@@ -302,11 +247,10 @@ describe('Configuration', () => {
       const { config } = await import('../src/config.js');
 
       expect(config.NODE_ENV).toBe('development');
-      expect(config.PORT).toBe(3000);
-      expect(config.HOST).toBe('localhost');
       expect(config.ENABLE_METRICS).toBe(false);
       expect(config.DEBUG).toBe('app:*');
       expect(config.FORCE_COLOR).toBe(true);
+      expect(config.LOG_LEVEL).toBe('debug'); // Default for development
     });
 
     it('should handle minimal configuration', async () => {
@@ -317,8 +261,8 @@ describe('Configuration', () => {
 
       expect(config).toBeDefined();
       expect(config.NODE_ENV).toBe('test');
-      expect(config.ENABLE_HEALTHCHECK).toBe(true);
-      expect(config.ENABLE_GRACEFUL_SHUTDOWN).toBe(true);
+      expect(config.APP_NAME).toBe('agentic-node-ts-starter');
+      expect(config.ENABLE_METRICS).toBe(false); // Default
     });
   });
 });
