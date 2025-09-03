@@ -33,6 +33,10 @@ cd my-project
 # Install dependencies (requires Node.js 22+ and pnpm 10.15)
 pnpm install
 
+# Set up configuration (required)
+cp .env.example .env
+# Edit .env with your configuration
+
 # Verify everything works
 pnpm test
 pnpm verify  # Full quality check
@@ -105,6 +109,13 @@ See [CLAUDE.md](./CLAUDE.md) for detailed Claude Code guidance.
 ```
 
 ## 🔄 Features
+
+### Configuration & Environment
+
+- 🔐 **Type-safe configuration** with Zod validation
+- 🔐 **Environment validation** at startup with clear errors
+- 🔐 **Sensitive value masking** in error messages
+- 📝 See [docs/CONFIG.md](./docs/CONFIG.md) for configuration guide
 
 ### Testing & Quality
 

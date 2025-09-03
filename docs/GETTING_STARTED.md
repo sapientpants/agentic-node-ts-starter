@@ -60,7 +60,19 @@ pnpm install
 - Node.js >= 22.0.0
 - pnpm 10.15.0 (exact version)
 
-### 3. Update Project Metadata
+### 3. Set Up Configuration (Required)
+
+Configuration is mandatory. The application will not start without valid configuration:
+
+```bash
+# Copy the example configuration
+cp .env.example .env
+
+# Edit .env with your configuration
+# Most defaults will work for development
+```
+
+### 4. Update Project Metadata
 
 Edit `package.json`:
 
@@ -83,7 +95,7 @@ Edit `package.json`:
 }
 ```
 
-### 4. Clean Up Example Code
+### 5. Clean Up Example Code
 
 > [!IMPORTANT]
 > **Understanding Template Files**
@@ -95,8 +107,10 @@ Edit `package.json`:
 >   - `tests/index.spec.ts` - Example unit tests
 >   - `tests/add.property.spec.ts` - Example property-based tests
 > - **🏗️ Template Infrastructure**: Production-ready code that you can keep and customize:
+>   - `src/config.ts` - Type-safe environment configuration with Zod validation
 >   - `src/logger.ts` - Structured logging with Pino
 >   - `src/dev/debug-utils.ts` - Development debugging utilities
+>   - `tests/config.spec.ts` - Configuration tests
 >   - `tests/logger.spec.ts` - Logger tests
 >   - `tests/container-scan.spec.ts` - Container security tests
 >   - `tests/documentation.spec.ts` - Documentation validation tests
