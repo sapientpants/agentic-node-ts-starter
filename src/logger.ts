@@ -1,21 +1,137 @@
 /**
  * Production-ready logger configuration using Pino.
  * This file is part of the template infrastructure and can be kept and customized.
+ *
+ * Supports multiple output destinations for flexible logging configuration.
  */
 
-import pino, { type Logger as PinoLogger, type LoggerOptions } from 'pino';
+import pino, { type Logger as PinoLogger, type LoggerOptions, type DestinationStream } from 'pino';
+import { mkdirSync } from 'fs';
+import { dirname } from 'path';
+import {
+  validateLogPath,
+  validateSyslogHost,
+  validateSyslogPort,
+  validateFileMode,
+} from './logger-validation.js';
 
 /**
- * Logger configuration based on environment
+ * Get environment configuration safely
+ * This avoids circular dependency with config module
  */
-const getLoggerConfig = (): LoggerOptions => {
-  const isProduction = process.env.NODE_ENV === 'production';
-  const isDevelopment = process.env.NODE_ENV === 'development';
-  const isTest = process.env.NODE_ENV === 'test';
-  const logLevel = process.env.LOG_LEVEL || (isProduction ? 'info' : 'debug');
+const getEnvConfig = () => ({
+  NODE_ENV: process.env.NODE_ENV || 'development',
+  LOG_LEVEL: process.env.LOG_LEVEL,
+  LOG_OUTPUT: process.env.LOG_OUTPUT,
+  LOG_FILE_PATH: process.env.LOG_FILE_PATH,
+  LOG_FILE_MAX_SIZE: process.env.LOG_FILE_MAX_SIZE,
+  LOG_FILE_MAX_FILES: process.env.LOG_FILE_MAX_FILES
+    ? parseInt(process.env.LOG_FILE_MAX_FILES, 10)
+    : undefined,
+  LOG_SYSLOG_HOST: process.env.LOG_SYSLOG_HOST,
+  LOG_SYSLOG_PORT: process.env.LOG_SYSLOG_PORT
+    ? parseInt(process.env.LOG_SYSLOG_PORT, 10)
+    : undefined,
+  LOG_SYSLOG_PROTOCOL: process.env.LOG_SYSLOG_PROTOCOL as 'udp' | 'tcp' | undefined,
+  APP_NAME: process.env.APP_NAME || 'agentic-node-ts-starter',
+});
+
+/**
+ * Runtime state for dynamic logger configuration
+ */
+let currentLoggerInstance: Logger | null = null;
+let currentOutputMode: string | null = null;
+let currentFileStream: DestinationStream | null = null;
+
+/**
+ * Determine the effective logging output destination
+ */
+const getEffectiveLogOutput = (): string => {
+  const envConfig = getEnvConfig();
+  // Use configured output or default to stdout
+  return envConfig.LOG_OUTPUT || 'stdout';
+};
+
+/**
+ * Parse size string (e.g., "10M", "1G") to bytes
+ */
+const parseSizeToBytes = (size: string | undefined): number | undefined => {
+  if (!size) return undefined;
+
+  const match = size.match(/^(\d+(?:\.\d+)?)\s*([KMGT]?)B?$/i);
+  if (!match || !match[1]) return undefined;
+
+  const value = parseFloat(match[1]);
+  const unit = match[2]?.toUpperCase() || '';
+
+  const multipliers: Record<string, number> = {
+    '': 1,
+    K: 1024,
+    M: 1024 * 1024,
+    G: 1024 * 1024 * 1024,
+    T: 1024 * 1024 * 1024 * 1024,
+  };
+
+  return Math.floor(value * (multipliers[unit] || 1));
+};
+
+/**
+ * Get file transport configuration
+ */
+const getFileTransportConfig = () => {
+  const maxSize = parseSizeToBytes(getEnvConfig().LOG_FILE_MAX_SIZE);
+
+  if (maxSize) {
+    // For rotation, use pino-roll transport if size limits are specified
+    return {
+      target: 'pino-roll',
+      options: {
+        file: getEnvConfig().LOG_FILE_PATH || './logs/app.log',
+        size: getEnvConfig().LOG_FILE_MAX_SIZE || '10M',
+        ...(getEnvConfig().LOG_FILE_MAX_FILES && {
+          limit: { count: getEnvConfig().LOG_FILE_MAX_FILES },
+        }),
+      },
+    };
+  }
+
+  // Default to pino/file transport without rotation
+  return {
+    target: 'pino/file',
+    options: {
+      destination: getEnvConfig().LOG_FILE_PATH || './logs/app.log',
+      mkdir: true,
+    },
+  };
+};
+
+/**
+ * Get syslog transport configuration
+ */
+const getSyslogTransportConfig = () => {
+  return {
+    target: 'pino-syslog',
+    options: {
+      host: getEnvConfig().LOG_SYSLOG_HOST || 'localhost',
+      port: getEnvConfig().LOG_SYSLOG_PORT || 514,
+      protocol: getEnvConfig().LOG_SYSLOG_PROTOCOL || 'udp',
+      app: getEnvConfig().APP_NAME,
+    },
+  };
+};
+
+/**
+ * Logger configuration based on environment and output mode
+ */
+const getLoggerConfig = (outputMode?: string): LoggerOptions => {
+  const isProduction = getEnvConfig().NODE_ENV === 'production';
+  const isDevelopment = getEnvConfig().NODE_ENV === 'development';
+  const isTest = getEnvConfig().NODE_ENV === 'test';
+  const logLevel = getEnvConfig().LOG_LEVEL || (isProduction ? 'info' : 'debug');
+  const effectiveOutput = outputMode || getEffectiveLogOutput();
 
   // Base configuration
-  const config: LoggerOptions = {
+  const baseConfig: LoggerOptions = {
     level: logLevel,
     timestamp: pino.stdTimeFunctions.isoTime,
     // Redact sensitive fields by default
@@ -38,10 +154,123 @@ const getLoggerConfig = (): LoggerOptions => {
     },
   };
 
-  // Development configuration - human-readable output
+  // Production mixin for correlation IDs
+  const productionConfig: LoggerOptions = {
+    ...baseConfig,
+    mixin() {
+      return {
+        correlationId: process.env.CORRELATION_ID,
+      };
+    },
+    formatters: {
+      level: (label) => {
+        return { level: label };
+      },
+    },
+  };
+
+  // Test configuration - minimize output
+  if (isTest) {
+    return {
+      ...baseConfig,
+      level: process.env.LOG_LEVEL || 'silent',
+    };
+  }
+
+  // Handle null output (disable logging)
+  if (effectiveOutput === 'null') {
+    return {
+      ...baseConfig,
+      level: 'silent',
+    };
+  }
+
+  // Handle file output
+  if (effectiveOutput === 'file') {
+    const logPath = getEnvConfig().LOG_FILE_PATH || './logs/app.log';
+
+    // Validate the log path for security
+    try {
+      validateLogPath(logPath);
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error(
+        `Invalid log file path: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      // eslint-disable-next-line no-console
+      console.error('Falling back to stdout');
+      return isProduction ? productionConfig : baseConfig;
+    }
+
+    // Ensure directory exists for file output with proper permissions
+    validateFileMode(process.env.LOG_FILE_PERMISSIONS); // Validates and warns about permissions
+    try {
+      mkdirSync(dirname(logPath), { recursive: true, mode: 0o750 });
+    } catch (error) {
+      // Log the error since logger might not be available yet
+      // eslint-disable-next-line no-console
+      console.error(
+        `Failed to create log directory: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      // eslint-disable-next-line no-console
+      console.error('Falling back to stdout');
+      return isProduction ? productionConfig : baseConfig;
+    }
+
+    const transportConfig = getFileTransportConfig();
+    return {
+      ...(isProduction ? productionConfig : baseConfig),
+      transport: transportConfig,
+    };
+  }
+
+  // Handle syslog output
+  if (effectiveOutput === 'syslog') {
+    // Validate syslog configuration
+    const syslogHost = getEnvConfig().LOG_SYSLOG_HOST || 'localhost';
+    const syslogPort = getEnvConfig().LOG_SYSLOG_PORT;
+
+    try {
+      validateSyslogHost(syslogHost);
+      validateSyslogPort(syslogPort);
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error(
+        `Invalid syslog configuration: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      // eslint-disable-next-line no-console
+      console.error('Falling back to stdout');
+      return isProduction ? productionConfig : baseConfig;
+    }
+
+    const transportConfig = getSyslogTransportConfig();
+    // Syslog transport requires numeric timestamps (epoch milliseconds)
+    // This is because the pino-syslog transport expects numeric timestamps
+    // for proper RFC5424 syslog message formatting
+    const syslogBaseConfig = {
+      ...baseConfig,
+      timestamp: pino.stdTimeFunctions.epochTime,
+    };
+    const syslogProductionConfig = {
+      ...productionConfig,
+      timestamp: pino.stdTimeFunctions.epochTime,
+    };
+    return {
+      ...(isProduction ? syslogProductionConfig : syslogBaseConfig),
+      transport: transportConfig,
+    };
+  }
+
+  // Handle stderr output - no pretty printing to avoid escape sequences
+  if (effectiveOutput === 'stderr') {
+    return isProduction ? productionConfig : baseConfig;
+  }
+
+  // Default stdout output
+  // Development gets pretty printing, production gets structured JSON
   if (isDevelopment && !isTest) {
     return {
-      ...config,
+      ...baseConfig,
       transport: {
         target: 'pino-pretty',
         options: {
@@ -54,35 +283,23 @@ const getLoggerConfig = (): LoggerOptions => {
     };
   }
 
-  // Test configuration - minimize output
-  if (isTest) {
-    return {
-      ...config,
-      level: process.env.LOG_LEVEL || 'silent',
-    };
+  return isProduction ? productionConfig : baseConfig;
+};
+
+/**
+ * Get the appropriate destination stream based on output mode
+ */
+const getDestination = (outputMode?: string): DestinationStream | undefined => {
+  const effectiveOutput = outputMode || getEffectiveLogOutput();
+
+  // stderr output uses file descriptor 2
+  if (effectiveOutput === 'stderr') {
+    return pino.destination(2);
   }
 
-  // Production configuration - structured JSON
-  return {
-    ...config,
-    // Add correlation ID support for production
-    mixin() {
-      return {
-        // Correlation ID placeholder - will be replaced with OpenTelemetry trace ID
-        // Future: correlationId: trace.getActiveSpan()?.spanContext().traceId
-        correlationId: process.env.CORRELATION_ID,
-        // Future OpenTelemetry fields:
-        // - span_id: trace.getActiveSpan()?.spanContext().spanId
-        // - service_name: process.env.OTEL_SERVICE_NAME
-        // - service_version: process.env.OTEL_SERVICE_VERSION
-      };
-    },
-    formatters: {
-      level: (label) => {
-        return { level: label };
-      },
-    },
-  };
+  // stdout is the default, let pino handle it
+  // File and syslog are handled via transports
+  return undefined;
 };
 
 /**
@@ -109,8 +326,12 @@ const wrapLoggerWithContext = (baseLogger: PinoLogger): Logger => {
 /**
  * Create a logger instance with the provided configuration
  */
-const createLogger = (): Logger => {
-  const baseLogger = pino(getLoggerConfig());
+const createLogger = (outputMode?: string): Logger => {
+  const config = getLoggerConfig(outputMode);
+  const destination = getDestination(outputMode);
+
+  const baseLogger = destination ? pino(config, destination) : pino(config);
+
   return wrapLoggerWithContext(baseLogger);
 };
 
@@ -118,7 +339,78 @@ const createLogger = (): Logger => {
  * Default logger instance
  * Use this throughout the application for consistent logging
  */
-export const logger = createLogger();
+export const logger = (() => {
+  const effectiveOutput = getEffectiveLogOutput();
+  currentOutputMode = effectiveOutput;
+  currentLoggerInstance = createLogger();
+  return currentLoggerInstance;
+})();
+
+/**
+ * Cleanup resources when switching output modes
+ * @param previousMode - The previous output mode
+ */
+const cleanupPreviousOutput = (previousMode: string | null): void => {
+  if (previousMode === 'file' && currentFileStream) {
+    try {
+      // Attempt to close the file stream
+      const stream = currentFileStream as unknown as { end?: () => void };
+      if (typeof stream.end === 'function') {
+        stream.end();
+      }
+      currentFileStream = null;
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        `Failed to cleanup file stream: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+  // Additional cleanup for other transports could be added here
+};
+
+/**
+ * Switch logger output to a different destination at runtime
+ * @param outputMode - The destination to switch to (stdout, stderr, file, syslog, null)
+ *
+ * Note: This implementation mutates the exported logger instance to maintain
+ * backward compatibility with existing code that imports the logger directly.
+ * While this approach is more complex than a factory pattern, it ensures that
+ * all existing logger references throughout the application automatically use
+ * the new output destination without requiring code changes.
+ */
+export const switchLogOutput = (outputMode: string): void => {
+  if (currentOutputMode === outputMode) {
+    logger.debug(`Logger already using ${outputMode} output`);
+    return;
+  }
+
+  const previousMode = currentOutputMode;
+
+  // Cleanup resources from previous mode
+  cleanupPreviousOutput(previousMode);
+
+  currentOutputMode = outputMode;
+  const newLogger = createLogger(outputMode);
+
+  // Replace the exported logger's methods with the new instance
+  // This approach maintains the same logger reference for all imports
+  Object.setPrototypeOf(logger, Object.getPrototypeOf(newLogger) as object);
+  Object.keys(newLogger).forEach((key) => {
+    // Use type assertion to handle dynamic property assignment
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+    (logger as any)[key] = (newLogger as any)[key];
+  });
+
+  logger.info({ previousMode, newMode: outputMode }, `Logger output switched to ${outputMode}`);
+};
+
+/**
+ * Get current logger output mode
+ */
+export const getLoggerOutputMode = (): string => {
+  return currentOutputMode || getEffectiveLogOutput();
+};
 
 /**
  * Create a child logger with specific context
@@ -167,12 +459,15 @@ export const withTraceContext = (log: Logger, traceId?: string, spanId?: string)
 export type { LoggerOptions, LogContext as LoggerContext };
 
 // Log startup information
-if (process.env.NODE_ENV !== 'test') {
+if (getEnvConfig().NODE_ENV !== 'test') {
+  const effectiveOutput = getEffectiveLogOutput();
+
   logger.info(
     {
-      node_env: process.env.NODE_ENV,
+      node_env: getEnvConfig().NODE_ENV,
       log_level: logger.level,
       pid: process.pid,
+      log_output: effectiveOutput,
     },
     'Logger initialized',
   );

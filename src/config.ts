@@ -68,6 +68,47 @@ const ConfigSchema = z.object({
   // Development settings
   FORCE_COLOR: BooleanSchema.optional().describe('Force colored output in terminals'),
   DEBUG: z.string().optional().describe('Debug namespaces to enable'),
+
+  // Logging Configuration
+  LOG_OUTPUT: z
+    .enum(['stdout', 'stderr', 'file', 'syslog', 'null'])
+    .optional()
+    .describe('Logger output destination (stdout, stderr, file, syslog, null)'),
+
+  // File logging configuration (when LOG_OUTPUT=file)
+  LOG_FILE_PATH: z.string().optional().describe('Path to log file when using file output'),
+
+  LOG_FILE_MAX_SIZE: z
+    .string()
+    .optional()
+    .describe('Maximum size of log file before rotation (e.g., 10M, 1G)'),
+
+  LOG_FILE_MAX_FILES: z
+    .union([z.string().regex(/^\d+$/).transform(Number), z.number()])
+    .optional()
+    .describe('Maximum number of rotated log files to keep'),
+
+  // Syslog configuration (when LOG_OUTPUT=syslog)
+  LOG_SYSLOG_HOST: z.string().optional().describe('Syslog server hostname'),
+
+  LOG_SYSLOG_PORT: z
+    .union([z.string().regex(/^\d+$/).transform(Number), z.number()])
+    .optional()
+    .describe('Syslog server port'),
+
+  LOG_SYSLOG_PROTOCOL: z.enum(['udp', 'tcp']).optional().describe('Syslog protocol (udp or tcp)'),
+
+  // File permissions configuration
+  LOG_FILE_PERMISSIONS: z
+    .string()
+    .optional()
+    .describe('Octal file permissions for log files (e.g., 640, 0640)'),
+
+  // Test configuration
+  LOG_TEST_FILE_TIMEOUT: z
+    .union([z.string().regex(/^\d+$/).transform(Number), z.number()])
+    .optional()
+    .describe('Timeout in milliseconds for file write tests in CI'),
 });
 
 /**
