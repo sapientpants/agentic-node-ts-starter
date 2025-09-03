@@ -6,6 +6,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { mkdirSync, rmSync, existsSync, readFileSync } from 'fs';
 import { join } from 'path';
+import { randomUUID } from 'crypto';
 import type { Logger } from '../src/logger.js';
 import { getTestFileTimeout } from '../src/logger-validation.js';
 
@@ -350,19 +351,56 @@ describe('Logger Output Configuration', () => {
 
       for (const testCase of testCases) {
         vi.resetModules();
+
+        // Create a unique test directory for each iteration to avoid conflicts
+        const uniqueTestLogDir = join(process.cwd(), `test-logs-${randomUUID()}`);
+        const uniqueTestLogFile = join(uniqueTestLogDir, 'test.log');
+
+        // Ensure the directory exists
+        if (!existsSync(uniqueTestLogDir)) {
+          mkdirSync(uniqueTestLogDir, { recursive: true });
+        }
+
         process.env = {
           ...originalEnv,
           NODE_ENV: 'test',
           LOG_OUTPUT: 'file',
-          LOG_FILE_PATH: testLogFile,
+          LOG_FILE_PATH: uniqueTestLogFile,
           LOG_FILE_MAX_SIZE: testCase.input,
         };
 
-        const loggerModule = await import('../src/logger.js');
-        logger = loggerModule.logger;
+        try {
+          const loggerModule = await import('../src/logger.js');
+          logger = loggerModule.logger;
 
-        // Should parse without errors
-        expect(logger).toBeDefined();
+          // Should parse without errors
+          expect(logger).toBeDefined();
+
+          // Give pino-roll a moment to finish any async operations
+          // Use configurable timeout for CI environments
+          const timeout = process.env.LOG_TEST_FILE_TIMEOUT
+            ? parseInt(process.env.LOG_TEST_FILE_TIMEOUT, 10)
+            : 50;
+          await new Promise((resolve) => setTimeout(resolve, timeout));
+        } finally {
+          // Clean up the unique directory after each test
+          // Use a try-catch to handle any cleanup errors gracefully
+          try {
+            if (existsSync(uniqueTestLogDir)) {
+              rmSync(uniqueTestLogDir, { recursive: true, force: true });
+            }
+          } catch (err) {
+            // Cleanup errors are non-fatal in tests
+            // Only ENOENT (already deleted) and EBUSY (still in use) are expected
+            if (err && typeof err === 'object' && 'code' in err) {
+              const errorCode = (err as NodeJS.ErrnoException).code;
+              if (errorCode !== 'ENOENT' && errorCode !== 'EBUSY') {
+                // Unexpected error - re-throw for visibility
+                throw err;
+              }
+            }
+          }
+        }
       }
     });
   });
