@@ -123,11 +123,13 @@ describe('Logger Output Configuration', () => {
       const loggerModule = await import('../src/logger.js');
       logger = loggerModule.logger;
 
-      // Log a message
-      logger.info('Test message for file output');
+      // Log multiple messages to ensure file is written
+      logger.info('Test message for file output 1');
+      logger.info('Test message for file output 2');
+      logger.info('Test message for file output 3');
 
-      // Give time for async file write
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      // Give more time for async file write in CI
+      await new Promise((resolve) => setTimeout(resolve, 300));
 
       // Check if log file was created
       expect(existsSync(testLogFile)).toBe(true);
