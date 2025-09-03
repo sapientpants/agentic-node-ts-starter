@@ -8,6 +8,12 @@
 import pino, { type Logger as PinoLogger, type LoggerOptions, type DestinationStream } from 'pino';
 import { mkdirSync } from 'fs';
 import { dirname } from 'path';
+import {
+  validateLogPath,
+  validateSyslogHost,
+  validateSyslogPort,
+  validateFileMode,
+} from './logger-validation.js';
 
 /**
  * Get environment configuration safely
@@ -35,6 +41,7 @@ const getEnvConfig = () => ({
  */
 let currentLoggerInstance: Logger | null = null;
 let currentOutputMode: string | null = null;
+let currentFileStream: DestinationStream | null = null;
 
 /**
  * Determine the effective logging output destination
@@ -180,12 +187,34 @@ const getLoggerConfig = (outputMode?: string): LoggerOptions => {
 
   // Handle file output
   if (effectiveOutput === 'file') {
-    // Ensure directory exists for file output
     const logPath = getEnvConfig().LOG_FILE_PATH || './logs/app.log';
+
+    // Validate the log path for security
     try {
-      mkdirSync(dirname(logPath), { recursive: true });
-    } catch {
-      // Directory creation errors are non-fatal
+      validateLogPath(logPath);
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error(
+        `Invalid log file path: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      // eslint-disable-next-line no-console
+      console.error('Falling back to stdout');
+      return isProduction ? productionConfig : baseConfig;
+    }
+
+    // Ensure directory exists for file output with proper permissions
+    validateFileMode(process.env.LOG_FILE_PERMISSIONS); // Validates and warns about permissions
+    try {
+      mkdirSync(dirname(logPath), { recursive: true, mode: 0o750 });
+    } catch (error) {
+      // Log the error since logger might not be available yet
+      // eslint-disable-next-line no-console
+      console.error(
+        `Failed to create log directory: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      // eslint-disable-next-line no-console
+      console.error('Falling back to stdout');
+      return isProduction ? productionConfig : baseConfig;
     }
 
     const transportConfig = getFileTransportConfig();
@@ -197,8 +226,27 @@ const getLoggerConfig = (outputMode?: string): LoggerOptions => {
 
   // Handle syslog output
   if (effectiveOutput === 'syslog') {
+    // Validate syslog configuration
+    const syslogHost = getEnvConfig().LOG_SYSLOG_HOST || 'localhost';
+    const syslogPort = getEnvConfig().LOG_SYSLOG_PORT;
+
+    try {
+      validateSyslogHost(syslogHost);
+      validateSyslogPort(syslogPort);
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error(
+        `Invalid syslog configuration: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      // eslint-disable-next-line no-console
+      console.error('Falling back to stdout');
+      return isProduction ? productionConfig : baseConfig;
+    }
+
     const transportConfig = getSyslogTransportConfig();
     // Syslog transport requires numeric timestamps (epoch milliseconds)
+    // This is because the pino-syslog transport expects numeric timestamps
+    // for proper RFC5424 syslog message formatting
     const syslogBaseConfig = {
       ...baseConfig,
       timestamp: pino.stdTimeFunctions.epochTime,
@@ -299,6 +347,29 @@ export const logger = (() => {
 })();
 
 /**
+ * Cleanup resources when switching output modes
+ * @param previousMode - The previous output mode
+ */
+const cleanupPreviousOutput = (previousMode: string | null): void => {
+  if (previousMode === 'file' && currentFileStream) {
+    try {
+      // Attempt to close the file stream
+      const stream = currentFileStream as unknown as { end?: () => void };
+      if (typeof stream.end === 'function') {
+        stream.end();
+      }
+      currentFileStream = null;
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        `Failed to cleanup file stream: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+  // Additional cleanup for other transports could be added here
+};
+
+/**
  * Switch logger output to a different destination at runtime
  * @param outputMode - The destination to switch to (stdout, stderr, file, syslog, null)
  *
@@ -315,6 +386,10 @@ export const switchLogOutput = (outputMode: string): void => {
   }
 
   const previousMode = currentOutputMode;
+
+  // Cleanup resources from previous mode
+  cleanupPreviousOutput(previousMode);
+
   currentOutputMode = outputMode;
   const newLogger = createLogger(outputMode);
 

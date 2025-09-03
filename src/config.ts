@@ -97,6 +97,18 @@ const ConfigSchema = z.object({
     .describe('Syslog server port'),
 
   LOG_SYSLOG_PROTOCOL: z.enum(['udp', 'tcp']).optional().describe('Syslog protocol (udp or tcp)'),
+
+  // File permissions configuration
+  LOG_FILE_PERMISSIONS: z
+    .string()
+    .optional()
+    .describe('Octal file permissions for log files (e.g., 640, 0640)'),
+
+  // Test configuration
+  LOG_TEST_FILE_TIMEOUT: z
+    .union([z.string().regex(/^\d+$/).transform(Number), z.number()])
+    .optional()
+    .describe('Timeout in milliseconds for file write tests in CI'),
 });
 
 /**

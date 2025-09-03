@@ -421,10 +421,50 @@ import { logger } from './logger.js';
 
 ## Security Considerations
 
-- Sensitive fields are automatically redacted (passwords, tokens, etc.)
-- File permissions: Ensure log files are not world-readable
-- Syslog: Use TCP with TLS for sensitive environments
-- Never log sensitive data that could expose credentials
+### Built-in Security Features
+
+- **Automatic Redaction**: Sensitive fields are automatically redacted (passwords, tokens, api_key, etc.)
+- **Path Validation**: File paths are validated to prevent path traversal attacks
+- **Restricted Directories**: System directories (/etc, /usr, /bin, etc.) are blocked for log files
+- **File Permissions**: Log files are created with restrictive permissions (640 by default)
+- **Input Validation**: All configuration inputs are validated for security issues
+
+### File Logging Security
+
+When using file output, the system:
+
+- Validates paths to prevent directory traversal (`../` patterns blocked)
+- Blocks writing to system directories
+- Creates directories with mode 0750 (rwxr-x---)
+- Sets file permissions via `LOG_FILE_PERMISSIONS` environment variable
+- Validates file paths don't contain null bytes
+- Limits path length to prevent buffer overflow attacks
+
+```bash
+# Configure file permissions (octal format)
+LOG_FILE_PERMISSIONS=640  # rw-r----- (default)
+LOG_FILE_PERMISSIONS=600  # rw------- (more restrictive)
+```
+
+### Syslog Security
+
+For syslog configuration:
+
+- Hostname/IP validation prevents injection attacks
+- Port range validation (1-65535)
+- Warning for privileged ports (<1024) in production
+- Warning for localhost usage in production
+- Consider using TCP with TLS for sensitive data
+
+### Best Practices
+
+1. **Never log credentials or secrets directly**
+2. **Use restrictive file permissions for log files**
+3. **Validate all external configuration**
+4. **Monitor log file sizes to prevent disk exhaustion**
+5. **Use centralized logging (syslog) for production**
+6. **Regularly rotate and archive old log files**
+7. **Consider encryption for sensitive log data**
 
 ## Related Documentation
 

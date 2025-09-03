@@ -7,6 +7,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { mkdirSync, rmSync, existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import type { Logger } from '../src/logger.js';
+import { getTestFileTimeout } from '../src/logger-validation.js';
 
 // Store original env
 const originalEnv = process.env;
@@ -129,7 +130,7 @@ describe('Logger Output Configuration', () => {
       logger.info('Test message for file output 3');
 
       // Give more time for async file write in CI
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      await new Promise((resolve) => setTimeout(resolve, getTestFileTimeout()));
 
       // Check if log file was created
       expect(existsSync(testLogFile)).toBe(true);
@@ -181,7 +182,7 @@ describe('Logger Output Configuration', () => {
       logger.info('Test nested directory creation 3');
 
       // Give more time for async file operations in CI
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      await new Promise((resolve) => setTimeout(resolve, getTestFileTimeout()));
 
       // Check if nested directories were created (check directory, not file)
       // File creation may be delayed, but directory should exist
@@ -428,6 +429,97 @@ describe('Logger Output Configuration', () => {
       logger = loggerModule.logger;
 
       expect(logger.level).toBe('debug');
+    });
+  });
+
+  describe('Resource Management and Cleanup', () => {
+    it('should handle multiple rapid output switches gracefully', async () => {
+      process.env.NODE_ENV = 'development';
+
+      const loggerModule = await import('../src/logger.js');
+      logger = loggerModule.logger;
+      switchLogOutput = loggerModule.switchLogOutput;
+      getLoggerOutputMode = loggerModule.getLoggerOutputMode;
+
+      // Rapid switching should not cause issues
+      switchLogOutput('stderr');
+      expect(getLoggerOutputMode()).toBe('stderr');
+
+      switchLogOutput('stdout');
+      expect(getLoggerOutputMode()).toBe('stdout');
+
+      switchLogOutput('null');
+      expect(getLoggerOutputMode()).toBe('null');
+
+      switchLogOutput('stderr');
+      expect(getLoggerOutputMode()).toBe('stderr');
+    });
+
+    it('should handle invalid file paths gracefully with fallback', async () => {
+      process.env.LOG_OUTPUT = 'file';
+      process.env.LOG_FILE_PATH = '../../../etc/passwd'; // Should be blocked
+      process.env.NODE_ENV = 'development';
+
+      const loggerModule = await import('../src/logger.js');
+      logger = loggerModule.logger;
+      getLoggerOutputMode = loggerModule.getLoggerOutputMode;
+
+      // Should fall back to stdout due to invalid path
+      expect(getLoggerOutputMode()).toBe('file'); // Config shows file, but internally uses stdout
+      expect(logger).toBeDefined();
+    });
+
+    it('should handle invalid syslog configuration gracefully', async () => {
+      process.env.LOG_OUTPUT = 'syslog';
+      process.env.LOG_SYSLOG_HOST = 'invalid..host'; // Invalid hostname
+      process.env.NODE_ENV = 'development';
+
+      const loggerModule = await import('../src/logger.js');
+      logger = loggerModule.logger;
+      getLoggerOutputMode = loggerModule.getLoggerOutputMode;
+
+      // Should fall back to stdout due to invalid syslog config
+      expect(getLoggerOutputMode()).toBe('syslog'); // Config shows syslog, but internally uses stdout
+      expect(logger).toBeDefined();
+    });
+  });
+
+  describe('Security Validation Integration', () => {
+    it('should prevent path traversal in file logging', async () => {
+      process.env.LOG_OUTPUT = 'file';
+      process.env.LOG_FILE_PATH = '../../sensitive/file.log';
+      process.env.NODE_ENV = 'development';
+
+      // Mock console.error to verify fallback
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      const loggerModule = await import('../src/logger.js');
+      logger = loggerModule.logger;
+
+      // Should log error and fall back to stdout
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Invalid log file path'));
+      expect(consoleSpy).toHaveBeenCalledWith('Falling back to stdout');
+
+      consoleSpy.mockRestore();
+    });
+
+    it('should validate file permissions and use secure defaults', async () => {
+      process.env.LOG_OUTPUT = 'file';
+      process.env.LOG_FILE_PATH = testLogFile;
+      process.env.LOG_FILE_PERMISSIONS = '644'; // Should warn about being too open
+      process.env.NODE_ENV = 'development';
+
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const loggerModule = await import('../src/logger.js');
+      logger = loggerModule.logger;
+
+      // Should warn about overly permissive permissions
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('allow access to other users'),
+      );
+
+      consoleSpy.mockRestore();
     });
   });
 });
