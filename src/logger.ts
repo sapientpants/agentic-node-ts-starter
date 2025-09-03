@@ -72,22 +72,26 @@ const parseSizeToBytes = (size: string | undefined): number | undefined => {
 const getFileTransportConfig = () => {
   const maxSize = parseSizeToBytes(getEnvConfig().LOG_FILE_MAX_SIZE);
 
+  if (maxSize) {
+    // For rotation, use pino-roll transport if size limits are specified
+    return {
+      target: 'pino-roll',
+      options: {
+        file: getEnvConfig().LOG_FILE_PATH || './logs/app.log',
+        size: getEnvConfig().LOG_FILE_MAX_SIZE || '10M',
+        ...(getEnvConfig().LOG_FILE_MAX_FILES && {
+          limit: { count: getEnvConfig().LOG_FILE_MAX_FILES },
+        }),
+      },
+    };
+  }
+
+  // Default to pino/file transport without rotation
   return {
     target: 'pino/file',
     options: {
       destination: getEnvConfig().LOG_FILE_PATH || './logs/app.log',
       mkdir: true,
-      ...(maxSize && {
-        // For rotation, we'll use pino-roll transport if size limits are specified
-        target: 'pino-roll',
-        options: {
-          file: getEnvConfig().LOG_FILE_PATH || './logs/app.log',
-          size: getEnvConfig().LOG_FILE_MAX_SIZE || '10M',
-          ...(getEnvConfig().LOG_FILE_MAX_FILES && {
-            limit: { count: getEnvConfig().LOG_FILE_MAX_FILES },
-          }),
-        },
-      }),
     },
   };
 };
@@ -278,6 +282,12 @@ export const logger = (() => {
 /**
  * Switch logger output to a different destination at runtime
  * @param outputMode - The destination to switch to (stdout, stderr, file, syslog, null)
+ *
+ * Note: This implementation mutates the exported logger instance to maintain
+ * backward compatibility with existing code that imports the logger directly.
+ * While this approach is more complex than a factory pattern, it ensures that
+ * all existing logger references throughout the application automatically use
+ * the new output destination without requiring code changes.
  */
 export const switchLogOutput = (outputMode: string): void => {
   if (currentOutputMode === outputMode) {
@@ -290,6 +300,7 @@ export const switchLogOutput = (outputMode: string): void => {
   const newLogger = createLogger(outputMode);
 
   // Replace the exported logger's methods with the new instance
+  // This approach maintains the same logger reference for all imports
   Object.setPrototypeOf(logger, Object.getPrototypeOf(newLogger) as object);
   Object.keys(newLogger).forEach((key) => {
     // Use type assertion to handle dynamic property assignment
