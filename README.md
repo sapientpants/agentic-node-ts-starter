@@ -1,8 +1,19 @@
 # Agentic Node + TypeScript Starter
 
-A **batteries-included** TypeScript starter template with comprehensive testing, code quality automation, and security scanning. Built for modern Node.js development with an agentic coding workflow.
+A **batteries-included** TypeScript starter template with comprehensive testing, code quality automation, and security scanning. Built for modern Node.js development with AI-assisted (agentic) coding workflow.
 
 > **Note:** This template includes example code to demonstrate its capabilities. These example files are clearly marked with header comments and should be removed when starting your project. See [Getting Started](./docs/GETTING_STARTED.md#clean-up-example-code) for details.
+
+## 🤔 What is Agentic Development?
+
+**"Agentic" in this context refers to AI-assisted development workflow**, not AI agent runtime. This template is designed to work seamlessly with AI development tools like [Claude Code](https://claude.ai/code) to enhance your productivity through:
+
+- 🤖 **AI-powered code generation** - Let AI assistants help write boilerplate and tests
+- 🔄 **Automated refactoring** - AI tools can safely refactor with comprehensive test coverage
+- 📝 **Documentation assistance** - AI can help maintain docs in sync with code
+- 🎯 **Issue-to-implementation workflows** - Custom commands for AI-driven development
+
+> **Important:** This is a template repository for starting new projects. No AI agents or chatbots are included - the "agentic" aspect comes from using AI development tools (like Claude) to assist you in building your application faster and with higher quality.
 
 ## 🛠️ Tech Stack
 

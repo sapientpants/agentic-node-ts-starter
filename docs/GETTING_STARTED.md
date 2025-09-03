@@ -2,6 +2,8 @@
 
 Welcome to the Agentic Node + TypeScript Starter! This guide will walk you through transforming this template into your own project in under 10 minutes.
 
+> **What does "Agentic" mean?** This template is designed for AI-assisted development workflows. It includes configurations and commands specifically tailored for working with AI development tools like Claude Code. The template itself is not an AI agent - it's a foundation for building your own applications with the help of AI assistants. The comprehensive testing, documentation, and quality automation make it safe and efficient for AI tools to help you generate, refactor, and maintain code.
+
 ## Quick Setup Checklist
 
 Follow these steps in order to customize the template for your project:
