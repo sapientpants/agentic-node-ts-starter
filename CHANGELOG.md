@@ -1,5 +1,50 @@
 # agentic-node-ts-starter
 
+## 0.21.0
+
+### Minor Changes
+
+- [#104](https://github.com/sapientpants/agentic-node-ts-starter/pull/104) [`2fd789b`](https://github.com/sapientpants/agentic-node-ts-starter/commit/2fd789b23703a4f2dad4a9378b665b9d0cb8a484) Thanks [@sapientpants](https://github.com/sapientpants)! - feat: Add configurable logging output destinations
+
+  Adds comprehensive support for multiple logging output destinations to provide flexibility for different deployment scenarios and application architectures.
+
+  Key features:
+  - Multiple output destinations: stdout, stderr, file, syslog, null
+  - File logging with rotation support (size and count limits)
+  - Programmatic API for runtime output switching
+  - Preserves all existing logger features (context, correlation IDs, redaction)
+  - Backward compatible with no breaking changes
+
+  This enables developers to:
+  - Redirect logs to stderr for applications that use stdout for data output
+  - Write logs to files with automatic rotation for long-running services
+  - Send logs to centralized syslog servers for enterprise environments
+  - Disable logging entirely with the null output for testing or special cases
+
+  For detailed usage, see docs/LOGGING_OUTPUT.md
+
+### Patch Changes
+
+- [#105](https://github.com/sapientpants/agentic-node-ts-starter/pull/105) [`834f02b`](https://github.com/sapientpants/agentic-node-ts-starter/commit/834f02b028c4e33e2f59e6ebc853ca796b750fe9) Thanks [@sapientpants](https://github.com/sapientpants)! - fix: resolve file rotation test race condition in CI
+  - Create unique test directories for each test iteration to avoid conflicts
+  - Add configurable timeout for file operations in CI environments
+  - Implement proper cleanup with error handling using try-finally blocks
+  - Remove console statement to comply with linting rules
+
+  This fixes the intermittent ENOENT errors when pino-roll tries to access
+  rotation files that may have been cleaned up by concurrent tests.
+
+- [#104](https://github.com/sapientpants/agentic-node-ts-starter/pull/104) [`2fd789b`](https://github.com/sapientpants/agentic-node-ts-starter/commit/2fd789b23703a4f2dad4a9378b665b9d0cb8a484) Thanks [@sapientpants](https://github.com/sapientpants)! - feat: Add comprehensive security validation for logging configuration
+  - Add path traversal protection for file logging paths
+  - Validate syslog hostnames and ports to prevent injection attacks
+  - Block writing logs to restricted system directories
+  - Set explicit file permissions (640 by default) for log files
+  - Create directories with restrictive permissions (750)
+  - Add proper cleanup for file descriptors to prevent resource leaks
+  - Add configurable test timeouts for CI reliability
+  - Improve error handling with fallback to stdout on validation failures
+  - Add comprehensive security documentation
+
 ## 0.20.0
 
 ### Minor Changes
