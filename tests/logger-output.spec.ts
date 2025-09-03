@@ -350,19 +350,51 @@ describe('Logger Output Configuration', () => {
 
       for (const testCase of testCases) {
         vi.resetModules();
+
+        // Create a unique test directory for each iteration to avoid conflicts
+        const uniqueTestLogDir = join(
+          process.cwd(),
+          `test-logs-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+        );
+        const uniqueTestLogFile = join(uniqueTestLogDir, 'test.log');
+
+        // Ensure the directory exists
+        if (!existsSync(uniqueTestLogDir)) {
+          mkdirSync(uniqueTestLogDir, { recursive: true });
+        }
+
         process.env = {
           ...originalEnv,
           NODE_ENV: 'test',
           LOG_OUTPUT: 'file',
-          LOG_FILE_PATH: testLogFile,
+          LOG_FILE_PATH: uniqueTestLogFile,
           LOG_FILE_MAX_SIZE: testCase.input,
         };
 
-        const loggerModule = await import('../src/logger.js');
-        logger = loggerModule.logger;
+        try {
+          const loggerModule = await import('../src/logger.js');
+          logger = loggerModule.logger;
 
-        // Should parse without errors
-        expect(logger).toBeDefined();
+          // Should parse without errors
+          expect(logger).toBeDefined();
+
+          // Give pino-roll a moment to finish any async operations
+          // Use configurable timeout for CI environments
+          const timeout = process.env.LOG_TEST_FILE_TIMEOUT
+            ? parseInt(process.env.LOG_TEST_FILE_TIMEOUT, 10)
+            : 50;
+          await new Promise((resolve) => setTimeout(resolve, timeout));
+        } finally {
+          // Clean up the unique directory after each test
+          // Use a try-catch to handle any cleanup errors gracefully
+          try {
+            if (existsSync(uniqueTestLogDir)) {
+              rmSync(uniqueTestLogDir, { recursive: true, force: true });
+            }
+          } catch {
+            // Ignore cleanup errors in tests - they're non-fatal
+          }
+        }
       }
     });
   });
