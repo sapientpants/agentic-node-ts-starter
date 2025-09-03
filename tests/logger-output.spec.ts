@@ -6,6 +6,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { mkdirSync, rmSync, existsSync, readFileSync } from 'fs';
 import { join } from 'path';
+import { randomUUID } from 'crypto';
 import type { Logger } from '../src/logger.js';
 import { getTestFileTimeout } from '../src/logger-validation.js';
 
@@ -352,10 +353,7 @@ describe('Logger Output Configuration', () => {
         vi.resetModules();
 
         // Create a unique test directory for each iteration to avoid conflicts
-        const uniqueTestLogDir = join(
-          process.cwd(),
-          `test-logs-${Date.now()}-${Math.random().toString(36).substring(7)}`,
-        );
+        const uniqueTestLogDir = join(process.cwd(), `test-logs-${randomUUID()}`);
         const uniqueTestLogFile = join(uniqueTestLogDir, 'test.log');
 
         // Ensure the directory exists
@@ -391,8 +389,16 @@ describe('Logger Output Configuration', () => {
             if (existsSync(uniqueTestLogDir)) {
               rmSync(uniqueTestLogDir, { recursive: true, force: true });
             }
-          } catch {
-            // Ignore cleanup errors in tests - they're non-fatal
+          } catch (err) {
+            // Cleanup errors are non-fatal in tests
+            // Only ENOENT (already deleted) and EBUSY (still in use) are expected
+            if (err && typeof err === 'object' && 'code' in err) {
+              const errorCode = (err as NodeJS.ErrnoException).code;
+              if (errorCode !== 'ENOENT' && errorCode !== 'EBUSY') {
+                // Unexpected error - re-throw for visibility
+                throw err;
+              }
+            }
           }
         }
       }
