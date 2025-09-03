@@ -388,7 +388,6 @@ Required secrets for distribution:
 Required variables:
 
 - `ENABLE_DOCKER_RELEASE` - Set to 'true' to enable Docker builds
-- `ENABLE_DOCS_RELEASE` - Set to 'true' to enable documentation deployment
 
 ## Customizing CLAUDE.md for Your Project
 

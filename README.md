@@ -192,14 +192,6 @@ To enable Docker builds:
 
 > **⚠️ Important**: The default Dockerfile includes a healthcheck that expects a web server with a `/health` endpoint on port 3000. See [Docker Configuration Guide](./docs/DOCKER.md) for detailed instructions on configuring healthchecks for different application types (web services, CLI tools, workers).
 
-### Documentation Publishing
-
-To enable GitHub Pages documentation:
-
-1. Set repository variable `ENABLE_DOCS_RELEASE` to `true`
-2. Enable GitHub Pages in repository settings
-3. Add documentation build command to release.yml
-
 ## 🔒 Security Features
 
 - **Dependency Auditing**: Critical vulnerability checks on every CI run

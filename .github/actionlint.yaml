@@ -10,7 +10,6 @@ self-hosted-runner:
 # This helps actionlint validate variable references
 config-variables:
   - ENABLE_DOCKER_RELEASE
-  - ENABLE_DOCS_RELEASE
   - ENABLE_NPM_RELEASE
   - ENABLE_GITHUB_PACKAGES
 
