@@ -6,6 +6,8 @@
  */
 
 import pino, { type Logger as PinoLogger, type LoggerOptions, type DestinationStream } from 'pino';
+import { mkdirSync } from 'fs';
+import { dirname } from 'path';
 
 /**
  * Get environment configuration safely
@@ -178,6 +180,14 @@ const getLoggerConfig = (outputMode?: string): LoggerOptions => {
 
   // Handle file output
   if (effectiveOutput === 'file') {
+    // Ensure directory exists for file output
+    const logPath = getEnvConfig().LOG_FILE_PATH || './logs/app.log';
+    try {
+      mkdirSync(dirname(logPath), { recursive: true });
+    } catch {
+      // Directory creation errors are non-fatal
+    }
+
     const transportConfig = getFileTransportConfig();
     return {
       ...(isProduction ? productionConfig : baseConfig),
