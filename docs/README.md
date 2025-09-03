@@ -14,7 +14,7 @@ Welcome to the **Agentic Node + TypeScript Starter** documentation! This templat
 - **[DEVELOPMENT.md](./DEVELOPMENT.md)** - Daily development workflow and commands
 - **[PATTERNS.md](./PATTERNS.md)** - Copy-paste code patterns and examples
 - **[TESTING.md](./TESTING.md)** - Testing strategies and examples
-- **[PROCESS.md](./PROCESS.md)** - Agentic development workflow
+- **[PROCESS.md](./PROCESS.md)** - AI-assisted (agentic) development workflow
 
 ### Reference
 
