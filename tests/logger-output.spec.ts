@@ -8,7 +8,6 @@ import { mkdirSync, rmSync, existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { randomUUID } from 'crypto';
 import type { Logger } from '../src/logger.js';
-import { getTestFileTimeout } from '../src/logger-validation.js';
 
 // Store original env
 const originalEnv = process.env;
@@ -19,7 +18,9 @@ describe('Logger Output Configuration', () => {
   let getLoggerOutputMode: () => string;
   let createChildLogger: (name: string, context?: Record<string, unknown>) => Logger;
 
-  const testLogDir = join(process.cwd(), 'test-logs');
+  // Use a unique directory for this test suite run to avoid conflicts
+  const testRunId = randomUUID();
+  const testLogDir = join(process.cwd(), 'test-logs', testRunId);
   const testLogFile = join(testLogDir, 'test.log');
 
   beforeEach(() => {
@@ -32,13 +33,37 @@ describe('Logger Output Configuration', () => {
     }
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     process.env = originalEnv;
     vi.clearAllMocks();
 
-    // Clean up test log directory
+    // Add a small delay to let any async file operations complete
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    // Clean up test log directory with error handling
     if (existsSync(testLogDir)) {
-      rmSync(testLogDir, { recursive: true, force: true });
+      try {
+        rmSync(testLogDir, { recursive: true, force: true });
+      } catch (error) {
+        // Ignore ENOENT errors as they're expected if the directory was already removed
+        // Also ignore EBUSY errors from async operations still in progress
+        if (error && typeof error === 'object' && 'code' in error) {
+          const code = (error as { code?: string }).code;
+          if (code !== 'ENOENT' && code !== 'EBUSY') {
+            throw error;
+          }
+        }
+      }
+    }
+
+    // Clean up the parent test-logs directory if it's empty
+    const parentTestLogDir = join(process.cwd(), 'test-logs');
+    if (existsSync(parentTestLogDir)) {
+      try {
+        rmSync(parentTestLogDir, { recursive: true, force: true });
+      } catch {
+        // Ignore errors - directory may still have async operations
+      }
     }
   });
 
@@ -121,17 +146,29 @@ describe('Logger Output Configuration', () => {
       process.env.LOG_OUTPUT = 'file';
       process.env.LOG_FILE_PATH = testLogFile;
       process.env.NODE_ENV = 'development';
+      // Disable file rotation for this test to make it more predictable
+      delete process.env.LOG_FILE_MAX_SIZE;
+      delete process.env.LOG_FILE_MAX_FILES;
 
       const loggerModule = await import('../src/logger.js');
       logger = loggerModule.logger;
 
-      // Log multiple messages to ensure file is written
-      logger.info('Test message for file output 1');
-      logger.info('Test message for file output 2');
-      logger.info('Test message for file output 3');
+      // Log a message
+      logger.info('Test message for file output');
 
-      // Give more time for async file write in CI
-      await new Promise((resolve) => setTimeout(resolve, getTestFileTimeout()));
+      // Wait for file to be created with a simple retry mechanism
+      // This is more reliable than a fixed timeout
+      let attempts = 0;
+      const maxAttempts = 20;
+      const retryDelay = 50;
+
+      while (attempts < maxAttempts) {
+        if (existsSync(testLogFile)) {
+          break;
+        }
+        await new Promise((resolve) => setTimeout(resolve, retryDelay));
+        attempts++;
+      }
 
       // Check if log file was created
       expect(existsSync(testLogFile)).toBe(true);
@@ -173,20 +210,30 @@ describe('Logger Output Configuration', () => {
       process.env.LOG_OUTPUT = 'file';
       process.env.LOG_FILE_PATH = nestedLogPath;
       process.env.NODE_ENV = 'development';
+      // Disable file rotation for predictability
+      delete process.env.LOG_FILE_MAX_SIZE;
+      delete process.env.LOG_FILE_MAX_FILES;
 
       const loggerModule = await import('../src/logger.js');
       logger = loggerModule.logger;
 
-      // Log multiple messages to ensure file is created
-      logger.info('Test nested directory creation 1');
-      logger.info('Test nested directory creation 2');
-      logger.info('Test nested directory creation 3');
+      // Log a message
+      logger.info('Test nested directory creation');
 
-      // Give more time for async file operations in CI
-      await new Promise((resolve) => setTimeout(resolve, getTestFileTimeout()));
+      // Wait for directory to be created with retry mechanism
+      let attempts = 0;
+      const maxAttempts = 20;
+      const retryDelay = 50;
 
-      // Check if nested directories were created (check directory, not file)
-      // File creation may be delayed, but directory should exist
+      while (attempts < maxAttempts) {
+        if (existsSync(nestedLogDir)) {
+          break;
+        }
+        await new Promise((resolve) => setTimeout(resolve, retryDelay));
+        attempts++;
+      }
+
+      // Check if nested directories were created
       expect(existsSync(nestedLogDir)).toBe(true);
     });
   });
@@ -377,11 +424,8 @@ describe('Logger Output Configuration', () => {
           expect(logger).toBeDefined();
 
           // Give pino-roll a moment to finish any async operations
-          // Use configurable timeout for CI environments
-          const timeout = process.env.LOG_TEST_FILE_TIMEOUT
-            ? parseInt(process.env.LOG_TEST_FILE_TIMEOUT, 10)
-            : 50;
-          await new Promise((resolve) => setTimeout(resolve, timeout));
+          // Using a small fixed delay since we're just checking config parsing
+          await new Promise((resolve) => setTimeout(resolve, 50));
         } finally {
           // Clean up the unique directory after each test
           // Use a try-catch to handle any cleanup errors gracefully

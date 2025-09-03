@@ -2,13 +2,12 @@
  * Tests for logger validation utilities
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   validateLogPath,
   validateSyslogHost,
   validateSyslogPort,
   validateFileMode,
-  getTestFileTimeout,
 } from '../src/logger-validation.js';
 
 describe('Logger Validation', () => {
@@ -192,47 +191,6 @@ describe('Logger Validation', () => {
       expect(validateFileMode(0o1000)).toBe(0o640);
       expect(validateFileMode('invalid')).toBe(0o640);
       expect(validateFileMode(NaN)).toBe(0o640);
-    });
-  });
-
-  describe('getTestFileTimeout', () => {
-    const originalEnv = process.env.LOG_TEST_FILE_TIMEOUT;
-
-    beforeEach(() => {
-      delete process.env.LOG_TEST_FILE_TIMEOUT;
-    });
-
-    afterEach(() => {
-      if (originalEnv !== undefined) {
-        process.env.LOG_TEST_FILE_TIMEOUT = originalEnv;
-      }
-    });
-
-    it('should return default when not set', () => {
-      expect(getTestFileTimeout()).toBe(300);
-    });
-
-    it('should parse valid timeout values', () => {
-      process.env.LOG_TEST_FILE_TIMEOUT = '500';
-      expect(getTestFileTimeout()).toBe(500);
-
-      process.env.LOG_TEST_FILE_TIMEOUT = '1000';
-      expect(getTestFileTimeout()).toBe(1000);
-    });
-
-    it('should warn about very high timeouts', () => {
-      process.env.LOG_TEST_FILE_TIMEOUT = '15000';
-      getTestFileTimeout();
-      // eslint-disable-next-line no-console
-      expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('very high'));
-    });
-
-    it('should return default for invalid values', () => {
-      process.env.LOG_TEST_FILE_TIMEOUT = 'invalid';
-      expect(getTestFileTimeout()).toBe(300);
-
-      process.env.LOG_TEST_FILE_TIMEOUT = '-100';
-      expect(getTestFileTimeout()).toBe(300);
     });
   });
 

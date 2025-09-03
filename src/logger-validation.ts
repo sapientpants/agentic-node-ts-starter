@@ -161,31 +161,3 @@ export function validateFileMode(mode: number | string | undefined): number {
 
   return numericMode;
 }
-
-/**
- * Parses and validates LOG_TEST_FILE_TIMEOUT environment variable
- * @returns Timeout in milliseconds
- */
-export function getTestFileTimeout(): number {
-  const defaultTimeout = 300;
-  const envTimeout = process.env.LOG_TEST_FILE_TIMEOUT;
-
-  if (!envTimeout) {
-    return defaultTimeout;
-  }
-
-  const parsed = parseInt(envTimeout, 10);
-
-  if (isNaN(parsed) || parsed < 0) {
-    // eslint-disable-next-line no-console
-    console.warn(`Invalid LOG_TEST_FILE_TIMEOUT: ${envTimeout}, using default ${defaultTimeout}ms`);
-    return defaultTimeout;
-  }
-
-  if (parsed > 10000) {
-    // eslint-disable-next-line no-console
-    console.warn(`LOG_TEST_FILE_TIMEOUT is very high: ${parsed}ms`);
-  }
-
-  return parsed;
-}
