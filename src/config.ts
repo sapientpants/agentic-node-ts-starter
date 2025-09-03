@@ -53,7 +53,7 @@ const ConfigSchema = z.object({
   // Logging configuration
   LOG_LEVEL: z
     .enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal', 'silent'])
-    .default(process.env.NODE_ENV === 'production' ? 'info' : 'debug')
+    .optional()
     .describe('Logging level'),
 
   // Feature flags
@@ -118,7 +118,7 @@ function formatZodError(error: z.ZodError): string {
     other: [] as string[],
   };
 
-  if (!error.issues || !Array.isArray(error.issues)) {
+  if (!error.issues.length) {
     return 'Invalid configuration';
   }
 
@@ -163,8 +163,13 @@ function loadConfig(): Config {
   try {
     const parsed = ConfigSchema.parse(process.env);
 
+    // Apply LOG_LEVEL default based on validated NODE_ENV if not set
+    if (!parsed.LOG_LEVEL) {
+      parsed.LOG_LEVEL = parsed.NODE_ENV === 'production' ? 'info' : 'debug';
+    }
+
     // Log successful configuration load in non-test environments
-    if (process.env.NODE_ENV !== 'test') {
+    if (parsed.NODE_ENV !== 'test') {
       logger.info(
         {
           environment: parsed.NODE_ENV,
