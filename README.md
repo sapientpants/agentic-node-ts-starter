@@ -124,6 +124,7 @@ See [CLAUDE.md](./CLAUDE.md) for detailed Claude Code guidance.
 - ✅ **80% coverage minimum** enforced
 - ✅ **Strict TypeScript** with type-aware linting
 - ✅ **Pre-commit hooks** with Husky & lint-staged
+- ✅ **Markdown and YAML linting** for docs/config consistency
 
 ### Security & Supply Chain
 
