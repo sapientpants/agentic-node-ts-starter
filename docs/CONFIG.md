@@ -36,11 +36,6 @@ The configuration module (`src/config.ts`) provides:
    ```typescript
    import { config } from './config.js';
 
-   // TypeScript knows config.PORT is a number
-   const server = app.listen(config.PORT, () => {
-     console.log(`Server running on port ${config.PORT}`);
-   });
-
    // TypeScript knows config.ENABLE_METRICS is a boolean
    if (config.ENABLE_METRICS) {
      setupMetrics();
@@ -59,9 +54,14 @@ The configuration module (`src/config.ts`) provides:
 | Variable   | Type   | Default                   | Description                                         |
 | ---------- | ------ | ------------------------- | --------------------------------------------------- |
 | `NODE_ENV` | string | `development`             | Environment: development, production, test, staging |
-| `PORT`     | number | `3000`                    | Server port (1-65535)                               |
-| `HOST`     | string | `0.0.0.0`                 | Server host address                                 |
 | `APP_NAME` | string | `agentic-node-ts-starter` | Application name for logging                        |
+
+### Optional Application Settings
+
+| Variable | Type   | Default   | Description                                            |
+| -------- | ------ | --------- | ------------------------------------------------------ |
+| `PORT`   | number | `3000`    | Application port (1-65535) - only if your app needs it |
+| `HOST`   | string | `0.0.0.0` | Application host address - only if your app needs it   |
 
 ### Logging
 
@@ -90,21 +90,18 @@ The configuration module (`src/config.ts`) provides:
 
 ### Security
 
-| Variable         | Type   | Required | Description                       |
-| ---------------- | ------ | -------- | --------------------------------- |
-| `CORS_ORIGIN`    | string | No       | CORS origins (default: `*`)       |
-| `SESSION_SECRET` | string | No       | Session secret (min 32 chars)     |
-| `API_KEY`        | string | No       | API key for external services     |
-| `JWT_SECRET`     | string | No       | JWT signing secret (min 32 chars) |
+| Variable         | Type   | Required | Description                                   |
+| ---------------- | ------ | -------- | --------------------------------------------- |
+| `SESSION_SECRET` | string | No       | Session secret for crypto operations (min 32) |
+| `API_KEY`        | string | No       | API key for external services                 |
+| `JWT_SECRET`     | string | No       | JWT signing secret (min 32 chars)             |
 
-### Rate Limiting & Timeouts
+### Timeouts & Limits
 
-| Variable               | Type   | Default | Description                     |
-| ---------------------- | ------ | ------- | ------------------------------- |
-| `REQUEST_TIMEOUT_MS`   | number | `30000` | Request timeout in milliseconds |
-| `MAX_REQUEST_SIZE`     | string | `10mb`  | Maximum request body size       |
-| `RATE_LIMIT_MAX`       | number | `100`   | Max requests per window         |
-| `RATE_LIMIT_WINDOW_MS` | number | `60000` | Rate limit window (ms)          |
+| Variable           | Type   | Default | Description                     |
+| ------------------ | ------ | ------- | ------------------------------- |
+| `TIMEOUT_MS`       | number | `30000` | General operation timeout in ms |
+| `MAX_PAYLOAD_SIZE` | string | `10mb`  | Maximum payload size (optional) |
 
 ## Adding Custom Configuration
 
@@ -266,7 +263,7 @@ Type-safe configuration getter:
 ```typescript
 import { getConfig } from './config.js';
 
-const port = getConfig('PORT'); // TypeScript knows this is a number
+const logLevel = getConfig('LOG_LEVEL'); // TypeScript knows this is a string
 const metrics = getConfig('ENABLE_METRICS'); // TypeScript knows this is a boolean
 ```
 
@@ -305,8 +302,8 @@ Let TypeScript guide you:
 
 ```typescript
 // ✅ TypeScript knows the types
-if (config.PORT > 8000) {
-  // PORT is number
+if (config.TIMEOUT_MS > 5000) {
+  // TIMEOUT_MS is number
   // ...
 }
 
@@ -341,9 +338,9 @@ Organize your schema logically:
 
 ```typescript
 const ConfigSchema = z.object({
-  // Server
-  PORT: /* ... */,
-  HOST: /* ... */,
+  // Core
+  NODE_ENV: /* ... */,
+  APP_NAME: /* ... */,
 
   // Database
   DATABASE_URL: /* ... */,
@@ -443,6 +440,7 @@ describe('Config', () => {
   it('should load production config', async () => {
     process.env.NODE_ENV = 'production';
     process.env.DATABASE_URL = 'postgresql://prod/db';
+    process.env.API_KEY = 'test-api-key';
 
     const { config } = await import('./config.js');
 

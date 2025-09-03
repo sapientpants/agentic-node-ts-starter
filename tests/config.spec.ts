@@ -42,12 +42,10 @@ describe('Configuration', () => {
 
       expect(config).toBeDefined();
       expect(config.NODE_ENV).toBe('test');
-      expect(config.PORT).toBe(3000);
-      expect(config.HOST).toBe('0.0.0.0');
       expect(config.APP_NAME).toBe('agentic-node-ts-starter');
     });
 
-    it('should parse PORT as a number', async () => {
+    it('should parse PORT as a number when provided', async () => {
       process.env.PORT = '8080';
 
       const { config } = await import('../src/config.js');
@@ -133,12 +131,9 @@ describe('Configuration', () => {
 
       const { config } = await import('../src/config.js');
 
-      expect(config.PORT).toBe(3000);
-      expect(config.HOST).toBe('0.0.0.0');
       expect(config.ENABLE_METRICS).toBe(false);
       expect(config.ENABLE_HEALTHCHECK).toBe(true);
-      expect(config.REQUEST_TIMEOUT_MS).toBe(30000);
-      expect(config.RATE_LIMIT_MAX).toBe(100);
+      expect(config.TIMEOUT_MS).toBe(30000);
     });
 
     it('should use environment-specific defaults for LOG_LEVEL', async () => {
@@ -231,12 +226,12 @@ describe('Configuration', () => {
 
   describe('config helper functions', () => {
     it('should provide getConfig helper', async () => {
-      process.env.PORT = '8080';
       process.env.ENABLE_METRICS = 'true';
+      process.env.LOG_LEVEL = 'warn';
 
       const { getConfig } = await import('../src/config.js');
 
-      expect(getConfig('PORT')).toBe(8080);
+      expect(getConfig('LOG_LEVEL')).toBe('warn');
       expect(getConfig('ENABLE_METRICS')).toBe(true);
       expect(getConfig('NODE_ENV')).toBe('test');
     });
@@ -249,7 +244,7 @@ describe('Configuration', () => {
 
       expect(hasConfig('DATABASE_URL')).toBe(true);
       expect(hasConfig('REDIS_URL')).toBe(false);
-      expect(hasConfig('PORT')).toBe(true); // Has default value
+      expect(hasConfig('NODE_ENV')).toBe(true); // Has default value
     });
 
     it('should provide getConfigKeys helper', async () => {
@@ -259,9 +254,8 @@ describe('Configuration', () => {
 
       expect(keys).toBeInstanceOf(Array);
       expect(keys).toContain('NODE_ENV');
-      expect(keys).toContain('PORT');
       expect(keys).toContain('ENABLE_METRICS');
-      expect(keys.length).toBeGreaterThan(10);
+      expect(keys.length).toBeGreaterThanOrEqual(10);
     });
   });
 
@@ -288,7 +282,6 @@ describe('Configuration', () => {
       process.env.SESSION_SECRET = 'super-secret-session-key-that-is-32-chars-long';
       process.env.ENABLE_METRICS = 'true';
       process.env.LOG_LEVEL = 'warn';
-      process.env.CORS_ORIGIN = 'https://app.example.com';
 
       const { config } = await import('../src/config.js');
 
@@ -296,7 +289,6 @@ describe('Configuration', () => {
       expect(config.PORT).toBe(8080);
       expect(config.ENABLE_METRICS).toBe(true);
       expect(config.LOG_LEVEL).toBe('warn');
-      expect(config.CORS_ORIGIN).toBe('https://app.example.com');
     });
 
     it('should handle typical development configuration', async () => {
@@ -325,7 +317,6 @@ describe('Configuration', () => {
 
       expect(config).toBeDefined();
       expect(config.NODE_ENV).toBe('test');
-      expect(config.PORT).toBe(3000);
       expect(config.ENABLE_HEALTHCHECK).toBe(true);
       expect(config.ENABLE_GRACEFUL_SHUTDOWN).toBe(true);
     });

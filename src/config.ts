@@ -52,9 +52,13 @@ const ConfigSchema = z.object({
     .default('development')
     .describe('Application environment'),
 
-  // Server configuration
-  PORT: PortSchema.default(3000).describe('Server port number'),
-  HOST: z.string().default('0.0.0.0').describe('Server host address'),
+  // Application configuration
+  PORT: PortSchema.default(3000).describe('Application port number (if applicable)').optional(),
+  HOST: z
+    .string()
+    .default('0.0.0.0')
+    .describe('Application host address (if applicable)')
+    .optional(),
 
   // Application settings
   APP_NAME: z
@@ -84,16 +88,11 @@ const ConfigSchema = z.object({
   API_BASE_URL: z.string().url().optional().describe('Base URL for external API calls (optional)'),
 
   // Security settings
-  CORS_ORIGIN: z
-    .string()
-    .default('*')
-    .describe('CORS allowed origins (comma-separated or * for all)'),
-
   SESSION_SECRET: z
     .string()
     .min(32)
     .optional()
-    .describe('Session secret for signing cookies (min 32 chars)'),
+    .describe('Session secret for cryptographic operations (min 32 chars)'),
 
   // API Keys (optional, sensitive)
   API_KEY: z.string().min(1).optional().describe('API key for external services'),
@@ -101,25 +100,16 @@ const ConfigSchema = z.object({
   JWT_SECRET: z.string().min(32).optional().describe('JWT signing secret (min 32 chars)'),
 
   // Timeouts and limits
-  REQUEST_TIMEOUT_MS: z
+  TIMEOUT_MS: z
     .union([z.string().regex(/^\d+$/).transform(Number), z.number()])
     .default(30000)
-    .describe('Request timeout in milliseconds'),
+    .describe('General operation timeout in milliseconds'),
 
-  MAX_REQUEST_SIZE: z
+  MAX_PAYLOAD_SIZE: z
     .string()
     .default('10mb')
-    .describe('Maximum request body size (e.g., 10mb, 1gb)'),
-
-  RATE_LIMIT_MAX: z
-    .union([z.string().regex(/^\d+$/).transform(Number), z.number()])
-    .default(100)
-    .describe('Maximum requests per window'),
-
-  RATE_LIMIT_WINDOW_MS: z
-    .union([z.string().regex(/^\d+$/).transform(Number), z.number()])
-    .default(60000)
-    .describe('Rate limit window in milliseconds'),
+    .optional()
+    .describe('Maximum payload size (e.g., 10mb, 1gb)'),
 
   // Development settings
   FORCE_COLOR: BooleanSchema.optional().describe('Force colored output in terminals'),
