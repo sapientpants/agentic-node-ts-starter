@@ -188,8 +188,17 @@ const getLoggerConfig = (outputMode?: string): LoggerOptions => {
   // Handle syslog output
   if (effectiveOutput === 'syslog') {
     const transportConfig = getSyslogTransportConfig();
+    // Syslog transport requires numeric timestamps (epoch milliseconds)
+    const syslogBaseConfig = {
+      ...baseConfig,
+      timestamp: pino.stdTimeFunctions.epochTime,
+    };
+    const syslogProductionConfig = {
+      ...productionConfig,
+      timestamp: pino.stdTimeFunctions.epochTime,
+    };
     return {
-      ...(isProduction ? productionConfig : baseConfig),
+      ...(isProduction ? syslogProductionConfig : syslogBaseConfig),
       transport: transportConfig,
     };
   }
