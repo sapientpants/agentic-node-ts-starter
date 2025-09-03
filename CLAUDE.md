@@ -337,7 +337,7 @@ Closes #42"
 #### Pre-commit Hook Fails
 
 ```bash
-pnpm format:fix  # Fix formatting issues
+pnpm format:fix  # Fix formatting issues (including markdown and YAML)
 pnpm lint:fix    # Fix linting issues
 pnpm test        # Ensure tests pass
 ```

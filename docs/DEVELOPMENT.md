@@ -114,6 +114,13 @@ function processUser(user) {
 - `tests/templates/unit-test.template.ts` - Standard unit test structure
 - `tests/templates/property-test.template.ts` - Property-based test patterns
 
+### Documentation & Config Quality
+
+- **Markdown linting** with markdownlint-cli2 ensures consistent documentation
+- **YAML validation** with yamllint catches config file issues early
+- Run `pnpm format:fix` to automatically fix markdown and YAML formatting issues
+- Pre-commit hooks enforce these standards automatically
+
 ### Code Organization
 
 ```
