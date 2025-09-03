@@ -113,6 +113,7 @@ See [CLAUDE.md](./CLAUDE.md) for detailed Claude Code guidance.
 ### Configuration & Environment
 
 - 🔐 **Type-safe configuration** with Zod validation
+- 🔌 **MCP-compatible logging** - Build MCP servers with stdio-safe logging
 - 🔐 **Environment validation** at startup with clear errors
 - 🔐 **Sensitive value masking** in error messages
 - 📝 See [docs/CONFIG.md](./docs/CONFIG.md) for configuration guide
