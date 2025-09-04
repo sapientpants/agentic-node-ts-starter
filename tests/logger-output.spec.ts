@@ -27,6 +27,12 @@ describe('Logger Output Configuration', () => {
     vi.resetModules();
     process.env = { ...originalEnv, NODE_ENV: 'test' };
 
+    // Ensure parent test-logs directory exists first
+    const parentDir = join(process.cwd(), 'test-logs');
+    if (!existsSync(parentDir)) {
+      mkdirSync(parentDir, { recursive: true });
+    }
+
     // Create test log directory
     if (!existsSync(testLogDir)) {
       mkdirSync(testLogDir, { recursive: true });
