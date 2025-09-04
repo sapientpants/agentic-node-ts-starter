@@ -17,7 +17,7 @@ A **batteries-included** TypeScript starter template with comprehensive testing,
 
 ## 🛠️ Tech Stack
 
-**Core:** Node.js 22+ • TypeScript 5.9 (strict) • pnpm 10.15  
+**Core:** Node.js 22+ • TypeScript ^5.9.2 (strict) • pnpm 10.15  
 **Testing:** Vitest • fast-check (property testing) • 80% coverage minimum  
 **Quality:** ESLint 9 • Prettier • Husky • Commitlint  
 **Security:** CodeQL • OSV Scanner • SBOM • SLSA attestations  
@@ -25,7 +25,7 @@ A **batteries-included** TypeScript starter template with comprehensive testing,
 
 ## 📖 Documentation
 
-**[Full Documentation →](./docs/)**
+**[Full Documentation →](./docs/README.md)**
 
 - **[Getting Started](./docs/GETTING_STARTED.md)** - Setup and installation
 - **[Development](./docs/DEVELOPMENT.md)** - Workflows and commands
@@ -47,6 +47,7 @@ pnpm install
 # Set up configuration (required)
 cp .env.example .env
 # Edit .env with your configuration
+# See docs/CONFIG.md for required environment variables
 
 # Verify everything works
 pnpm test
@@ -73,7 +74,9 @@ pnpm test:watch   # Watch mode
 pnpm test:coverage # With coverage report
 
 # Quality
+pnpm lint         # Check linting
 pnpm lint:fix     # Fix linting issues
+pnpm format       # Check formatting
 pnpm format:fix   # Fix formatting
 pnpm typecheck    # Type check only
 
@@ -124,7 +127,7 @@ See [CLAUDE.md](./CLAUDE.md) for detailed Claude Code guidance.
 ### Configuration & Environment
 
 - 🔐 **Type-safe configuration** with Zod validation
-- 🔌 **Configurable logging output** - Redirect logs to stderr, files, syslog, or disable entirely
+- 🔌 **Configurable logging output** - Redirect logs to stderr, files, syslog, or disable entirely (see [docs/LOGGING_OUTPUT.md](./docs/LOGGING_OUTPUT.md))
 - 🔐 **Environment validation** at startup with clear errors
 - 🔐 **Sensitive value masking** in error messages
 - 📝 See [docs/CONFIG.md](./docs/CONFIG.md) for configuration guide
@@ -182,6 +185,8 @@ To enable npm publishing:
 
 ### Docker Publishing
 
+> **⚠️ Important**: The default Dockerfile includes a healthcheck that expects a web server with a `/health` endpoint on port 3000. See [Docker Configuration Guide](./docs/DOCKER.md) for detailed instructions on configuring healthchecks for different application types (web services, CLI tools, workers).
+
 To enable Docker builds:
 
 1. Set repository variable `ENABLE_DOCKER_RELEASE` to `true`
@@ -189,8 +194,6 @@ To enable Docker builds:
    - `DOCKERHUB_USERNAME`
    - `DOCKERHUB_TOKEN`
 3. Images are automatically pushed to GitHub Container Registry
-
-> **⚠️ Important**: The default Dockerfile includes a healthcheck that expects a web server with a `/health` endpoint on port 3000. See [Docker Configuration Guide](./docs/DOCKER.md) for detailed instructions on configuring healthchecks for different application types (web services, CLI tools, workers).
 
 ## 🔒 Security Features
 

@@ -1,16 +1,20 @@
 # Configurable Logging Output Guide
 
-This guide explains how to configure logging output destinations in your application. This feature provides flexibility for different deployment scenarios, from development debugging to production environments.
+Comprehensive guide to all logging output destinations, including configuration, security, and best practices. This feature provides flexibility for different deployment scenarios, from development debugging to production environments.
+
+> **Referenced from**: [README Features](../README.md#features) - Configurable logging output
 
 ## Overview
 
-The logging system supports multiple output destinations to accommodate various use cases:
+The logging system supports five output destinations to accommodate various deployment and operational needs:
 
-- **stdout** - Standard output for normal console logging
-- **stderr** - Standard error stream for when stdout is used for data
-- **file** - File-based logging with rotation support
-- **syslog** - Network syslog for centralized logging
-- **null** - Disable logging entirely
+| Destination | Use Case                             | Configuration Complexity | Performance Impact |
+| ----------- | ------------------------------------ | ------------------------ | ------------------ |
+| **stdout**  | Default console logging, development | None (default)           | Minimal            |
+| **stderr**  | When stdout is used for data output  | Minimal                  | Minimal            |
+| **file**    | Persistent logs with rotation        | Moderate                 | Low (async I/O)    |
+| **syslog**  | Centralized enterprise logging       | Moderate                 | Network dependent  |
+| **null**    | Testing, performance critical paths  | Minimal                  | Zero               |
 
 ## Quick Start
 
@@ -41,86 +45,215 @@ logger.info('Application starting...');
 logger.debug({ request }, 'Processing request');
 ```
 
-## Configuration Options
+## Complete Configuration Reference
 
-### Environment Variables
+### Core Environment Variables
 
-#### Core Settings
+| Variable     | Type   | Default  | Required | Description                                               |
+| ------------ | ------ | -------- | -------- | --------------------------------------------------------- |
+| `LOG_OUTPUT` | string | `stdout` | No       | Output destination: stdout, stderr, file, syslog, null    |
+| `LOG_LEVEL`  | string | auto\*   | No       | Log level: trace, debug, info, warn, error, fatal, silent |
 
-| Variable     | Type   | Default  | Description                                            |
-| ------------ | ------ | -------- | ------------------------------------------------------ |
-| `LOG_OUTPUT` | string | `stdout` | Output destination: stdout, stderr, file, syslog, null |
-| `LOG_LEVEL`  | string | auto     | Log level: trace, debug, info, warn, error, fatal      |
+\* Default is `info` in production, `debug` in development, `silent` in test
 
-#### Output Destinations
+## Output Destinations - Complete Guide
 
-##### `stdout` (default)
+### 1. stdout - Standard Output (Default)
 
-Standard output - normal logging behavior for console applications.
+**When to use**: Default for most applications, development, containers logging to stdout
+
+#### Configuration
 
 ```bash
-LOG_OUTPUT=stdout
+# .env or environment variables
+LOG_OUTPUT=stdout  # Optional, this is the default
+LOG_LEVEL=info     # Optional, see defaults above
 ```
 
-##### `stderr`
+#### Example Usage
 
-Standard error stream - useful when stdout is used for application output.
+```typescript
+import { logger } from './logger.js';
+
+logger.info('Application started');
+logger.debug({ config }, 'Configuration loaded');
+logger.error({ err }, 'Database connection failed');
+```
+
+#### Docker Integration
+
+```dockerfile
+# Dockerfile
+ENV LOG_OUTPUT=stdout
+ENV LOG_LEVEL=info
+```
+
+```yaml
+# docker-compose.yml
+services:
+  app:
+    environment:
+      - LOG_OUTPUT=stdout
+      - LOG_LEVEL=info
+```
+
+### 2. stderr - Standard Error Stream
+
+**When to use**: CLI tools outputting data to stdout, pipe-based architectures, debugging
+
+#### Configuration
 
 ```bash
+# .env
 LOG_OUTPUT=stderr
+LOG_LEVEL=warn  # Often only warnings/errors to stderr
 ```
 
-Use cases:
-
-- CLI tools that output data to stdout
-- Applications using stdio for inter-process communication
-- Docker containers where stdout is parsed for data
-
-##### `file`
-
-Write logs to a file with optional rotation.
+#### Use Cases & Examples
 
 ```bash
+# CLI tool that outputs JSON data
+./my-cli process data.csv > output.json 2> errors.log
+# Data goes to output.json, logs go to errors.log
+```
+
+```typescript
+// CLI implementation
+import { logger, switchLogOutput } from './logger.js';
+
+// Ensure logs don't interfere with data output
+switchLogOutput('stderr');
+
+logger.info('Processing started'); // Goes to stderr
+console.log(JSON.stringify(data)); // Goes to stdout
+```
+
+### 3. file - File-Based Logging with Rotation
+
+**When to use**: Services requiring persistent logs, audit trails, debugging production issues
+
+#### Complete Configuration
+
+```bash
+# .env
 LOG_OUTPUT=file
-LOG_FILE_PATH=./logs/app.log
-LOG_FILE_MAX_SIZE=10M       # Rotate when file reaches 10MB
-LOG_FILE_MAX_FILES=5        # Keep maximum 5 rotated files
+LOG_FILE_PATH=./logs/app.log    # Path to log file
+LOG_FILE_MAX_SIZE=10M            # Max size before rotation (K, M, G suffixes)
+LOG_FILE_MAX_FILES=5             # Number of rotated files to keep
+LOG_FILE_PERMISSIONS=640         # Unix file permissions (octal)
 ```
 
-##### `syslog`
+#### Rotation Settings Explained
 
-Send logs to a syslog daemon for centralized logging.
+| Setting                | Default | Examples            | Description                          |
+| ---------------------- | ------- | ------------------- | ------------------------------------ |
+| `LOG_FILE_MAX_SIZE`    | `10M`   | `100K`, `50M`, `1G` | Size threshold for rotation          |
+| `LOG_FILE_MAX_FILES`   | `5`     | `10`, `30`          | Number of old files to retain        |
+| `LOG_FILE_PERMISSIONS` | `640`   | `600`, `644`        | File permissions (owner-group-other) |
+
+#### Security Features
+
+- **Path Validation**: Prevents directory traversal attacks
+- **System Directory Protection**: Blocks writing to `/etc`, `/usr`, `/bin`, etc.
+- **Secure Defaults**: Files created with mode 640 (rw-r-----)
+- **Directory Creation**: Parent directories created with mode 750
+
+#### Production Example
 
 ```bash
+# Production configuration
+LOG_OUTPUT=file
+LOG_FILE_PATH=/var/log/myapp/production.log
+LOG_FILE_MAX_SIZE=100M
+LOG_FILE_MAX_FILES=30  # Keep 30 days of logs
+LOG_FILE_PERMISSIONS=600  # Only owner can read/write
+LOG_LEVEL=info
+```
+
+#### Rotation Behavior
+
+```
+app.log           # Current log file
+app.log.1         # Most recent rotated file
+app.log.2         # Second most recent
+...
+app.log.5         # Oldest kept file (deleted next)
+```
+
+### 4. syslog - Centralized Network Logging
+
+**When to use**: Enterprise environments, centralized logging infrastructure, compliance requirements
+
+#### Complete Configuration
+
+```bash
+# .env
 LOG_OUTPUT=syslog
-LOG_SYSLOG_HOST=localhost
-LOG_SYSLOG_PORT=514
-LOG_SYSLOG_PROTOCOL=udp     # or tcp
+LOG_SYSLOG_HOST=syslog.example.com  # Hostname or IP
+LOG_SYSLOG_PORT=514                 # Standard syslog port
+LOG_SYSLOG_PROTOCOL=tcp              # tcp or udp
+LOG_LEVEL=info
 ```
 
-##### `null`
+#### Configuration Options
 
-Disable logging entirely.
+| Variable              | Default     | Options      | Description           |
+| --------------------- | ----------- | ------------ | --------------------- |
+| `LOG_SYSLOG_HOST`     | `localhost` | Hostname/IP  | Syslog server address |
+| `LOG_SYSLOG_PORT`     | `514`       | 1-65535      | Server port           |
+| `LOG_SYSLOG_PROTOCOL` | `udp`       | `udp`, `tcp` | Transport protocol    |
+
+#### Security Validations
+
+- **Hostname Validation**: Prevents injection attacks
+- **Port Range Check**: Validates 1-65535
+- **Privileged Port Warning**: Warns if port < 1024 in production
+- **Localhost Warning**: Alerts when using localhost in production
+
+#### Enterprise Setup Examples
 
 ```bash
+# Internal syslog server
+LOG_OUTPUT=syslog
+LOG_SYSLOG_HOST=syslog.internal.corp.com
+LOG_SYSLOG_PORT=514
+LOG_SYSLOG_PROTOCOL=tcp
+
+# AWS CloudWatch via syslog
+LOG_OUTPUT=syslog
+LOG_SYSLOG_HOST=logs.us-east-1.amazonaws.com
+LOG_SYSLOG_PORT=514
+LOG_SYSLOG_PROTOCOL=tcp
+
+# Splunk Universal Forwarder
+LOG_OUTPUT=syslog
+LOG_SYSLOG_HOST=splunk-forwarder.local
+LOG_SYSLOG_PORT=9514
+LOG_SYSLOG_PROTOCOL=tcp
+```
+
+### 5. null - Disable Logging
+
+**When to use**: Performance testing, specific test scenarios, ultra-high-performance code paths
+
+#### Configuration
+
+```bash
+# .env
 LOG_OUTPUT=null
 ```
 
-### File Logging Configuration
+#### Use Cases
 
-| Variable             | Type   | Default          | Description                                   |
-| -------------------- | ------ | ---------------- | --------------------------------------------- |
-| `LOG_FILE_PATH`      | string | `./logs/app.log` | Path to log file                              |
-| `LOG_FILE_MAX_SIZE`  | string | `10M`            | Max file size before rotation (e.g., 10M, 1G) |
-| `LOG_FILE_MAX_FILES` | number | `5`              | Number of rotated files to keep               |
+```typescript
+// Conditionally disable logging
+if (process.env.BENCHMARK_MODE === 'true') {
+  switchLogOutput('null');
+}
 
-### Syslog Configuration
-
-| Variable              | Type   | Default     | Description            |
-| --------------------- | ------ | ----------- | ---------------------- |
-| `LOG_SYSLOG_HOST`     | string | `localhost` | Syslog server hostname |
-| `LOG_SYSLOG_PORT`     | number | `514`       | Syslog server port     |
-| `LOG_SYSLOG_PROTOCOL` | string | `udp`       | Protocol: udp or tcp   |
+// Or via environment
+// LOG_OUTPUT=null npm run benchmark
+```
 
 ## Programmatic API
 
@@ -398,14 +531,14 @@ logger.error({ error }, 'Error occurred');
 
 ### From existing Pino setup
 
-Before:
+Before (direct Pino usage):
 
 ```typescript
 import pino from 'pino';
 const logger = pino();
 ```
 
-After:
+After (using configured logger):
 
 ```typescript
 import { logger } from './logger.js';
@@ -419,52 +552,104 @@ import { logger } from './logger.js';
 - **syslog**: Network overhead, consider batching
 - **null**: Zero overhead, no operations
 
-## Security Considerations
+## Security Features & Validations
 
-### Built-in Security Features
+### Comprehensive Security Measures
 
-- **Automatic Redaction**: Sensitive fields are automatically redacted (passwords, tokens, api_key, etc.)
-- **Path Validation**: File paths are validated to prevent path traversal attacks
-- **Restricted Directories**: System directories (/etc, /usr, /bin, etc.) are blocked for log files
-- **File Permissions**: Log files are created with restrictive permissions (640 by default)
-- **Input Validation**: All configuration inputs are validated for security issues
+The logging system implements multiple layers of security validation:
 
-### File Logging Security
+#### 1. Automatic Data Redaction
 
-When using file output, the system:
+**What's Protected**: Fields containing sensitive patterns are automatically redacted:
 
-- Validates paths to prevent directory traversal (`../` patterns blocked)
-- Blocks writing to system directories
-- Creates directories with mode 0750 (rwxr-x---)
-- Sets file permissions via `LOG_FILE_PERMISSIONS` environment variable
-- Validates file paths don't contain null bytes
-- Limits path length to prevent buffer overflow attacks
+- `password`, `passwd`, `pwd`
+- `token`, `api_key`, `apiKey`
+- `secret`, `credential`
+- `auth`, `authorization`
+- Credit card patterns
+- Social security numbers
 
-```bash
-# Configure file permissions (octal format)
-LOG_FILE_PERMISSIONS=640  # rw-r----- (default)
-LOG_FILE_PERMISSIONS=600  # rw------- (more restrictive)
+```typescript
+logger.info({
+  user: 'john',
+  password: 'secret123', // Automatically redacted to '***'
+  api_key: 'sk-abc123xyz', // Redacted to '***'
+  data: 'safe-info', // Not redacted
+});
 ```
 
-### Syslog Security
+#### 2. File Output Security
 
-For syslog configuration:
+**Path Validation** (implemented in `src/logger-validation.ts`):
 
-- Hostname/IP validation prevents injection attacks
-- Port range validation (1-65535)
-- Warning for privileged ports (<1024) in production
-- Warning for localhost usage in production
-- Consider using TCP with TLS for sensitive data
+| Validation          | Description                        | Example Blocked       |
+| ------------------- | ---------------------------------- | --------------------- |
+| Directory Traversal | Blocks `../` patterns              | `../../../etc/passwd` |
+| System Directories  | Prevents writing to system paths   | `/etc/`, `/usr/bin/`  |
+| Null Bytes          | Rejects paths with null characters | `file\0.log`          |
+| Path Length         | Limits to 4096 characters          | Extremely long paths  |
+| Special Characters  | Blocks control characters          | Paths with `\n`, `\r` |
 
-### Best Practices
+**File Permissions**:
 
-1. **Never log credentials or secrets directly**
-2. **Use restrictive file permissions for log files**
-3. **Validate all external configuration**
-4. **Monitor log file sizes to prevent disk exhaustion**
-5. **Use centralized logging (syslog) for production**
-6. **Regularly rotate and archive old log files**
-7. **Consider encryption for sensitive log data**
+```bash
+# Permission modes (octal)
+LOG_FILE_PERMISSIONS=640  # rw-r----- (default, recommended)
+LOG_FILE_PERMISSIONS=600  # rw------- (more restrictive)
+LOG_FILE_PERMISSIONS=644  # rw-r--r-- (less restrictive, avoid)
+
+# Directory creation
+# Directories are always created with mode 750 (rwxr-x---)
+```
+
+#### 3. Syslog Security
+
+**Validation Checks**:
+
+| Check            | Description                     | Action                |
+| ---------------- | ------------------------------- | --------------------- |
+| Hostname Format  | Validates DNS names and IPs     | Rejects invalid hosts |
+| Port Range       | Ensures 1-65535                 | Rejects invalid ports |
+| Privileged Ports | Warns if port < 1024            | Warning in production |
+| Localhost Check  | Detects localhost in production | Warning issued        |
+| Protocol         | Validates tcp/udp only          | Rejects others        |
+
+**Security Warnings Example**:
+
+```bash
+# This configuration will trigger warnings:
+NODE_ENV=production
+LOG_OUTPUT=syslog
+LOG_SYSLOG_HOST=localhost  # ⚠️ Warning: localhost in production
+LOG_SYSLOG_PORT=514        # ⚠️ Warning: privileged port in production
+```
+
+#### 4. Input Validation
+
+All configuration inputs undergo validation:
+
+```typescript
+// These are all validated and sanitized:
+- LOG_OUTPUT: Must be one of: stdout, stderr, file, syslog, null
+- LOG_FILE_PATH: Path validation, no traversal
+- LOG_FILE_MAX_SIZE: Valid size format (10K, 5M, 1G)
+- LOG_SYSLOG_HOST: Valid hostname or IP
+- LOG_SYSLOG_PORT: Integer 1-65535
+- LOG_FILE_PERMISSIONS: Valid octal format
+```
+
+### Security Best Practices
+
+1. **Never log credentials directly** - Use structured logging and rely on automatic redaction
+2. **Use restrictive file permissions** - Default 640 or stricter 600 for sensitive environments
+3. **Implement log rotation** - Prevent disk exhaustion with size limits and file counts
+4. **Use centralized logging in production** - Syslog with TCP/TLS for security
+5. **Monitor log sizes** - Set alerts for unusual growth patterns
+6. **Audit log access** - Track who reads log files in production
+7. **Consider encryption** - For highly sensitive environments, encrypt at rest
+8. **Regular cleanup** - Archive and remove old logs per retention policy
+9. **Validate all inputs** - The system validates all configuration automatically
+10. **Test security features** - Verify redaction and validation work as expected
 
 ## Related Documentation
 
@@ -472,14 +657,28 @@ For syslog configuration:
 - [Environment Configuration](./CONFIG.md)
 - [Pino Documentation](https://getpino.io/)
 
+## Quick Decision Matrix
+
+| Scenario                  | Recommended Output | Key Configuration                 |
+| ------------------------- | ------------------ | --------------------------------- |
+| Local Development         | `stdout` (default) | `LOG_LEVEL=debug`                 |
+| CLI Tool with Data Output | `stderr`           | Separates logs from data          |
+| Production Web Service    | `file` or `syslog` | Rotation + centralization         |
+| Docker/Kubernetes         | `stdout`           | Container logs handle it          |
+| Performance Testing       | `null`             | Zero overhead                     |
+| Debugging Production      | `file`             | `LOG_LEVEL=trace`, large rotation |
+| Compliance/Audit          | `syslog`           | Centralized, tamper-proof         |
+
 ## Summary
 
-The configurable logging output system ensures your application can:
+The logging output system provides:
 
-- Adapt to different deployment environments
-- Integrate with existing logging infrastructure
-- Maintain clean separation between application output and logs
-- Scale from development to production seamlessly
-- Debug issues effectively with appropriate log destinations
+✅ **Five output destinations** for different use cases  
+✅ **Automatic security validations** preventing common vulnerabilities  
+✅ **File rotation** preventing disk space issues  
+✅ **Centralized logging support** via syslog  
+✅ **Runtime switching** for dynamic scenarios  
+✅ **Zero-config defaults** that work out of the box  
+✅ **Production-ready security** with path validation and redaction
 
-Choose the right output destination for your use case and configure it via environment variables or programmatically at runtime.
+Configure via environment variables or switch programmatically at runtime based on your needs.
