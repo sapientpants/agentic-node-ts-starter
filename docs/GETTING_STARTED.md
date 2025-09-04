@@ -28,8 +28,17 @@ Choose your preferred Node.js version manager:
 
 #### Option A: Using mise (Recommended)
 
+The project includes a `mise.toml` file to automatically manage Node.js and pnpm versions:
+
 ```bash
-# Install mise: https://mise.jdx.dev/getting-started.html
+# Install mise (if not already installed)
+# macOS/Linux: curl https://mise.run | sh
+# Or via Homebrew: brew install mise
+
+# Activate mise in your shell (add to ~/.bashrc or ~/.zshrc)
+eval "$(mise activate bash)"  # or zsh
+
+# Install the exact versions specified in mise.toml
 mise install        # Installs Node 22 and pnpm 10.15.0
 pnpm install       # Install dependencies
 ```
@@ -104,34 +113,38 @@ Edit `package.json`:
 >
 > This template includes two types of files:
 >
-> - **📝 Example Code**: Demonstration files that should be removed or replaced:
+> - **📝 Example Code**: Demonstration files marked with header comments that should be removed:
 >   - `src/index.ts` - Example add function with validation demos
+>   - `src/health.example.ts` - Example health endpoint implementation (reference only)
 >   - `tests/index.spec.ts` - Example unit tests
 >   - `tests/add.property.spec.ts` - Example property-based tests
 > - **🏗️ Template Infrastructure**: Production-ready code that you can keep and customize:
 >   - `src/config.ts` - Type-safe environment configuration with Zod validation
 >   - `src/logger.ts` - Structured logging with Pino
->   - `src/dev/debug-utils.ts` - Development debugging utilities
+>   - `src/logger-validation.ts` - Logger security validation utilities
 >   - `tests/config.spec.ts` - Configuration tests
 >   - `tests/logger.spec.ts` - Logger tests
+>   - `tests/logger-validation.spec.ts` - Logger validation tests
+>   - `tests/logger-output.spec.ts` - Logger output configuration tests
 >   - `tests/container-scan.spec.ts` - Container security tests
 >   - `tests/documentation.spec.ts` - Documentation validation tests
 >   - All configuration files (TypeScript, ESLint, Prettier, etc.)
 >
-> Look for header comments in files to identify their purpose.
+> All example files have clear header comments marked with "EXAMPLE CODE" to identify them.
 
-Remove the example files and create your own:
+Remove the example files with a single command:
 
 ```bash
-# Remove example source files
-rm src/index.ts
+# Remove all example files at once
+rm src/index.ts \
+   src/health.example.ts \
+   tests/index.spec.ts \
+   tests/add.property.spec.ts
 
-# Remove example tests
-rm tests/index.spec.ts
-rm tests/add.property.spec.ts
+# Create your own entry point
+echo "console.log('Hello from my app!');" > src/index.ts
 
-# Keep the logger if you want structured logging
-# Or remove it: rm src/logger.ts tests/logger.spec.ts
+# Note: Keep the infrastructure files (config.ts, logger.ts, etc.) unless you want to replace them
 ```
 
 ### 5. Update README
@@ -208,19 +221,35 @@ Now that your template is customized, you can start building your project. The t
 
 ## Verify Your Setup
 
-After customization, ensure everything works:
+### Post-Setup Validation Checklist
+
+After customization, run through this checklist to ensure everything is properly configured:
 
 ```bash
-# Run all quality checks
+# 1. Verify all quality checks pass
 pnpm verify
+# This runs: audit, typecheck, lint, format check, and tests
 
-# This runs:
-# - Security audit
-# - TypeScript type checking
-# - ESLint linting
-# - Prettier formatting
-# - Test suite
+# 2. Check test coverage meets requirements (80% minimum)
+pnpm test:coverage
+# Should show coverage >= 80% for all metrics
+
+# 3. Ensure TypeScript builds successfully
+pnpm build
+# Creates dist/ directory with compiled JavaScript
+
+# 4. Verify pre-commit hooks are installed
+git add .
+git commit -m "test commit" --dry-run
+# Should trigger pre-commit validation
+
+# 5. Check that your environment is configured
+node -e "console.log('Node:', process.version)"
+pnpm --version
+# Should show Node 22+ and pnpm 10.15.0
 ```
+
+If all checks pass, your project is ready for development!
 
 ## Next Steps
 
@@ -280,14 +309,13 @@ npx prisma init
 
 ### Next Steps
 
-1. **Clean up example code**:
+1. **Verify your environment** (if using mise):
 
    ```bash
-   # Remove example test files
-   rm tests/index.spec.ts tests/add.property.spec.ts
-
-   # Replace the example entry point with your own
-   echo "console.log('Hello from my app!');" > src/index.ts
+   # Check that mise is managing versions correctly
+   mise list          # Shows installed tools
+   node --version     # Should show v22.x.x
+   pnpm --version     # Should show 10.15.0
    ```
 
 2. **Update project metadata**:

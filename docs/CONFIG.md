@@ -47,42 +47,62 @@ The configuration module (`src/config.ts`) provides:
    }
    ```
 
-## Configuration Variables
+## Complete Environment Variable Reference
 
-### Core Settings
+This table lists all available environment variables, their types, requirements, and defaults.
 
-| Variable   | Type   | Default                   | Description                                         |
-| ---------- | ------ | ------------------------- | --------------------------------------------------- |
-| `NODE_ENV` | string | `development`             | Environment: development, production, test, staging |
-| `APP_NAME` | string | `agentic-node-ts-starter` | Application name for logging                        |
+### Core Configuration
 
-### Logging
+| Variable   | Type     | Required | Default                   | Description                                                 |
+| ---------- | -------- | -------- | ------------------------- | ----------------------------------------------------------- |
+| `NODE_ENV` | `enum`   | Optional | `development`             | Environment: `development`, `production`, `test`, `staging` |
+| `APP_NAME` | `string` | Optional | `agentic-node-ts-starter` | Application name for logging and metrics                    |
 
-| Variable    | Type   | Default          | Description                      |
-| ----------- | ------ | ---------------- | -------------------------------- |
-| `LOG_LEVEL` | string | `info` / `debug` | Log level (see note below)       |
-| `DEBUG`     | string | -                | Debug namespaces (e.g., `app:*`) |
+### Logging Configuration
 
-**Note:** `LOG_LEVEL` defaults to `info` in production, `debug` in development.
+| Variable      | Type      | Required | Default          | Description                                                             |
+| ------------- | --------- | -------- | ---------------- | ----------------------------------------------------------------------- |
+| `LOG_LEVEL`   | `enum`    | Optional | `info`/`debug`\* | Log level: `trace`, `debug`, `info`, `warn`, `error`, `fatal`, `silent` |
+| `LOG_OUTPUT`  | `enum`    | Optional | `stdout`         | Output destination: `stdout`, `stderr`, `file`, `syslog`, `null`        |
+| `DEBUG`       | `string`  | Optional | -                | Debug namespaces to enable (e.g., `app:*`, `express:*`)                 |
+| `FORCE_COLOR` | `boolean` | Optional | -                | Force colored output in terminals (`true`/`false`, `1`/`0`, `yes`/`no`) |
+
+\* `LOG_LEVEL` defaults to `info` in production, `debug` in development
+
+### File Logging (when LOG_OUTPUT=file)
+
+| Variable               | Type     | Required | Default          | Description                                               |
+| ---------------------- | -------- | -------- | ---------------- | --------------------------------------------------------- |
+| `LOG_FILE_PATH`        | `string` | Optional | `./logs/app.log` | Path to log file                                          |
+| `LOG_FILE_MAX_SIZE`    | `string` | Optional | `10M`            | Max file size before rotation (e.g., `10M`, `100M`, `1G`) |
+| `LOG_FILE_MAX_FILES`   | `number` | Optional | `5`              | Number of rotated files to keep                           |
+| `LOG_FILE_PERMISSIONS` | `string` | Optional | `640`            | Octal file permissions (e.g., `600`, `644`, `640`)        |
+
+### Syslog Configuration (when LOG_OUTPUT=syslog)
+
+| Variable              | Type     | Required | Default     | Description                  |
+| --------------------- | -------- | -------- | ----------- | ---------------------------- |
+| `LOG_SYSLOG_HOST`     | `string` | Optional | `localhost` | Syslog server hostname or IP |
+| `LOG_SYSLOG_PORT`     | `number` | Optional | `514`       | Syslog server port           |
+| `LOG_SYSLOG_PROTOCOL` | `enum`   | Optional | `udp`       | Protocol: `udp` or `tcp`     |
 
 ### Feature Flags
 
-| Variable         | Type    | Default | Description               |
-| ---------------- | ------- | ------- | ------------------------- |
-| `ENABLE_METRICS` | boolean | `false` | Enable metrics collection |
+| Variable         | Type      | Required | Default | Description               |
+| ---------------- | --------- | -------- | ------- | ------------------------- |
+| `ENABLE_METRICS` | `boolean` | Optional | `false` | Enable metrics collection |
 
 ### Timeouts
 
-| Variable     | Type   | Default | Description                               |
-| ------------ | ------ | ------- | ----------------------------------------- |
-| `TIMEOUT_MS` | number | `30000` | General operation timeout in milliseconds |
+| Variable     | Type     | Required | Default | Description                               |
+| ------------ | -------- | -------- | ------- | ----------------------------------------- |
+| `TIMEOUT_MS` | `number` | Optional | `30000` | General operation timeout in milliseconds |
 
-### Development Settings (Optional)
+### Test Configuration
 
-| Variable      | Type    | Description                      |
-| ------------- | ------- | -------------------------------- |
-| `DEBUG`       | string  | Debug namespaces (e.g., `app:*`) |
-| `FORCE_COLOR` | boolean | Force colored terminal output    |
+| Variable                | Type     | Required | Default | Description                             |
+| ----------------------- | -------- | -------- | ------- | --------------------------------------- |
+| `LOG_TEST_FILE_TIMEOUT` | `number` | Optional | `300`   | Timeout for file write tests in CI (ms) |
 
 ## Adding Custom Configuration
 
@@ -191,30 +211,68 @@ ALLOWED_HOSTS: z.string()
 
 ## Error Handling
 
-When configuration validation fails, the application provides clear error messages:
+### Validation Failure Examples
+
+When configuration validation fails at startup, you'll see clear, actionable error messages:
+
+#### Example 1: Missing Required Variables
 
 ```
 ❌ Invalid environment configuration:
 
 Missing required variables:
-  • MY_CUSTOM_VAR: Required but not provided
+  • API_KEY: Required but not provided
+  • DATABASE_URL: Required but not provided
+
+💡 Tip: Check .env.example for valid configuration examples
+```
+
+#### Example 2: Invalid Formats and Types
+
+```
+❌ Invalid environment configuration:
 
 Invalid format:
-  • TIMEOUT_MS: Must be a valid number (received: "abc")
+  • NODE_ENV: Invalid enum value (received: "dev")
+  • TIMEOUT_MS: Expected number, received string (received: "thirty-seconds")
+  • LOG_LEVEL: Invalid enum value (received: "verbose")
   • ENABLE_METRICS: Invalid enum value (received: "maybe")
 
 Other errors:
-  • SECRET: String must contain at least 32 character(s)
+  • LOG_SYSLOG_PORT: Number must be less than or equal to 65535 (received: "99999")
+  • LOG_FILE_PERMISSIONS: Invalid octal format (received: "777xyz")
 
 💡 Tip: Check .env.example for valid configuration examples
 ```
 
 ### Sensitive Value Protection
 
-Sensitive values are automatically masked in error messages:
+The configuration system automatically masks sensitive values in error messages to prevent accidental exposure in logs or console output.
 
-- Any variable containing `PASSWORD`, `TOKEN`, `SECRET`, or `KEY` → Masked
-- Shows only first and last 2 characters for longer values
+#### How It Works
+
+- **Detection**: Any variable name containing `PASSWORD`, `TOKEN`, `SECRET`, or `KEY` is considered sensitive
+- **Masking**: Shows only first 2 and last 2 characters for values longer than 4 characters
+- **Short values**: Completely masked as `***`
+
+#### Example: Sensitive Values in Errors
+
+```
+❌ Invalid environment configuration:
+
+Invalid format:
+  • API_TOKEN: String must contain at least 32 character(s) (received: "sk***yz")
+  • DATABASE_PASSWORD: Invalid format (received: "pa***rd")
+  • SECRET_KEY: Must match pattern (received: "se***89")
+  • AUTH_SECRET: Required but not provided
+
+Other errors:
+  • ENCRYPTION_KEY: String must be exactly 64 characters (received: "ke***01")
+
+💡 Tip: Check .env.example for valid configuration examples
+```
+
+**Note**: Even though values are masked in error messages, the actual validation still occurs with the full values. This ensures security without compromising functionality.
 
 ## Helper Functions
 
