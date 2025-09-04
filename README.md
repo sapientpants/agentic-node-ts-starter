@@ -38,7 +38,7 @@ A **batteries-included** TypeScript starter template with comprehensive testing,
 
 ```bash
 # Clone and setup
-git clone https://github.com/mfisher87/agentic-node-ts-starter.git my-project
+git clone https://github.com/sapientpants/agentic-node-ts-starter.git my-project
 cd my-project
 
 # Install dependencies (requires Node.js 22+ and pnpm 10.15)
