@@ -1,5 +1,14 @@
 # agentic-node-ts-starter
 
+## 0.21.1
+
+### Patch Changes
+
+- [#109](https://github.com/sapientpants/agentic-node-ts-starter/pull/109) [`98a0293`](https://github.com/sapientpants/agentic-node-ts-starter/commit/98a0293f0592c603e8bcf46623bbf2788d57efaa) Thanks [@sapientpants](https://github.com/sapientpants)! - fix: resolve race condition in logger-output tests
+  - Fixed intermittent test failures that were causing CI/CD pipeline issues
+  - Tests now use explicit file paths to prevent conflicts
+  - Increased cleanup delay for async operations to complete properly
+
 ## 0.21.0
 
 ### Minor Changes
