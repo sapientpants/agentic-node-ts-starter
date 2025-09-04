@@ -37,8 +37,9 @@ describe('Logger Output Configuration', () => {
     process.env = originalEnv;
     vi.clearAllMocks();
 
-    // Add a small delay to let any async file operations complete
-    await new Promise((resolve) => setTimeout(resolve, 10));
+    // Add a delay to let any async file operations complete
+    // Increase delay for file-based tests to ensure pino-roll finishes
+    await new Promise((resolve) => setTimeout(resolve, 50));
 
     // Clean up test log directory with error handling
     if (existsSync(testLogDir)) {
@@ -338,6 +339,7 @@ describe('Logger Output Configuration', () => {
 
     it('should preserve child logger functionality with file output', async () => {
       process.env.LOG_OUTPUT = 'file';
+      process.env.LOG_FILE_PATH = testLogFile;
       process.env.NODE_ENV = 'development';
 
       const loggerModule = await import('../src/logger.js');
@@ -374,7 +376,13 @@ describe('Logger Output Configuration', () => {
     });
 
     it('should maintain correlation ID support with different outputs', async () => {
+      // Ensure directory exists for this test
+      if (!existsSync(testLogDir)) {
+        mkdirSync(testLogDir, { recursive: true });
+      }
+
       process.env.LOG_OUTPUT = 'file';
+      process.env.LOG_FILE_PATH = testLogFile;
       process.env.NODE_ENV = 'production';
       process.env.CORRELATION_ID = 'test-correlation-123';
 
@@ -493,6 +501,7 @@ describe('Logger Output Configuration', () => {
     it('should work correctly in development with file output', async () => {
       process.env.NODE_ENV = 'development';
       process.env.LOG_OUTPUT = 'file';
+      process.env.LOG_FILE_PATH = testLogFile;
 
       const loggerModule = await import('../src/logger.js');
       logger = loggerModule.logger;
