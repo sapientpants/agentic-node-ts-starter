@@ -1,11 +1,6 @@
 {
   "$schema": "https://unpkg.com/@changesets/config@3.1.1/schema.json",
-  "changelog": [
-    "@changesets/changelog-github",
-    {
-      "repo": "sapientpants/agentic-node-ts-starter"
-    }
-  ],
+  "changelog": "./dev/changelog-custom.js",
   "commit": false,
   "fixed": [],
   "linked": [],
