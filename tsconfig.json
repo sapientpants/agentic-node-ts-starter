@@ -15,5 +15,5 @@
     "sourceMap": true,
     "outDir": "dist"
   },
-  "include": ["src", "tests", "vitest.config.ts", ".changeset/changelog-custom.ts"]
+  "include": ["src", "tests", "vitest.config.ts"]
 }
