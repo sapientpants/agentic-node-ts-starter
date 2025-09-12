@@ -1,5 +1,22 @@
 # agentic-node-ts-starter
 
+## 0.22.0
+
+### Minor Changes
+
+- [#117](https://github.com/sapientpants/agentic-node-ts-starter/pull/117) [`288eede`](https://github.com/sapientpants/agentic-node-ts-starter/commit/288eede6c51eb02e6e6cb86fcea4a6a29031db3a) - feat: implement custom changelog generator
+  - Add custom changelog generator based on @changesets/changelog-github
+  - Fix typo in variable name (updatedDepenenciesList → updatedDependenciesList)
+  - Add proper TypeScript types with Options interface
+  - Remove unnecessary dotenv dependency
+
+### Patch Changes
+
+- [#118](https://github.com/sapientpants/agentic-node-ts-starter/pull/118) [`99fd0ca`](https://github.com/sapientpants/agentic-node-ts-starter/commit/99fd0caf9cc27d0a0927bc8cae8a95b5f86ecdd4) - chore: update Vite to 7.1.5
+  - Explicitly add Vite 7.1.5 as a dev dependency
+  - Previously Vite 7.1.3 was only included as an indirect dependency through Vitest
+  - All tests pass with the updated version
+
 ## 0.21.1
 
 ### Patch Changes
