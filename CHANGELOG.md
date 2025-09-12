@@ -21,7 +21,7 @@
 
 ### Patch Changes
 
-- [#109](https://github.com/sapientpants/agentic-node-ts-starter/pull/109) [`98a0293`](https://github.com/sapientpants/agentic-node-ts-starter/commit/98a0293f0592c603e8bcf46623bbf2788d57efaa) Thanks [@sapientpants](https://github.com/sapientpants)! - fix: resolve race condition in logger-output tests
+- [#109](https://github.com/sapientpants/agentic-node-ts-starter/pull/109) [`98a0293`](https://github.com/sapientpants/agentic-node-ts-starter/commit/98a0293f0592c603e8bcf46623bbf2788d57efaa) - fix: resolve race condition in logger-output tests
   - Fixed intermittent test failures that were causing CI/CD pipeline issues
   - Tests now use explicit file paths to prevent conflicts
   - Increased cleanup delay for async operations to complete properly
@@ -30,7 +30,7 @@
 
 ### Minor Changes
 
-- [#104](https://github.com/sapientpants/agentic-node-ts-starter/pull/104) [`2fd789b`](https://github.com/sapientpants/agentic-node-ts-starter/commit/2fd789b23703a4f2dad4a9378b665b9d0cb8a484) Thanks [@sapientpants](https://github.com/sapientpants)! - feat: Add configurable logging output destinations
+- [#104](https://github.com/sapientpants/agentic-node-ts-starter/pull/104) [`2fd789b`](https://github.com/sapientpants/agentic-node-ts-starter/commit/2fd789b23703a4f2dad4a9378b665b9d0cb8a484) - feat: Add configurable logging output destinations
 
   Adds comprehensive support for multiple logging output destinations to provide flexibility for different deployment scenarios and application architectures.
 
@@ -51,7 +51,7 @@
 
 ### Patch Changes
 
-- [#105](https://github.com/sapientpants/agentic-node-ts-starter/pull/105) [`834f02b`](https://github.com/sapientpants/agentic-node-ts-starter/commit/834f02b028c4e33e2f59e6ebc853ca796b750fe9) Thanks [@sapientpants](https://github.com/sapientpants)! - fix: resolve file rotation test race condition in CI
+- [#105](https://github.com/sapientpants/agentic-node-ts-starter/pull/105) [`834f02b`](https://github.com/sapientpants/agentic-node-ts-starter/commit/834f02b028c4e33e2f59e6ebc853ca796b750fe9) - fix: resolve file rotation test race condition in CI
   - Create unique test directories for each test iteration to avoid conflicts
   - Add configurable timeout for file operations in CI environments
   - Implement proper cleanup with error handling using try-finally blocks
@@ -60,7 +60,7 @@
   This fixes the intermittent ENOENT errors when pino-roll tries to access
   rotation files that may have been cleaned up by concurrent tests.
 
-- [#104](https://github.com/sapientpants/agentic-node-ts-starter/pull/104) [`2fd789b`](https://github.com/sapientpants/agentic-node-ts-starter/commit/2fd789b23703a4f2dad4a9378b665b9d0cb8a484) Thanks [@sapientpants](https://github.com/sapientpants)! - feat: Add comprehensive security validation for logging configuration
+- [#104](https://github.com/sapientpants/agentic-node-ts-starter/pull/104) [`2fd789b`](https://github.com/sapientpants/agentic-node-ts-starter/commit/2fd789b23703a4f2dad4a9378b665b9d0cb8a484) - feat: Add comprehensive security validation for logging configuration
   - Add path traversal protection for file logging paths
   - Validate syslog hostnames and ports to prevent injection attacks
   - Block writing logs to restricted system directories
@@ -75,7 +75,7 @@
 
 ### Minor Changes
 
-- [#103](https://github.com/sapientpants/agentic-node-ts-starter/pull/103) [`0825690`](https://github.com/sapientpants/agentic-node-ts-starter/commit/0825690f84bd8f6399967b6034cd4dc18f6cc20d) Thanks [@sapientpants](https://github.com/sapientpants)! - feat: Add mandatory Zod-based environment configuration loader
+- [#103](https://github.com/sapientpants/agentic-node-ts-starter/pull/103) [`0825690`](https://github.com/sapientpants/agentic-node-ts-starter/commit/0825690f84bd8f6399967b6034cd4dc18f6cc20d) - feat: Add mandatory Zod-based environment configuration loader
   - Added comprehensive environment configuration system with Zod validation
   - Configuration is now MANDATORY - application won't start without valid config
   - Type-safe access to all environment variables with TypeScript inference
@@ -90,7 +90,7 @@
 
 ### Patch Changes
 
-- [#102](https://github.com/sapientpants/agentic-node-ts-starter/pull/102) [`322a0e2`](https://github.com/sapientpants/agentic-node-ts-starter/commit/322a0e2b45cfc2e62cfac88541818250200cb7bc) Thanks [@sapientpants](https://github.com/sapientpants)! - docs: Clarify Docker healthcheck configuration and requirements
+- [#102](https://github.com/sapientpants/agentic-node-ts-starter/pull/102) [`322a0e2`](https://github.com/sapientpants/agentic-node-ts-starter/commit/322a0e2b45cfc2e62cfac88541818250200cb7bc) - docs: Clarify Docker healthcheck configuration and requirements
   - Created comprehensive Docker configuration guide (docs/DOCKER.md) with detailed healthcheck instructions
   - Added prominent comments to Dockerfile explaining healthcheck expectations and linking to documentation
   - Created optional health endpoint example file (src/health.example.ts) demonstrating implementation patterns
@@ -104,7 +104,7 @@
 
 ### Patch Changes
 
-- [#101](https://github.com/sapientpants/agentic-node-ts-starter/pull/101) [`4bfdf9f`](https://github.com/sapientpants/agentic-node-ts-starter/commit/4bfdf9f588695d64548123e021e5990255ac216a) Thanks [@sapientpants](https://github.com/sapientpants)! - docs: Improve clarity of example code marking in starter template
+- [#101](https://github.com/sapientpants/agentic-node-ts-starter/pull/101) [`4bfdf9f`](https://github.com/sapientpants/agentic-node-ts-starter/commit/4bfdf9f588695d64548123e021e5990255ac216a) - docs: Improve clarity of example code marking in starter template
   - Added prominent header comments to all example files (src/index.ts, tests/\*.spec.ts) marking them as "EXAMPLE CODE - REPLACE WITH YOUR IMPLEMENTATION"
   - Added subtle header comments to template infrastructure files marking them as production-ready and customizable
   - Updated GETTING_STARTED.md with an info box clearly distinguishing between example code to remove and template infrastructure to keep
@@ -117,7 +117,7 @@
 
 ### Patch Changes
 
-- [#96](https://github.com/sapientpants/agentic-node-ts-starter/pull/96) [`3afa29b`](https://github.com/sapientpants/agentic-node-ts-starter/commit/3afa29bcc484aa4e99bebe99de3f647b772ebb12) Thanks [@sapientpants](https://github.com/sapientpants)! - docs: fix incorrect logger function references in documentation
+- [#96](https://github.com/sapientpants/agentic-node-ts-starter/pull/96) [`3afa29b`](https://github.com/sapientpants/agentic-node-ts-starter/commit/3afa29bcc484aa4e99bebe99de3f647b772ebb12) - docs: fix incorrect logger function references in documentation
   - Fixed docs/OBSERVABILITY.md to use correct logger imports (logger instead of createLogger)
   - Fixed docs/PATTERNS.md to use correct logger imports (logger instead of createLogger)
   - Documentation now accurately reflects the actual exports from src/logger.ts
@@ -128,7 +128,7 @@
 
 ### Patch Changes
 
-- [#94](https://github.com/sapientpants/agentic-node-ts-starter/pull/94) [`2ab4c5a`](https://github.com/sapientpants/agentic-node-ts-starter/commit/2ab4c5a71612eebbf53f2ef3e736e5ed2753a1be) Thanks [@sapientpants](https://github.com/sapientpants)! - docs: fix incorrect PAT environment variable name in README
+- [#94](https://github.com/sapientpants/agentic-node-ts-starter/pull/94) [`2ab4c5a`](https://github.com/sapientpants/agentic-node-ts-starter/commit/2ab4c5a71612eebbf53f2ef3e736e5ed2753a1be) - docs: fix incorrect PAT environment variable name in README
   - Changed GH_RELEASE_TOKEN to RELEASE_TOKEN to match actual workflow usage
   - This corrects the documentation to reflect the actual secret name used in GitHub Actions
 
@@ -136,7 +136,7 @@
 
 ### Patch Changes
 
-- [#92](https://github.com/sapientpants/agentic-node-ts-starter/pull/92) [`7e93395`](https://github.com/sapientpants/agentic-node-ts-starter/commit/7e933956734849f2226db0d1d1b8e4494e510b7b) Thanks [@sapientpants](https://github.com/sapientpants)! - docs: comprehensive documentation improvements for starter template
+- [#92](https://github.com/sapientpants/agentic-node-ts-starter/pull/92) [`7e93395`](https://github.com/sapientpants/agentic-node-ts-starter/commit/7e933956734849f2226db0d1d1b8e4494e510b7b) - docs: comprehensive documentation improvements for starter template
   - Created docs/README.md as central navigation hub
   - Streamlined root README.md from 351 to 186 lines
   - Added docs/PATTERNS.md with copy-paste code examples
@@ -152,7 +152,7 @@
 
 ### Patch Changes
 
-- [#93](https://github.com/sapientpants/agentic-node-ts-starter/pull/93) [`a79b2c6`](https://github.com/sapientpants/agentic-node-ts-starter/commit/a79b2c6d155ef21da0169cff908058bf56e46b0e) Thanks [@sapientpants](https://github.com/sapientpants)! - chore: remove Makefile and update documentation to use pnpm commands only
+- [#93](https://github.com/sapientpants/agentic-node-ts-starter/pull/93) [`a79b2c6`](https://github.com/sapientpants/agentic-node-ts-starter/commit/a79b2c6d155ef21da0169cff908058bf56e46b0e) - chore: remove Makefile and update documentation to use pnpm commands only
   - Removed Makefile from the project
   - Updated DEVELOPMENT.md to use only pnpm commands
   - Simplified documentation by removing dual command options
@@ -162,7 +162,7 @@
 
 ### Patch Changes
 
-- [#91](https://github.com/sapientpants/agentic-node-ts-starter/pull/91) [`48bd7cc`](https://github.com/sapientpants/agentic-node-ts-starter/commit/48bd7cc6635f41c8f28c9fc30a40c490bcc66e60) Thanks [@sapientpants](https://github.com/sapientpants)! - docs: comprehensive ADR updates following proper ADR patterns
+- [#91](https://github.com/sapientpants/agentic-node-ts-starter/pull/91) [`48bd7cc`](https://github.com/sapientpants/agentic-node-ts-starter/commit/48bd7cc6635f41c8f28c9fc30a40c490bcc66e60) - docs: comprehensive ADR updates following proper ADR patterns
 
   New ADRs documenting recent decisions:
   - ADR-0010: Extended Linting Strategy for markdown, YAML, JSON, and GitHub Actions linting
@@ -182,7 +182,7 @@
 
 ### Patch Changes
 
-- [#90](https://github.com/sapientpants/agentic-node-ts-starter/pull/90) [`9ceb406`](https://github.com/sapientpants/agentic-node-ts-starter/commit/9ceb40611178e4342a8fabe34eb7df381b54b954) Thanks [@sapientpants](https://github.com/sapientpants)! - fix: resolve SonarQube issues
+- [#90](https://github.com/sapientpants/agentic-node-ts-starter/pull/90) [`9ceb406`](https://github.com/sapientpants/agentic-node-ts-starter/commit/9ceb40611178e4342a8fabe34eb7df381b54b954) - fix: resolve SonarQube issues
 
   Fixed 18 SonarQube issues to improve code quality:
   - Fixed 2 MINOR issues: Updated deprecated Zod methods (uuid and email) with proper options
@@ -195,7 +195,7 @@
 
 ### Minor Changes
 
-- [#89](https://github.com/sapientpants/agentic-node-ts-starter/pull/89) [`cdf0649`](https://github.com/sapientpants/agentic-node-ts-starter/commit/cdf06491dfcd151bd95a90cdc63f804bc02663e1) Thanks [@sapientpants](https://github.com/sapientpants)! - feat: add Claude command to fix SonarQube issues
+- [#89](https://github.com/sapientpants/agentic-node-ts-starter/pull/89) [`cdf0649`](https://github.com/sapientpants/agentic-node-ts-starter/commit/cdf06491dfcd151bd95a90cdc63f804bc02663e1) - feat: add Claude command to fix SonarQube issues
 
   Add `/fix-sonarqube-issues` command that automates the process of identifying and fixing SonarQube issues. The command first checks if issues exist before creating a branch, then fixes issues by priority (BLOCKER → CRITICAL → MAJOR → MINOR → INFO), validates changes, creates a changeset, commits, and creates a PR. Streamlines code quality improvements by automating the entire workflow from issue detection to PR creation.
 
@@ -203,7 +203,7 @@
 
 ### Minor Changes
 
-- [#88](https://github.com/sapientpants/agentic-node-ts-starter/pull/88) [`cd5ef4a`](https://github.com/sapientpants/agentic-node-ts-starter/commit/cd5ef4ac60275ba8259319b412cbf4392d6d24e7) Thanks [@sapientpants](https://github.com/sapientpants)! - feat: add YAML linting with yaml-lint
+- [#88](https://github.com/sapientpants/agentic-node-ts-starter/pull/88) [`cd5ef4a`](https://github.com/sapientpants/agentic-node-ts-starter/commit/cd5ef4ac60275ba8259319b412cbf4392d6d24e7) - feat: add YAML linting with yaml-lint
 
   Integrate yaml-lint package for comprehensive YAML validation across the codebase. Configure appropriate exclusions for node_modules, GitHub workflows (already handled by actionlint), and auto-generated lock files. Add lint:yaml npm script and integrate with lint-staged for automatic validation on commit. Create .yamllintignore and .yaml-lint.yml configuration files using FAILSAFE_SCHEMA for maximum compatibility.
 
@@ -211,7 +211,7 @@
 
 ### Minor Changes
 
-- [#87](https://github.com/sapientpants/agentic-node-ts-starter/pull/87) [`48f93a4`](https://github.com/sapientpants/agentic-node-ts-starter/commit/48f93a459fa22ad3a86e05f1ce672e3cb574ad9f) Thanks [@sapientpants](https://github.com/sapientpants)! - feat: add markdown linting with markdownlint-cli2
+- [#87](https://github.com/sapientpants/agentic-node-ts-starter/pull/87) [`48f93a4`](https://github.com/sapientpants/agentic-node-ts-starter/commit/48f93a459fa22ad3a86e05f1ce672e3cb574ad9f) - feat: add markdown linting with markdownlint-cli2
   - Integrate markdownlint-cli2 for comprehensive markdown validation
   - Configure sensible markdown rules with flexibility for documentation needs
   - Add markdown linting to npm scripts (lint:markdown and lint:markdown:fix)
@@ -224,7 +224,7 @@
 
 ### Minor Changes
 
-- [#86](https://github.com/sapientpants/agentic-node-ts-starter/pull/86) [`0cdbb73`](https://github.com/sapientpants/agentic-node-ts-starter/commit/0cdbb733fe665ff664552c646b9e04826f09a696) Thanks [@sapientpants](https://github.com/sapientpants)! - feat: add JSON linting with eslint-plugin-jsonc
+- [#86](https://github.com/sapientpants/agentic-node-ts-starter/pull/86) [`0cdbb73`](https://github.com/sapientpants/agentic-node-ts-starter/commit/0cdbb733fe665ff664552c646b9e04826f09a696) - feat: add JSON linting with eslint-plugin-jsonc
   - Integrate eslint-plugin-jsonc for comprehensive JSON/JSONC/JSON5 linting
   - Configure specific rules for package.json (key ordering) and tsconfig files (allow comments)
   - Add JSON files to lint-staged for automatic formatting on commit
@@ -235,7 +235,7 @@
 
 ### Minor Changes
 
-- [#83](https://github.com/sapientpants/agentic-node-ts-starter/pull/83) [`0fdb55c`](https://github.com/sapientpants/agentic-node-ts-starter/commit/0fdb55c34d93765de2a426b05715341be4841f98) Thanks [@sapientpants](https://github.com/sapientpants)! - feat: add actionlint for GitHub Actions workflow validation
+- [#83](https://github.com/sapientpants/agentic-node-ts-starter/pull/83) [`0fdb55c`](https://github.com/sapientpants/agentic-node-ts-starter/commit/0fdb55c34d93765de2a426b05715341be4841f98) - feat: add actionlint for GitHub Actions workflow validation
   - Add actionlint wrapper script to check for workflow installation
   - Integrate actionlint into precommit validation process
   - Add actionlint job to PR workflow for CI validation
@@ -251,13 +251,13 @@
 
 ### Patch Changes
 
-- [#84](https://github.com/sapientpants/agentic-node-ts-starter/pull/84) [`a38af6b`](https://github.com/sapientpants/agentic-node-ts-starter/commit/a38af6b7d910d42cfde7815cb464b7937d1b31cf) Thanks [@sapientpants](https://github.com/sapientpants)! - fix: add actionlint installation to reusable validate workflow
+- [#84](https://github.com/sapientpants/agentic-node-ts-starter/pull/84) [`a38af6b`](https://github.com/sapientpants/agentic-node-ts-starter/commit/a38af6b7d910d42cfde7815cb464b7937d1b31cf) - fix: add actionlint installation to reusable validate workflow
   - Install actionlint in CI using official download script from rhysd/actionlint
   - Add workflow linting step to validation pipeline after format checking
   - Ensures lint:workflows script works properly in CI environments
   - Uses the same validation that runs locally via precommit hooks
 
-- [#85](https://github.com/sapientpants/agentic-node-ts-starter/pull/85) [`cc86f88`](https://github.com/sapientpants/agentic-node-ts-starter/commit/cc86f88ed994a6c8bffadd8a65a5088a31d96011) Thanks [@sapientpants](https://github.com/sapientpants)! - fix: skip actionlint in CI when not installed during release
+- [#85](https://github.com/sapientpants/agentic-node-ts-starter/pull/85) [`cc86f88`](https://github.com/sapientpants/agentic-node-ts-starter/commit/cc86f88ed994a6c8bffadd8a65a5088a31d96011) - fix: skip actionlint in CI when not installed during release
   - Skip actionlint validation in CI environments when not installed
   - Workflows are already validated during PR checks, no need to re-validate
   - Prevents release workflow failures while maintaining local development checks
@@ -266,7 +266,7 @@
 
 ### Patch Changes
 
-- [#82](https://github.com/sapientpants/agentic-node-ts-starter/pull/82) [`b24e2ea`](https://github.com/sapientpants/agentic-node-ts-starter/commit/b24e2ea0513d94413b1e2c66074cdfde66613148) Thanks [@sapientpants](https://github.com/sapientpants)! - ci: always generate test coverage in validation workflow
+- [#82](https://github.com/sapientpants/agentic-node-ts-starter/pull/82) [`b24e2ea`](https://github.com/sapientpants/agentic-node-ts-starter/commit/b24e2ea0513d94413b1e2c66074cdfde66613148) - ci: always generate test coverage in validation workflow
   - Remove conditional coverage generation
   - Always run tests with coverage in CI for better visibility
   - Upload coverage artifacts for all builds
@@ -276,7 +276,7 @@
 
 ### Minor Changes
 
-- [#80](https://github.com/sapientpants/agentic-node-ts-starter/pull/80) [`a9dffcc`](https://github.com/sapientpants/agentic-node-ts-starter/commit/a9dffcc3fdda75c72e946babcd46f67e643a2c7e) Thanks [@sapientpants](https://github.com/sapientpants)! - feat: Add SonarCloud integration for continuous code quality monitoring
+- [#80](https://github.com/sapientpants/agentic-node-ts-starter/pull/80) [`a9dffcc`](https://github.com/sapientpants/agentic-node-ts-starter/commit/a9dffcc3fdda75c72e946babcd46f67e643a2c7e) - feat: Add SonarCloud integration for continuous code quality monitoring
   - Integrate SonarQube scan in CI/CD pipeline for automated code analysis
   - Configure sonar-project.properties with TypeScript and coverage settings
   - Enable quality gate enforcement with existing LCOV coverage reports
@@ -286,7 +286,7 @@
 
 ### Minor Changes
 
-- [#79](https://github.com/sapientpants/agentic-node-ts-starter/pull/79) [`9744372`](https://github.com/sapientpants/agentic-node-ts-starter/commit/9744372b16b66bb05d6d039a4dc21e070f76ab55) Thanks [@sapientpants](https://github.com/sapientpants)! - feat: enhance developer experience with comprehensive DX improvements
+- [#79](https://github.com/sapientpants/agentic-node-ts-starter/pull/79) [`9744372`](https://github.com/sapientpants/agentic-node-ts-starter/commit/9744372b16b66bb05d6d039a4dc21e070f76ab55) - feat: enhance developer experience with comprehensive DX improvements
   - Add one-command setup script reducing onboarding from 30min to <5min
   - Implement VS Code configuration with optimized settings and debugging
   - Create Makefile shortcuts for common development tasks
@@ -305,7 +305,7 @@
 
 ### Minor Changes
 
-- [#76](https://github.com/sapientpants/agentic-node-ts-starter/pull/76) [`7c46ed5`](https://github.com/sapientpants/agentic-node-ts-starter/commit/7c46ed53a0c937b8ad020c0c71b5ed1610efb7b1) Thanks [@sapientpants](https://github.com/sapientpants)! - feat: Enhance documentation and onboarding experience for AI coding agents
+- [#76](https://github.com/sapientpants/agentic-node-ts-starter/pull/76) [`7c46ed5`](https://github.com/sapientpants/agentic-node-ts-starter/commit/7c46ed53a0c937b8ad020c0c71b5ed1610efb7b1) - feat: Enhance documentation and onboarding experience for AI coding agents
   - Added comprehensive GETTING_STARTED.md with step-by-step customization checklist
   - Created detailed TROUBLESHOOTING.md with common issues and solutions
   - Updated README with clear navigation to all documentation guides and GitHub requirement
@@ -319,7 +319,7 @@
 
 ### Minor Changes
 
-- [`bf07182`](https://github.com/sapientpants/agentic-node-ts-starter/commit/bf07182267eacd786af9fa636ad86e63fe169573) Thanks [@sapientpants](https://github.com/sapientpants)! - Improve OSV vulnerability scanner integration with official Google actions
+- [`bf07182`](https://github.com/sapientpants/agentic-node-ts-starter/commit/bf07182267eacd786af9fa636ad86e63fe169573) - Improve OSV vulnerability scanner integration with official Google actions
   - Replace custom OSV scanner implementation with Google's official GitHub Actions
   - Use specialized `osv-scanner-reusable-pr.yml` workflow for pull requests (v2.2.2)
   - Use standard `osv-scanner-reusable.yml` workflow for main branch scanning (v2.2.1)
@@ -333,7 +333,7 @@
 
 ### Minor Changes
 
-- [#74](https://github.com/sapientpants/agentic-node-ts-starter/pull/74) [`b10aa51`](https://github.com/sapientpants/agentic-node-ts-starter/commit/b10aa51a8f5dafe3d9b7b7c2b967f9f1dc0ed054) Thanks [@sapientpants](https://github.com/sapientpants)! - feat: Add container image security scanning to CI/CD pipeline
+- [#74](https://github.com/sapientpants/agentic-node-ts-starter/pull/74) [`b10aa51`](https://github.com/sapientpants/agentic-node-ts-starter/commit/b10aa51a8f5dafe3d9b7b7c2b967f9f1dc0ed054) - feat: Add container image security scanning to CI/CD pipeline
   - Integrated Trivy scanner for vulnerability detection in Docker images
   - Added automatic scanning before Docker Hub publication
   - Configured SARIF output for GitHub Security tab integration
@@ -350,7 +350,7 @@
 
 ### Minor Changes
 
-- [#73](https://github.com/sapientpants/agentic-node-ts-starter/pull/73) [`17eb13a`](https://github.com/sapientpants/agentic-node-ts-starter/commit/17eb13ac251e53060215f0ddb7d4fb396264805e) Thanks [@sapientpants](https://github.com/sapientpants)! - feat: add structured logging with Pino
+- [#73](https://github.com/sapientpants/agentic-node-ts-starter/pull/73) [`17eb13a`](https://github.com/sapientpants/agentic-node-ts-starter/commit/17eb13ac251e53060215f0ddb7d4fb396264805e) - feat: add structured logging with Pino
 
   Implements structured logging foundation with Pino logger:
   - Environment-based configuration (development, production, test)
@@ -374,7 +374,7 @@
 
 ### Minor Changes
 
-- [#65](https://github.com/sapientpants/agentic-node-ts-starter/pull/65) [`531ca40`](https://github.com/sapientpants/agentic-node-ts-starter/commit/531ca40a7c05589c4073d489ba9505577e8965a0) Thanks [@sapientpants](https://github.com/sapientpants)! - feat: enforce minimum test coverage thresholds at 80%
+- [#65](https://github.com/sapientpants/agentic-node-ts-starter/pull/65) [`531ca40`](https://github.com/sapientpants/agentic-node-ts-starter/commit/531ca40a7c05589c4073d489ba9505577e8965a0) - feat: enforce minimum test coverage thresholds at 80%
   - Added coverage thresholds to Vitest configuration (80% for lines, branches, functions, statements)
   - Configured proper coverage exclusions for non-source files
   - Added json-summary reporter for better CI integration
@@ -390,7 +390,7 @@
 
 ### Minor Changes
 
-- [#62](https://github.com/sapientpants/agentic-node-ts-starter/pull/62) [`b668240`](https://github.com/sapientpants/agentic-node-ts-starter/commit/b668240dfb59c793179957e03ab0615bf67f58b1) Thanks [@sapientpants](https://github.com/sapientpants)! - feat: Enable TypeScript ESLint rules requiring type information
+- [#62](https://github.com/sapientpants/agentic-node-ts-starter/pull/62) [`b668240`](https://github.com/sapientpants/agentic-node-ts-starter/commit/b668240dfb59c793179957e03ab0615bf67f58b1) - feat: Enable TypeScript ESLint rules requiring type information
   - Added TypeScript ESLint type-aware rules (@typescript-eslint/recommended-type-checked)
   - Configured ESLint to use TypeScript compiler for enhanced type checking
   - Type-aware rules now catch floating promises, unsafe type assertions, and other subtle type-safety issues
@@ -404,7 +404,7 @@
 
 ### Minor Changes
 
-- [#60](https://github.com/sapientpants/agentic-node-ts-starter/pull/60) [`c935b3c`](https://github.com/sapientpants/agentic-node-ts-starter/commit/c935b3cfa8b53460b10a214b7cded91f3e22f03e) Thanks [@sapientpants](https://github.com/sapientpants)! - Refactor project structure and enhance Claude Code integration
+- [#60](https://github.com/sapientpants/agentic-node-ts-starter/pull/60) [`c935b3c`](https://github.com/sapientpants/agentic-node-ts-starter/commit/c935b3cfa8b53460b10a214b7cded91f3e22f03e) - Refactor project structure and enhance Claude Code integration
 
   ## Removed Unused Directories
   - Removed `artifacts/` directory (unused)
@@ -434,7 +434,7 @@
 
 ### Patch Changes
 
-- [#59](https://github.com/sapientpants/agentic-node-ts-starter/pull/59) [`be7fa33`](https://github.com/sapientpants/agentic-node-ts-starter/commit/be7fa335ce96f76f540875d5b1b7c00410c92621) Thanks [@sapientpants](https://github.com/sapientpants)! - Fix Husky pre-commit hook configuration and rename scripts for clarity
+- [#59](https://github.com/sapientpants/agentic-node-ts-starter/pull/59) [`be7fa33`](https://github.com/sapientpants/agentic-node-ts-starter/commit/be7fa335ce96f76f540875d5b1b7c00410c92621) - Fix Husky pre-commit hook configuration and rename scripts for clarity
   - Fixed missing shebang line in `.husky/pre-commit` hook
   - Renamed `verify` script to `precommit` to better indicate its purpose
   - Created `verify` as an alias to `precommit` for backwards compatibility
@@ -446,7 +446,7 @@
 
 ### Patch Changes
 
-- [#58](https://github.com/sapientpants/agentic-node-ts-starter/pull/58) [`c676b92`](https://github.com/sapientpants/agentic-node-ts-starter/commit/c676b92a39fbf2c2f63a443d669773b05229d4c5) Thanks [@sapientpants](https://github.com/sapientpants)! - Fix version inconsistencies in documentation
+- [#58](https://github.com/sapientpants/agentic-node-ts-starter/pull/58) [`c676b92`](https://github.com/sapientpants/agentic-node-ts-starter/commit/c676b92a39fbf2c2f63a443d669773b05229d4c5) - Fix version inconsistencies in documentation
   - Updated README.md to show pnpm 10.15.0 instead of 10.0.0
   - Updated Dockerfile to use pnpm 10.15.0 for consistency
   - Updated mise.toml to specify exact pnpm version 10.15.0
@@ -456,7 +456,7 @@
 
 ### Patch Changes
 
-- [#57](https://github.com/sapientpants/agentic-node-ts-starter/pull/57) [`1edb9b9`](https://github.com/sapientpants/agentic-node-ts-starter/commit/1edb9b94ec89fc73f5a6af60fff0ae262e201d4c) Thanks [@sapientpants](https://github.com/sapientpants)! - Fix release documentation to reflect automated Changesets workflow
+- [#57](https://github.com/sapientpants/agentic-node-ts-starter/pull/57) [`1edb9b9`](https://github.com/sapientpants/agentic-node-ts-starter/commit/1edb9b94ec89fc73f5a6af60fff0ae262e201d4c) - Fix release documentation to reflect automated Changesets workflow
   - Updated `.claude/commands/release.md` to accurately describe the automated release process
   - Removed outdated manual version bumping and changelog editing instructions
   - Emphasized PR-only workflow (no direct pushes to main)
@@ -467,20 +467,20 @@
 
 ### Patch Changes
 
-- [#55](https://github.com/sapientpants/agentic-node-ts-starter/pull/55) [`edf6c4d`](https://github.com/sapientpants/agentic-node-ts-starter/commit/edf6c4d7bb174b7491ad0b68962e032d108ea77e) Thanks [@sapientpants](https://github.com/sapientpants)! - Update dependencies to latest versions
+- [#55](https://github.com/sapientpants/agentic-node-ts-starter/pull/55) [`edf6c4d`](https://github.com/sapientpants/agentic-node-ts-starter/commit/edf6c4d7bb174b7491ad0b68962e032d108ea77e) - Update dependencies to latest versions
   - zod: 4.1.1 → 4.1.4
   - @typescript-eslint/eslint-plugin: 8.40.0 → 8.41.0
   - @typescript-eslint/parser: 8.40.0 → 8.41.0
 
-- [#56](https://github.com/sapientpants/agentic-node-ts-starter/pull/56) [`adb4b3c`](https://github.com/sapientpants/agentic-node-ts-starter/commit/adb4b3c4b920aa83445c64886be01dd393b991fe) Thanks [@sapientpants](https://github.com/sapientpants)! - Update pnpm package manager to version 10.15.0
+- [#56](https://github.com/sapientpants/agentic-node-ts-starter/pull/56) [`adb4b3c`](https://github.com/sapientpants/agentic-node-ts-starter/commit/adb4b3c4b920aa83445c64886be01dd393b991fe) - Update pnpm package manager to version 10.15.0
 
 ## 0.5.6
 
 ### Patch Changes
 
-- [#53](https://github.com/sapientpants/agentic-node-ts-starter/pull/53) [`b6abce1`](https://github.com/sapientpants/agentic-node-ts-starter/commit/b6abce1c0db13485bf91cfb8856ba958195a9738) Thanks [@sapientpants](https://github.com/sapientpants)! - Fix duplicate workflow runs for release commits by adding [skip actions] tag
+- [#53](https://github.com/sapientpants/agentic-node-ts-starter/pull/53) [`b6abce1`](https://github.com/sapientpants/agentic-node-ts-starter/commit/b6abce1c0db13485bf91cfb8856ba958195a9738) - Fix duplicate workflow runs for release commits by adding [skip actions] tag
 
-- [#54](https://github.com/sapientpants/agentic-node-ts-starter/pull/54) [`44f0a33`](https://github.com/sapientpants/agentic-node-ts-starter/commit/44f0a33d03fdb40623ddb1b81a805ab23a27112e) Thanks [@sapientpants](https://github.com/sapientpants)! - Update dependencies to latest versions
+- [#54](https://github.com/sapientpants/agentic-node-ts-starter/pull/54) [`44f0a33`](https://github.com/sapientpants/agentic-node-ts-starter/commit/44f0a33d03fdb40623ddb1b81a805ab23a27112e) - Update dependencies to latest versions
   - zod: 4.1.1 → 4.1.4
   - @typescript-eslint/eslint-plugin: 8.40.0 → 8.41.0
   - @typescript-eslint/parser: 8.40.0 → 8.41.0
@@ -489,7 +489,7 @@
 
 ### Patch Changes
 
-- [#52](https://github.com/sapientpants/agentic-node-ts-starter/pull/52) [`5dbec56`](https://github.com/sapientpants/agentic-node-ts-starter/commit/5dbec56313cee920273ebf2cfea30b08551841f9) Thanks [@sapientpants](https://github.com/sapientpants)! - Optimize GitHub Actions workflows for better performance and maintainability
+- [#52](https://github.com/sapientpants/agentic-node-ts-starter/pull/52) [`5dbec56`](https://github.com/sapientpants/agentic-node-ts-starter/commit/5dbec56313cee920273ebf2cfea30b08551841f9) - Optimize GitHub Actions workflows for better performance and maintainability
   - Extract reusable workflows for setup, validation, and security scanning
   - Parallelize PR validation jobs for ~50% faster feedback
   - Simplify publish workflow by removing unnecessary matrix strategy
@@ -500,18 +500,18 @@
 
 ### Patch Changes
 
-- [#47](https://github.com/sapientpants/agentic-node-ts-starter/pull/47) [`6500da9`](https://github.com/sapientpants/agentic-node-ts-starter/commit/6500da976100317b037ddac39bba06cd81de9657) Thanks [@sapientpants](https://github.com/sapientpants)! - Fix GITHUB_TOKEN secret reference in release creation workflow
+- [#47](https://github.com/sapientpants/agentic-node-ts-starter/pull/47) [`6500da9`](https://github.com/sapientpants/agentic-node-ts-starter/commit/6500da976100317b037ddac39bba06cd81de9657) - Fix GITHUB_TOKEN secret reference in release creation workflow
   - Changed `secrets.github-token` to `secrets.GITHUB_TOKEN` in the Create GitHub Release step
   - This ensures the release is created with proper permissions to trigger subsequent workflows
   - Also reorganized YAML properties for better readability (moved release flags before files list)
 
-- [#48](https://github.com/sapientpants/agentic-node-ts-starter/pull/48) [`760d769`](https://github.com/sapientpants/agentic-node-ts-starter/commit/760d7696589fa7e23af11ab034d664ebca5d1bfd) Thanks [@sapientpants](https://github.com/sapientpants)! - Fix publish workflow not triggering after releases
+- [#48](https://github.com/sapientpants/agentic-node-ts-starter/pull/48) [`760d769`](https://github.com/sapientpants/agentic-node-ts-starter/commit/760d7696589fa7e23af11ab034d664ebca5d1bfd) - Fix publish workflow not triggering after releases
   - Updated main.yml to use RELEASE_TOKEN instead of GITHUB_TOKEN for release creation
   - This fixes the issue where the publish workflow wasn't triggered due to GitHub's security feature that prevents workflows triggered by GITHUB_TOKEN from triggering other workflows
   - Added comprehensive documentation about PAT requirements in WORKFLOWS.md
   - The workflow now falls back to GITHUB_TOKEN if RELEASE_TOKEN is not configured
 
-- [#46](https://github.com/sapientpants/agentic-node-ts-starter/pull/46) [`bf61f04`](https://github.com/sapientpants/agentic-node-ts-starter/commit/bf61f0443cc50089eba8356e2783c201144106ff) Thanks [@sapientpants](https://github.com/sapientpants)! - refactor: split CI/CD workflow into reusable workflows
+- [#46](https://github.com/sapientpants/agentic-node-ts-starter/pull/46) [`bf61f04`](https://github.com/sapientpants/agentic-node-ts-starter/commit/bf61f0443cc50089eba8356e2783c201144106ff) - refactor: split CI/CD workflow into reusable workflows
   - Created separate reusable workflows for CI validation and CD release/publishing
   - Simplified main workflow to orchestrate reusable components
   - Improved maintainability and modularity of GitHub Actions workflows
@@ -521,18 +521,18 @@
 
 ### Patch Changes
 
-- [#47](https://github.com/sapientpants/agentic-node-ts-starter/pull/47) [`6500da9`](https://github.com/sapientpants/agentic-node-ts-starter/commit/6500da976100317b037ddac39bba06cd81de9657) Thanks [@sapientpants](https://github.com/sapientpants)! - Fix GITHUB_TOKEN secret reference in release creation workflow
+- [#47](https://github.com/sapientpants/agentic-node-ts-starter/pull/47) [`6500da9`](https://github.com/sapientpants/agentic-node-ts-starter/commit/6500da976100317b037ddac39bba06cd81de9657) - Fix GITHUB_TOKEN secret reference in release creation workflow
   - Changed `secrets.github-token` to `secrets.GITHUB_TOKEN` in the Create GitHub Release step
   - This ensures the release is created with proper permissions to trigger subsequent workflows
   - Also reorganized YAML properties for better readability (moved release flags before files list)
 
-- [#48](https://github.com/sapientpants/agentic-node-ts-starter/pull/48) [`760d769`](https://github.com/sapientpants/agentic-node-ts-starter/commit/760d7696589fa7e23af11ab034d664ebca5d1bfd) Thanks [@sapientpants](https://github.com/sapientpants)! - Fix publish workflow not triggering after releases
+- [#48](https://github.com/sapientpants/agentic-node-ts-starter/pull/48) [`760d769`](https://github.com/sapientpants/agentic-node-ts-starter/commit/760d7696589fa7e23af11ab034d664ebca5d1bfd) - Fix publish workflow not triggering after releases
   - Updated main.yml to use RELEASE_TOKEN instead of GITHUB_TOKEN for release creation
   - This fixes the issue where the publish workflow wasn't triggered due to GitHub's security feature that prevents workflows triggered by GITHUB_TOKEN from triggering other workflows
   - Added comprehensive documentation about PAT requirements in WORKFLOWS.md
   - The workflow now falls back to GITHUB_TOKEN if RELEASE_TOKEN is not configured
 
-- [#46](https://github.com/sapientpants/agentic-node-ts-starter/pull/46) [`bf61f04`](https://github.com/sapientpants/agentic-node-ts-starter/commit/bf61f0443cc50089eba8356e2783c201144106ff) Thanks [@sapientpants](https://github.com/sapientpants)! - refactor: split CI/CD workflow into reusable workflows
+- [#46](https://github.com/sapientpants/agentic-node-ts-starter/pull/46) [`bf61f04`](https://github.com/sapientpants/agentic-node-ts-starter/commit/bf61f0443cc50089eba8356e2783c201144106ff) - refactor: split CI/CD workflow into reusable workflows
   - Created separate reusable workflows for CI validation and CD release/publishing
   - Simplified main workflow to orchestrate reusable components
   - Improved maintainability and modularity of GitHub Actions workflows
@@ -542,12 +542,12 @@
 
 ### Patch Changes
 
-- [#47](https://github.com/sapientpants/agentic-node-ts-starter/pull/47) [`6500da9`](https://github.com/sapientpants/agentic-node-ts-starter/commit/6500da976100317b037ddac39bba06cd81de9657) Thanks [@sapientpants](https://github.com/sapientpants)! - Fix GITHUB_TOKEN secret reference in release creation workflow
+- [#47](https://github.com/sapientpants/agentic-node-ts-starter/pull/47) [`6500da9`](https://github.com/sapientpants/agentic-node-ts-starter/commit/6500da976100317b037ddac39bba06cd81de9657) - Fix GITHUB_TOKEN secret reference in release creation workflow
   - Changed `secrets.github-token` to `secrets.GITHUB_TOKEN` in the Create GitHub Release step
   - This ensures the release is created with proper permissions to trigger subsequent workflows
   - Also reorganized YAML properties for better readability (moved release flags before files list)
 
-- [#46](https://github.com/sapientpants/agentic-node-ts-starter/pull/46) [`bf61f04`](https://github.com/sapientpants/agentic-node-ts-starter/commit/bf61f0443cc50089eba8356e2783c201144106ff) Thanks [@sapientpants](https://github.com/sapientpants)! - refactor: split CI/CD workflow into reusable workflows
+- [#46](https://github.com/sapientpants/agentic-node-ts-starter/pull/46) [`bf61f04`](https://github.com/sapientpants/agentic-node-ts-starter/commit/bf61f0443cc50089eba8356e2783c201144106ff) - refactor: split CI/CD workflow into reusable workflows
   - Created separate reusable workflows for CI validation and CD release/publishing
   - Simplified main workflow to orchestrate reusable components
   - Improved maintainability and modularity of GitHub Actions workflows
@@ -557,7 +557,7 @@
 
 ### Patch Changes
 
-- [#46](https://github.com/sapientpants/agentic-node-ts-starter/pull/46) [`bf61f04`](https://github.com/sapientpants/agentic-node-ts-starter/commit/bf61f0443cc50089eba8356e2783c201144106ff) Thanks [@sapientpants](https://github.com/sapientpants)! - refactor: split CI/CD workflow into reusable workflows
+- [#46](https://github.com/sapientpants/agentic-node-ts-starter/pull/46) [`bf61f04`](https://github.com/sapientpants/agentic-node-ts-starter/commit/bf61f0443cc50089eba8356e2783c201144106ff) - refactor: split CI/CD workflow into reusable workflows
   - Created separate reusable workflows for CI validation and CD release/publishing
   - Simplified main workflow to orchestrate reusable components
   - Improved maintainability and modularity of GitHub Actions workflows
@@ -567,7 +567,7 @@
 
 ### Minor Changes
 
-- [`fcba137`](https://github.com/sapientpants/agentic-node-ts-starter/commit/fcba137d80bb2feee5308f8f535b827298333dd1) Thanks [@sapientpants](https://github.com/sapientpants)! - ### ✨ Streamlined CI/CD Workflow
+- [`fcba137`](https://github.com/sapientpants/agentic-node-ts-starter/commit/fcba137d80bb2feee5308f8f535b827298333dd1) - ### ✨ Streamlined CI/CD Workflow
 
   Significantly simplified the CI/CD pipeline for single-user projects:
   - **Reduced complexity by 65%** - From 730 to 259 lines
@@ -593,7 +593,7 @@
 
 ### Patch Changes
 
-- [#43](https://github.com/sapientpants/agentic-node-ts-starter/pull/43) [`f6152a7`](https://github.com/sapientpants/agentic-node-ts-starter/commit/f6152a73d6bebbeda2df0f54517c3484f5e4278d) Thanks [@sapientpants](https://github.com/sapientpants)! - fix: handle missing labels gracefully in CD workflow
+- [#43](https://github.com/sapientpants/agentic-node-ts-starter/pull/43) [`f6152a7`](https://github.com/sapientpants/agentic-node-ts-starter/commit/f6152a73d6bebbeda2df0f54517c3484f5e4278d) - fix: handle missing labels gracefully in CD workflow
 
   The CD workflow now creates PRs without failing if labels don't exist.
   Labels are added after PR creation if they exist, but their absence
@@ -603,7 +603,7 @@
 
 ### Major Changes
 
-- [#37](https://github.com/sapientpants/agentic-node-ts-starter/pull/37) [`e6035ba`](https://github.com/sapientpants/agentic-node-ts-starter/commit/e6035ba3306d36ccd1481bfbdcb6261161c75127) Thanks [@sapientpants](https://github.com/sapientpants)! - feat: implement true continuous deployment with serialized release workflow
+- [#37](https://github.com/sapientpants/agentic-node-ts-starter/pull/37) [`e6035ba`](https://github.com/sapientpants/agentic-node-ts-starter/commit/e6035ba3306d36ccd1481bfbdcb6261161c75127) - feat: implement true continuous deployment with serialized release workflow
 
   **BREAKING CHANGE**: Complete redesign of CI/CD pipeline
 
@@ -634,7 +634,7 @@
 
 ### Patch Changes
 
-- [#40](https://github.com/sapientpants/agentic-node-ts-starter/pull/40) [`a3d7ea7`](https://github.com/sapientpants/agentic-node-ts-starter/commit/a3d7ea749b8db32a9ace7c25ffd87c424efbcb03) Thanks [@sapientpants](https://github.com/sapientpants)! - fix: add run-id and github-token to cross-workflow artifact downloads
+- [#40](https://github.com/sapientpants/agentic-node-ts-starter/pull/40) [`a3d7ea7`](https://github.com/sapientpants/agentic-node-ts-starter/commit/a3d7ea749b8db32a9ace7c25ffd87c424efbcb03) - fix: add run-id and github-token to cross-workflow artifact downloads
 
   The CD workflow needs to download artifacts from the CI workflow run.
   The `download-artifact@v4` action requires `run-id` and `github-token`
@@ -646,7 +646,7 @@
   This fix ensures the CD workflow can successfully retrieve build artifacts
   and SBOMs generated by the CI workflow.
 
-- [#41](https://github.com/sapientpants/agentic-node-ts-starter/pull/41) [`4ab2f6c`](https://github.com/sapientpants/agentic-node-ts-starter/commit/4ab2f6c48bc1447053f339e34d90da55e538cc5b) Thanks [@sapientpants](https://github.com/sapientpants)! - fix: adapt CD workflow to use PR approach for version updates
+- [#41](https://github.com/sapientpants/agentic-node-ts-starter/pull/41) [`4ab2f6c`](https://github.com/sapientpants/agentic-node-ts-starter/commit/4ab2f6c48bc1447053f339e34d90da55e538cc5b) - fix: adapt CD workflow to use PR approach for version updates
 
   Due to repository rules requiring all changes to main go through PRs,
   the CD workflow now:
@@ -656,7 +656,7 @@
 
   This maintains the automated release flow while respecting branch protection rules.
 
-- [#39](https://github.com/sapientpants/agentic-node-ts-starter/pull/39) [`1c05e7c`](https://github.com/sapientpants/agentic-node-ts-starter/commit/1c05e7cbad04096741f1fc2c098a19641077ded5) Thanks [@sapientpants](https://github.com/sapientpants)! - fix: improve CI/CD reliability and performance
+- [#39](https://github.com/sapientpants/agentic-node-ts-starter/pull/39) [`1c05e7c`](https://github.com/sapientpants/agentic-node-ts-starter/commit/1c05e7cbad04096741f1fc2c098a19641077ded5) - fix: improve CI/CD reliability and performance
 
   **Fixes:**
   - Use standalone pnpm installation to avoid npm registry rate limiting (429 errors)
@@ -678,7 +678,7 @@
 
 ### Patch Changes
 
-- [#35](https://github.com/sapientpants/agentic-node-ts-starter/pull/35) [`56e9241`](https://github.com/sapientpants/agentic-node-ts-starter/commit/56e9241a44c70d02b8fc99fa5f328d3ea9a80e13) Thanks [@sapientpants](https://github.com/sapientpants)! - Make auto-merge workflow fail explicitly when PAT is not configured
+- [#35](https://github.com/sapientpants/agentic-node-ts-starter/pull/35) [`56e9241`](https://github.com/sapientpants/agentic-node-ts-starter/commit/56e9241a44c70d02b8fc99fa5f328d3ea9a80e13) - Make auto-merge workflow fail explicitly when PAT is not configured
   - Add validation step to check for AUTO_MERGE_PAT secret
   - Fail the workflow with clear error messages when PAT is missing
   - Remove silent fallback to GITHUB_TOKEN which doesn't work
@@ -689,7 +689,7 @@
 
 ### Patch Changes
 
-- [#33](https://github.com/sapientpants/agentic-node-ts-starter/pull/33) [`b57458d`](https://github.com/sapientpants/agentic-node-ts-starter/commit/b57458d959d65cc3fdd787ef9a92f05fd7c25cf8) Thanks [@sapientpants](https://github.com/sapientpants)! - Fix auto-merge workflow to recognize app/github-actions author
+- [#33](https://github.com/sapientpants/agentic-node-ts-starter/pull/33) [`b57458d`](https://github.com/sapientpants/agentic-node-ts-starter/commit/b57458d959d65cc3fdd787ef9a92f05fd7c25cf8) - Fix auto-merge workflow to recognize app/github-actions author
   - GitHub Actions can appear as 'app/github-actions' when using the default token
   - Add this as valid author for version PRs created by changesets
   - This fixes auto-merge not triggering for version PRs
@@ -698,7 +698,7 @@
 
 ### Patch Changes
 
-- [#31](https://github.com/sapientpants/agentic-node-ts-starter/pull/31) [`46bfb2d`](https://github.com/sapientpants/agentic-node-ts-starter/commit/46bfb2ddf61e7e64680f1905198c490c01ba6cce) Thanks [@sapientpants](https://github.com/sapientpants)! - Simplify CI/CD pipeline for better maintainability
+- [#31](https://github.com/sapientpants/agentic-node-ts-starter/pull/31) [`46bfb2d`](https://github.com/sapientpants/agentic-node-ts-starter/commit/46bfb2ddf61e7e64680f1905198c490c01ba6cce) - Simplify CI/CD pipeline for better maintainability
   - Consolidated build logic directly into continuous-deployment.yml
   - Removed redundant workflows (reusable-build, release-distribution, setup-node-pnpm)
   - Simplified artifact naming by removing unique run IDs
@@ -716,7 +716,7 @@
 
 ### Minor Changes
 
-- [#29](https://github.com/sapientpants/agentic-node-ts-starter/pull/29) [`51c1bdc`](https://github.com/sapientpants/agentic-node-ts-starter/commit/51c1bdce74f295cf821da8c82cf0c8a8e3fd5cef) Thanks [@sapientpants](https://github.com/sapientpants)! - feat: implement build-once-deploy-many CD architecture for true continuous deployment
+- [#29](https://github.com/sapientpants/agentic-node-ts-starter/pull/29) [`51c1bdc`](https://github.com/sapientpants/agentic-node-ts-starter/commit/51c1bdce74f295cf821da8c82cf0c8a8e3fd5cef) - feat: implement build-once-deploy-many CD architecture for true continuous deployment
 
   **Major Architecture Changes:**
   - **Reusable Workflows**: Created modular, callable workflows for build and deploy operations
@@ -754,7 +754,7 @@
 
 ### Patch Changes
 
-- [#27](https://github.com/sapientpants/agentic-node-ts-starter/pull/27) [`4caf589`](https://github.com/sapientpants/agentic-node-ts-starter/commit/4caf589d965028af6ae650ef80dec30afeb7f407) Thanks [@sapientpants](https://github.com/sapientpants)! - feat: improve GitHub Actions workflows with security and reliability enhancements
+- [#27](https://github.com/sapientpants/agentic-node-ts-starter/pull/27) [`4caf589`](https://github.com/sapientpants/agentic-node-ts-starter/commit/4caf589d965028af6ae650ef80dec30afeb7f407) - feat: improve GitHub Actions workflows with security and reliability enhancements
 
   **Bug Fixes:**
   - Fixed critical bug in auto-merge workflow that was attempting to merge wrong PR number (#17 instead of dynamic PR number)
@@ -784,7 +784,7 @@
 
 ### Patch Changes
 
-- [#25](https://github.com/sapientpants/agentic-node-ts-starter/pull/25) [`7e80c53`](https://github.com/sapientpants/agentic-node-ts-starter/commit/7e80c538f093ecd2303151263ab26eb50eb908fb) Thanks [@sapientpants](https://github.com/sapientpants)! - fix: include actual CHANGELOG content in GitHub release body
+- [#25](https://github.com/sapientpants/agentic-node-ts-starter/pull/25) [`7e80c53`](https://github.com/sapientpants/agentic-node-ts-starter/commit/7e80c538f093ecd2303151263ab26eb50eb908fb) - fix: include actual CHANGELOG content in GitHub release body
   - Extract changelog content for the specific version being released
   - Include the actual changes in the GitHub release body instead of just linking to CHANGELOG.md
   - Users can now see what changed directly in the GitHub release without clicking through
@@ -796,7 +796,7 @@
 
 ### Minor Changes
 
-- [#15](https://github.com/sapientpants/agentic-node-ts-starter/pull/15) [`47ddf0c`](https://github.com/sapientpants/agentic-node-ts-starter/commit/47ddf0c59cb2b7b1521f89742c8ef6bcb9afd32a) Thanks [@sapientpants](https://github.com/sapientpants)! - feat: add automatic merging of version PRs for fully automated releases
+- [#15](https://github.com/sapientpants/agentic-node-ts-starter/pull/15) [`47ddf0c`](https://github.com/sapientpants/agentic-node-ts-starter/commit/47ddf0c59cb2b7b1521f89742c8ef6bcb9afd32a) - feat: add automatic merging of version PRs for fully automated releases
   - Add auto-merge workflow that enables auto-merge for changesets version PRs
   - Eliminate manual intervention in the release process
   - Document repository settings required for automation
@@ -804,7 +804,7 @@
 
   This completes the release automation by automatically merging version PRs when CI passes, making the entire release process hands-free. Once a PR with changesets is merged, the version PR is created, auto-merge is enabled, and when CI passes, it merges automatically, triggering the release with SBOM generation.
 
-- [#21](https://github.com/sapientpants/agentic-node-ts-starter/pull/21) [`4d4c657`](https://github.com/sapientpants/agentic-node-ts-starter/commit/4d4c6572dc8c2761e46fb14f16f7819398b731ea) Thanks [@sapientpants](https://github.com/sapientpants)! - feat: implement unified CI/CD workflow to eliminate duplication
+- [#21](https://github.com/sapientpants/agentic-node-ts-starter/pull/21) [`4d4c657`](https://github.com/sapientpants/agentic-node-ts-starter/commit/4d4c6572dc8c2761e46fb14f16f7819398b731ea) - feat: implement unified CI/CD workflow to eliminate duplication
 
   Major improvements to the CI/CD pipeline:
   - Combined CI and Release workflows into a single unified ci-cd.yml workflow
@@ -820,7 +820,7 @@
 
 ### Patch Changes
 
-- [#23](https://github.com/sapientpants/agentic-node-ts-starter/pull/23) [`78976c7`](https://github.com/sapientpants/agentic-node-ts-starter/commit/78976c705f5aea35c983e883d385a4dfd9d1e5ca) Thanks [@sapientpants](https://github.com/sapientpants)! - Add release distribution workflow for automated multi-platform deployment
+- [#23](https://github.com/sapientpants/agentic-node-ts-starter/pull/23) [`78976c7`](https://github.com/sapientpants/agentic-node-ts-starter/commit/78976c705f5aea35c983e883d385a4dfd9d1e5ca) - Add release distribution workflow for automated multi-platform deployment
   - Add `release.yml` workflow triggered on GitHub release publication
   - Create production-ready Dockerfile with multi-architecture support (amd64/arm64)
   - Add .dockerignore to optimize Docker build context
@@ -834,23 +834,23 @@
 
   This workflow efficiently reuses artifacts from the CI/CD pipeline and only builds what's necessary for each distribution channel, avoiding duplicate work. The separation of concerns ensures the CI/CD workflow focuses on version management while release.yml handles all distribution channels.
 
-- [#18](https://github.com/sapientpants/agentic-node-ts-starter/pull/18) [`f5b9a80`](https://github.com/sapientpants/agentic-node-ts-starter/commit/f5b9a804783157b7f12d1ca4e888dac3479eae59) Thanks [@sapientpants](https://github.com/sapientpants)! - fix: add attestations write permission to release workflow
+- [#18](https://github.com/sapientpants/agentic-node-ts-starter/pull/18) [`f5b9a80`](https://github.com/sapientpants/agentic-node-ts-starter/commit/f5b9a804783157b7f12d1ca4e888dac3479eae59) - fix: add attestations write permission to release workflow
 
   The release workflow was failing with "Resource not accessible by integration" when trying to create attestations. Added the missing `attestations: write` permission.
 
-- [#19](https://github.com/sapientpants/agentic-node-ts-starter/pull/19) [`75a5d58`](https://github.com/sapientpants/agentic-node-ts-starter/commit/75a5d5819960e6b6d12b9b1e9ebae3f0ab04d7aa) Thanks [@sapientpants](https://github.com/sapientpants)! - fix: update auto-merge workflow to recognize changesets PR author
+- [#19](https://github.com/sapientpants/agentic-node-ts-starter/pull/19) [`75a5d58`](https://github.com/sapientpants/agentic-node-ts-starter/commit/75a5d5819960e6b6d12b9b1e9ebae3f0ab04d7aa) - fix: update auto-merge workflow to recognize changesets PR author
 
   The auto-merge workflow was checking for `github-actions[bot]` but changesets creates PRs with `app/github-actions` as the author. Updated the condition to check for both formats.
 
-- [#20](https://github.com/sapientpants/agentic-node-ts-starter/pull/20) [`7446585`](https://github.com/sapientpants/agentic-node-ts-starter/commit/744658564b9447ed30a1eeae21e6bd696c30fc16) Thanks [@sapientpants](https://github.com/sapientpants)! - fix: check PR title instead of actor for auto-merge workflow
+- [#20](https://github.com/sapientpants/agentic-node-ts-starter/pull/20) [`7446585`](https://github.com/sapientpants/agentic-node-ts-starter/commit/744658564b9447ed30a1eeae21e6bd696c30fc16) - fix: check PR title instead of actor for auto-merge workflow
 
   The auto-merge workflow was checking `github.actor` which is the user who triggers the workflow (including when pushing updates to the PR), not the PR author. Changed to check the PR title directly in the job condition, which is more reliable and works regardless of who triggers the workflow.
 
-- [#16](https://github.com/sapientpants/agentic-node-ts-starter/pull/16) [`ce1cec5`](https://github.com/sapientpants/agentic-node-ts-starter/commit/ce1cec5894e1db968e478be7543bafcbdcef5b20) Thanks [@sapientpants](https://github.com/sapientpants)! - fix: correct ncipollo/release-action version from v2 to v1
+- [#16](https://github.com/sapientpants/agentic-node-ts-starter/pull/16) [`ce1cec5`](https://github.com/sapientpants/agentic-node-ts-starter/commit/ce1cec5894e1db968e478be7543bafcbdcef5b20) - fix: correct ncipollo/release-action version from v2 to v1
 
   The action version v2 doesn't exist. Use v1 which is the current major version tag that points to the latest stable release (v1.18.0).
 
-- [#15](https://github.com/sapientpants/agentic-node-ts-starter/pull/15) [`47ddf0c`](https://github.com/sapientpants/agentic-node-ts-starter/commit/47ddf0c59cb2b7b1521f89742c8ef6bcb9afd32a) Thanks [@sapientpants](https://github.com/sapientpants)! - fix: consolidate release workflow to support private packages with SBOM generation
+- [#15](https://github.com/sapientpants/agentic-node-ts-starter/pull/15) [`47ddf0c`](https://github.com/sapientpants/agentic-node-ts-starter/commit/47ddf0c59cb2b7b1521f89742c8ef6bcb9afd32a) - fix: consolidate release workflow to support private packages with SBOM generation
   - Configure changesets to support tagging private packages via privatePackages config
   - Consolidate all release logic into single workflow to avoid token triggering issues
   - Detect version changes after PR merge and generate release assets
@@ -864,7 +864,7 @@
 
 ### Minor Changes
 
-- [#13](https://github.com/sapientpants/agentic-node-ts-starter/pull/13) [`6236970`](https://github.com/sapientpants/agentic-node-ts-starter/commit/6236970654563189e340d22a3c34b7ca0da632d9) Thanks [@sapientpants](https://github.com/sapientpants)! - feat: enhance release workflow with SBOM attestations and conditional NPM publishing
+- [#13](https://github.com/sapientpants/agentic-node-ts-starter/pull/13) [`6236970`](https://github.com/sapientpants/agentic-node-ts-starter/commit/6236970654563189e340d22a3c34b7ca0da632d9) - feat: enhance release workflow with SBOM attestations and conditional NPM publishing
   - Enable native GitHub releases via changesets/action with `createGithubReleases: true`
   - Add SBOM generation and attachment to GitHub releases
   - Create build provenance and SBOM attestations for release artifacts
@@ -879,7 +879,7 @@
 
 ### Patch Changes
 
-- [#10](https://github.com/sapientpants/agentic-node-ts-starter/pull/10) [`4ad85dd`](https://github.com/sapientpants/agentic-node-ts-starter/commit/4ad85dd59ccaa72152dfb770510ad8bfdb51830e) Thanks [@sapientpants](https://github.com/sapientpants)! - fix: document GitHub Actions permissions requirement for release workflow
+- [#10](https://github.com/sapientpants/agentic-node-ts-starter/pull/10) [`4ad85dd`](https://github.com/sapientpants/agentic-node-ts-starter/commit/4ad85dd59ccaa72152dfb770510ad8bfdb51830e) - fix: document GitHub Actions permissions requirement for release workflow
   - Add clear documentation about required repository settings
   - Add comments in release workflow about permissions requirement
   - Add issues write permission for better GitHub integration
@@ -889,7 +889,7 @@
   administrators must enable "Allow GitHub Actions to create and approve
   pull requests" in Settings → Actions → General.
 
-- [#9](https://github.com/sapientpants/agentic-node-ts-starter/pull/9) [`62dbf2c`](https://github.com/sapientpants/agentic-node-ts-starter/commit/62dbf2cdf7e3ea4c6cea45f909840f976f3aed8b) Thanks [@sapientpants](https://github.com/sapientpants)! - feat: separate test and test:coverage scripts for better performance
+- [#9](https://github.com/sapientpants/agentic-node-ts-starter/pull/9) [`62dbf2c`](https://github.com/sapientpants/agentic-node-ts-starter/commit/62dbf2cdf7e3ea4c6cea45f909840f976f3aed8b) - feat: separate test and test:coverage scripts for better performance
   - Add dedicated `test:coverage` script for running tests with coverage
   - Update `test` script to run without coverage for faster local development
   - Update CI workflow to use `test:coverage` to maintain coverage reporting
