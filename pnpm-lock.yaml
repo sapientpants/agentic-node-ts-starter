@@ -56,6 +56,9 @@ importers:
       '@vitest/coverage-v8':
         specifier: ^3.2.4
         version: 3.2.4(vitest@3.2.4(@types/debug@4.1.12)(@types/node@24.3.1)(jiti@2.5.1)(yaml@2.8.1))
+      changelog-github-custom:
+        specifier: 1.2.0
+        version: 1.2.0
       eslint:
         specifier: ^9.35.0
         version: 9.35.0(jiti@2.5.1)
@@ -1978,6 +1981,13 @@ packages:
         integrity: sha512-7NzBL0rN6fMUW+f7A6Io4h40qQlG+xGmtMxfbnH/K7TAtt8JQWVQK+6g0UXKMeVJoyV5EkkNsErQ8pVD3bLHbA==,
       }
     engines: { node: ^12.17.0 || ^14.13 || >=16.0.0 }
+
+  changelog-github-custom@1.2.0:
+    resolution:
+      {
+        integrity: sha512-fpSdn2YY+72WYWj5SBVu9g+ivdaC/D82sn82SLi0HVjdSGMNuFi8NZ+f6BdwLPSy6UZAqdrPCyYeHxUGU4Lmow==,
+      }
+    engines: { node: '>=22.0.0' }
 
   character-entities-legacy@3.0.0:
     resolution:
@@ -7530,6 +7540,10 @@ snapshots:
       supports-color: 7.2.0
 
   chalk@5.6.2: {}
+
+  changelog-github-custom@1.2.0:
+    dependencies:
+      '@changesets/types': 6.1.0
 
   character-entities-legacy@3.0.0: {}
 
