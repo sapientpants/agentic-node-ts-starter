@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+coverage/
+*.tsbuildinfo
+
+# Lock files (managed by pnpm)
+pnpm-lock.yaml
+
+# Logs
+logs/
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# Generated files
+sbom.cdx.json
