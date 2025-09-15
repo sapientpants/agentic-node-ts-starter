@@ -83,7 +83,7 @@
     "@typescript-eslint/eslint-plugin": "^8.43.0",
     "@typescript-eslint/parser": "^8.43.0",
     "@vitest/coverage-v8": "^3.2.4",
-    "changelog-github-custom": "1.2.2",
+    "changelog-github-custom": "1.2.3",
     "eslint": "^9.35.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-jsonc": "2.20.1",
