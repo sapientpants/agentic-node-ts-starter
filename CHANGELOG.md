@@ -1,5 +1,13 @@
 # agentic-node-ts-starter
 
+## 0.22.2
+
+### Patch Changes
+
+- [#122](https://github.com/sapientpants/agentic-node-ts-starter/pull/122) [`e101263`](https://github.com/sapientpants/agentic-node-ts-starter/commit/e101263aed3e2747ea8f83fa600e57d0b96ea210) - chore: switch to changelog-github-custom formatter
+
+  Replace custom changelog formatter with the published changelog-github-custom package for better maintainability and standardization.
+
 ## 0.22.1
 
 ### Patch Changes
