@@ -1,5 +1,16 @@
 # agentic-node-ts-starter
 
+## 0.22.3
+
+### Patch Changes
+
+- [#126](https://github.com/sapientpants/agentic-node-ts-starter/pull/126) [`c05dad9`](https://github.com/sapientpants/agentic-node-ts-starter/commit/c05dad9bf425104898d56b8da81108b600ae7882) - chore: update dependencies
+  - Updated pino from 9.9.5 to 9.10.0
+  - Updated zod from 4.1.8 to 4.1.9
+  - Updated @types/node from 24.4.0 to 24.5.1 (dev)
+  - Updated changelog-github-custom from 1.2.4 to 1.2.5 (dev)
+  - All tests passing, no breaking changes
+
 ## 0.22.2
 
 ### Patch Changes
