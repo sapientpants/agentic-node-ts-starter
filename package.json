@@ -68,7 +68,7 @@
     "pino": "9.10.0",
     "pino-roll": "3.1.0",
     "pino-syslog": "3.2.0",
-    "zod": "^4.1.9"
+    "zod": "^4.1.11"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.7",
