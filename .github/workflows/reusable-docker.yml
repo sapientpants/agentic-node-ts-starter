@@ -246,7 +246,8 @@ jobs:
         run: |
           if [ -f trivy-results.sarif ]; then
             # Check for vulnerabilities, secrets, or misconfigurations (not licenses)
-            SECURITY_ISSUES=$(jq -r '.runs[0].results[] | select(.ruleId | startswith("CVE-") or startswith("SECRET-") or startswith("CONFIG-")) | .level' trivy-results.sarif 2>/dev/null | wc -l || echo "0")
+            # Using jq length function instead of wc -l for shellcheck compliance
+            SECURITY_ISSUES=$(jq -r '[.runs[0].results[] | select(.ruleId | startswith("CVE-") or startswith("SECRET-") or startswith("CONFIG-"))] | length' trivy-results.sarif 2>/dev/null || echo "0")
             if [ "$SECURITY_ISSUES" -gt 0 ]; then
               echo "::error::Found $SECURITY_ISSUES security issue(s) in container image"
               echo "Review the scan results in the Security tab after SARIF upload"
