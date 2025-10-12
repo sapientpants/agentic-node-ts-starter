@@ -93,7 +93,8 @@ jobs:
         id: multiplatform
         run: |
           # Split platforms on comma, trim whitespace, filter out empty entries
-          count=$(echo "${{ inputs.platforms }}" | tr ',' '\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | grep -v '^$' | wc -l)
+          # Using grep -c instead of wc -l for shellcheck compliance
+          count=$(echo "${{ inputs.platforms }}" | tr ',' '\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | grep -cv '^$')
           if [ "$count" -gt 1 ]; then
             echo "is-multiplatform=true" >> $GITHUB_OUTPUT
           else
