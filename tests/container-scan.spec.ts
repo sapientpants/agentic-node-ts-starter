@@ -107,40 +107,39 @@ describe('Container Security Scanning', () => {
       expect(content).not.toContain('trivy');
     });
 
-    it('should integrate container scan directly in publish workflow', () => {
-      const publishWorkflowPath = join(process.cwd(), '.github', 'workflows', 'publish.yml');
-      const content = readFileSync(publishWorkflowPath, 'utf-8');
-      expect(content).toContain('Scan Docker image for vulnerabilities');
+    it('should integrate container scan in reusable Docker workflow', () => {
+      const dockerWorkflowPath = join(process.cwd(), '.github', 'workflows', 'reusable-docker.yml');
+      const content = readFileSync(dockerWorkflowPath, 'utf-8');
+      expect(content).toContain('Run Trivy vulnerability scanner');
       expect(content).toContain('aquasecurity/trivy-action');
       expect(content).toContain('Upload Trivy results to GitHub Security');
       expect(content).toContain('Build Docker image');
-      expect(content).toContain('Push Docker image to Docker Hub');
     });
   });
 
   describe('Scan Configuration', () => {
     it('should support configurable severity thresholds', () => {
-      const workflowPath = join(process.cwd(), '.github', 'workflows', 'publish.yml');
+      const workflowPath = join(process.cwd(), '.github', 'workflows', 'reusable-docker.yml');
       const content = readFileSync(workflowPath, 'utf-8');
-      expect(content).toContain("severity: 'CRITICAL,HIGH'");
+      expect(content).toContain("severity: 'HIGH,CRITICAL'");
     });
 
     it('should support SARIF output format', () => {
-      const workflowPath = join(process.cwd(), '.github', 'workflows', 'publish.yml');
+      const workflowPath = join(process.cwd(), '.github', 'workflows', 'reusable-docker.yml');
       const content = readFileSync(workflowPath, 'utf-8');
       expect(content).toContain("format: 'sarif'");
       expect(content).toContain('github/codeql-action/upload-sarif');
     });
 
     it('should support Docker build caching', () => {
-      const workflowPath = join(process.cwd(), '.github', 'workflows', 'publish.yml');
+      const workflowPath = join(process.cwd(), '.github', 'workflows', 'reusable-docker.yml');
       const content = readFileSync(workflowPath, 'utf-8');
       expect(content).toContain('cache-from: type=gha');
       expect(content).toContain('cache-to: type=gha,mode=max');
     });
 
     it('should fail on vulnerabilities by default', () => {
-      const workflowPath = join(process.cwd(), '.github', 'workflows', 'publish.yml');
+      const workflowPath = join(process.cwd(), '.github', 'workflows', 'reusable-docker.yml');
       const content = readFileSync(workflowPath, 'utf-8');
       expect(content).toContain("exit-code: '1'");
     });
