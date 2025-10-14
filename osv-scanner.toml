@@ -14,3 +14,13 @@ id = "GHSA-ffrw-9mx8-89p8"
 # - Mitigation: Not exploitable in our usage patterns (structured logging only)
 # - Will re-evaluate when upstream releases a fix
 # Issue: https://github.com/davidmarkclements/fast-redact/security/advisories
+
+[[IgnoredVulns]]
+id = "GHSA-9965-vmph-33xx"
+# Reason: Medium severity (CVSS 6.1) vulnerability in validator.js
+# - validator is a transitive dependency (exact usage path to be investigated)
+# - No fixed version available as of 2025-10-14
+# - Risk: URL parsing difference could lead to XSS/open redirect bypass
+# - Mitigation: Project does not use validator's isURL() function for security-critical validation
+# - Will re-evaluate when upstream releases a fix
+# Issue: https://osv.dev/GHSA-9965-vmph-33xx
