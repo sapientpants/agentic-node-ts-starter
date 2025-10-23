@@ -1,5 +1,63 @@
 # agentic-node-ts-starter
 
+## 0.22.4
+
+### Patch Changes
+
+- [#144](https://github.com/sapientpants/agentic-node-ts-starter/pull/144) [`3ba6bfe`](https://github.com/sapientpants/agentic-node-ts-starter/commit/3ba6bfe149c9c1c81f5875c7e68c0360c82ce4cc) - chore: update dependencies to latest versions
+  - Updated pino from 10.0.0 to 10.1.0 (production dependency)
+  - Updated @typescript-eslint/eslint-plugin from 8.46.0 to 8.46.2 (dev)
+  - Updated @typescript-eslint/parser from 8.46.0 to 8.46.2 (dev)
+  - Updated @cyclonedx/cdxgen from 11.9.0 to 11.10.0 (dev)
+  - Updated @types/node from 24.7.2 to 24.9.1 (dev)
+  - Updated changelog-github-custom from 1.2.5 to 1.2.7 (dev)
+  - Updated eslint from 9.37.0 to 9.38.0 (dev)
+  - Updated lint-staged from 16.2.4 to 16.2.5 (dev)
+  - Updated vite from 7.1.9 to 7.1.11 (dev)
+
+  All tests passing with 80%+ coverage maintained.
+
+- [#138](https://github.com/sapientpants/agentic-node-ts-starter/pull/138) [`9b4a94c`](https://github.com/sapientpants/agentic-node-ts-starter/commit/9b4a94c02750da32e9a9bd65a3eea25f462d232d) - feat(ci): support conditional publishing with skipped distribution jobs
+
+  Enhanced the release workflow to allow GitHub releases to proceed successfully
+  when Docker or npm publishing jobs are conditionally skipped, rather than
+  blocking the entire release pipeline.
+
+  Changes:
+  - Updated create-release job condition to check if Docker/npm jobs succeeded OR were skipped
+  - Added workflow cancellation check for improved reliability
+  - Enables flexible release configurations where not all distribution channels need to be active
+
+  This allows releases to complete successfully even when optional publishing
+  steps (Docker to Docker Hub, npm to registry) are disabled via configuration
+  or missing credentials, while still creating the GitHub release with artifacts.
+
+- [#137](https://github.com/sapientpants/agentic-node-ts-starter/pull/137) [`3b282dc`](https://github.com/sapientpants/agentic-node-ts-starter/commit/3b282dc32d3af2f82fd39bd3cbfea3d107ea5563) - chore: update dependencies to latest versions
+
+  Updated production and dev dependencies to their latest versions:
+
+  Production dependencies:
+  - pino: 9.10.0 → 10.0.0 (major update with improved performance)
+  - pino-roll: 3.1.0 → 4.0.0 (major update for compatibility with pino 10)
+  - zod: 4.1.9 → 4.1.12 (patch updates)
+
+  Dev dependencies:
+  - @commitlint/cli: 19.8.1 → 20.1.0
+  - @commitlint/config-conventional: 19.8.1 → 20.0.0
+  - @cyclonedx/cdxgen: 11.7.0 → 11.9.0
+  - @types/node: 24.5.1 → 24.7.2
+  - @typescript-eslint/eslint-plugin: 8.44.0 → 8.46.0
+  - @typescript-eslint/parser: 8.44.0 → 8.46.0
+  - eslint: 9.35.0 → 9.37.0
+  - eslint-plugin-jsonc: 2.20.1 → 2.21.0
+  - jsonc-eslint-parser: 2.4.0 → 2.4.1
+  - lint-staged: 16.1.6 → 16.2.4
+  - pino-pretty: 13.1.1 → 13.1.2
+  - typescript: 5.9.2 → 5.9.3
+  - vite: 7.1.5 → 7.1.9
+
+  All tests passing with 80%+ coverage maintained. No breaking changes to public API.
+
 ## 0.22.3
 
 ### Patch Changes
