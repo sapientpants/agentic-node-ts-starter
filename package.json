@@ -76,10 +76,10 @@
     "@commitlint/config-conventional": "20.0.0",
     "@cyclonedx/cdxgen": "11.10.0",
     "@fast-check/vitest": "^0.2.2",
-    "@types/node": "^24.9.1",
+    "@types/node": "^24.9.2",
     "@typescript-eslint/eslint-plugin": "^8.46.2",
     "@typescript-eslint/parser": "^8.46.2",
-    "@vitest/coverage-v8": "^4.0.1",
+    "@vitest/coverage-v8": "^4.0.5",
     "changelog-github-custom": "1.2.7",
     "eslint": "^9.38.0",
     "eslint-config-prettier": "^10.1.8",
@@ -91,10 +91,10 @@
     "markdownlint-cli2": "0.18.1",
     "pino-pretty": "13.1.2",
     "prettier": "^3.6.2",
-    "rimraf": "^6.0.1",
+    "rimraf": "^6.1.0",
     "typescript": "^5.9.3",
     "vite": "7.1.12",
-    "vitest": "^4.0.1",
+    "vitest": "^4.0.5",
     "yaml-lint": "1.7.0"
   }
 }
