@@ -71,7 +71,7 @@ export default [
       'sonarjs/cognitive-complexity': ['error', 15],
 
       // Additional code quality rules from SonarJS
-      'sonarjs/no-duplicate-string': ['error', { threshold: 3 }],
+      'sonarjs/no-duplicate-string': ['error', { threshold: 2 }],
       'sonarjs/no-identical-functions': 'error',
       'sonarjs/prefer-immediate-return': 'error',
     },

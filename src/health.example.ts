@@ -14,6 +14,10 @@ import { createChildLogger } from './logger.js';
 
 const logger = createChildLogger('server');
 
+// Content type constants
+const CONTENT_TYPE_JSON = 'application/json';
+const CONTENT_TYPE_TEXT = 'text/plain';
+
 /**
  * Example health check implementation for a basic HTTP server
  * Modify this to fit your application's needs
@@ -27,7 +31,7 @@ const server = http.createServer((req, res) => {
     // - Resource usage thresholds
     // - Queue backlogs
 
-    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.writeHead(200, { 'Content-Type': CONTENT_TYPE_JSON });
     res.end(
       JSON.stringify({
         status: 'healthy',
@@ -43,14 +47,14 @@ const server = http.createServer((req, res) => {
   if (req.url === '/ready') {
     // Check if the application is ready to serve traffic
     // This might be different from health during startup
-    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.writeHead(200, { 'Content-Type': CONTENT_TYPE_TEXT });
     res.end('OK');
     return;
   }
 
   // Your application routes would go here
   // This is just an example response
-  res.writeHead(404, { 'Content-Type': 'text/plain' });
+  res.writeHead(404, { 'Content-Type': CONTENT_TYPE_TEXT });
   res.end('Not Found');
 });
 

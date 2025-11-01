@@ -20,8 +20,6 @@
     "lint:markdown": "markdownlint-cli2 \"**/*.md\" \"#node_modules\"",
     "lint:markdown:fix": "markdownlint-cli2 --fix \"**/*.md\" \"#node_modules\"",
     "lint:yaml": "yamllint '**/*.{yml,yaml}' --ignore='node_modules/**' --ignore='.github/workflows/**' --ignore='pnpm-lock.yaml'",
-    "complexity": "pnpm lint",
-    "complexity:strict": "pnpm lint",
     "deps:circular": "madge --circular --extensions ts --ts-config tsconfig.json src/",
     "deps:graph": "madge src/ --ts-config tsconfig.json --image reports/deps-graph.png",
     "deps:summary": "madge --summary src/ --ts-config tsconfig.json",
