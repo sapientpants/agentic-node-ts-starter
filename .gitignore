@@ -7,6 +7,9 @@ sbom.cdx.json
 .claude/settings.local.json
 tmp/
 
+# Code quality reports
+reports/
+
 # Log files
 logs/
 test-logs/

@@ -28,6 +28,38 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Coverage Requirements**: This project enforces 80% minimum coverage for lines, branches, functions, and statements. Coverage checks will fail in CI if thresholds are not met.
 
+### Code Quality & Complexity
+
+- `pnpm complexity` - Check code complexity (via ESLint)
+- `pnpm complexity:strict` - Check complexity with zero warnings allowed
+- `pnpm deps:circular` - Find circular dependencies
+- `pnpm deps:graph` - Generate dependency graph
+- `pnpm deps:summary` - Show dependency summary
+- `pnpm duplication` - Check code duplication
+- `pnpm duplication:ci` - Enforce duplication threshold (CI)
+- `pnpm metrics` - Run all quality metrics
+- `pnpm metrics:ci` - Run all metrics with CI enforcement
+
+**Complexity Thresholds**: This project enforces code quality limits via ESLint and dedicated analyzers:
+
+| Metric                    | Warn | Error | Scope        |
+| ------------------------- | ---- | ----- | ------------ |
+| **Cyclomatic Complexity** | 10   | 15    | Per function |
+| **Cognitive Complexity**  | 15   | 20    | Per function |
+| **Max Function Lines**    | 50   | 100   | Per function |
+| **Max Parameters**        | -    | 4     | Per function |
+| **Max Nesting Depth**     | 3    | 4     | Per function |
+| **Code Duplication**      | 2%   | 3%    | Project-wide |
+
+These rules apply to `src/**/*.ts`. Test files have relaxed thresholds (complexity: 15/20, lines: 100, duplication: off).
+
+**Tools Used**:
+
+- **eslint-plugin-sonarjs** - Cognitive complexity (ESLint rule)
+- **ESLint core rules** - Cyclomatic complexity, max lines, max params, max nesting
+- **madge** - Circular dependency detection
+- **jscpd** - Code duplication analysis
+
 ### Container Security
 
 **Prerequisites**: Docker and Trivy must be installed locally (`brew install aquasecurity/trivy/trivy` on macOS).

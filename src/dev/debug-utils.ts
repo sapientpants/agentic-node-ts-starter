@@ -123,6 +123,77 @@ export function inspect(obj: unknown, label: string = 'inspect', maxDepth: numbe
 }
 
 /**
+ * Log function entry
+ */
+const logFunctionEntry = (functionName: string, args: any[]): void => {
+  logger.debug(
+    {
+      function: functionName,
+      arguments: args,
+      timestamp: new Date().toISOString(),
+    },
+    'Function called',
+  );
+};
+
+/**
+ * Log successful function completion
+ */
+const logFunctionSuccess = (functionName: string, result: any): void => {
+  logger.debug(
+    {
+      function: functionName,
+      result,
+      status: 'completed',
+    },
+    'Function completed',
+  );
+};
+
+/**
+ * Log function error
+ */
+const logFunctionError = (functionName: string, error: unknown): void => {
+  logger.error(
+    {
+      function: functionName,
+      error: error instanceof Error ? error.message : error,
+      status: 'error',
+    },
+    'Function failed',
+  );
+};
+
+/**
+ * Handle async function result
+ */
+const handleAsyncResult = (functionName: string, promise: Promise<any>): Promise<any> => {
+  return promise
+    .then((res) => {
+      logger.debug(
+        {
+          function: functionName,
+          result: res,
+          status: 'resolved',
+        },
+        'Async function completed',
+      );
+      return res;
+    })
+    .catch((error) => {
+      logger.error(
+        {
+          function: functionName,
+          error: error.message,
+          status: 'rejected',
+        },
+        'Async function failed',
+      );
+      throw error;
+    });
+};
+
+/**
  * Function call tracer for debugging
  */
 export function trace(target: any, propertyName: string, descriptor: PropertyDescriptor) {
@@ -132,7 +203,6 @@ export function trace(target: any, propertyName: string, descriptor: PropertyDes
 
   const method = descriptor.value;
 
-  // Validate that we're decorating a method
   if (typeof method !== 'function') {
     throw new Error(
       `@trace decorator can only be applied to methods, but ${propertyName} is not a function`,
@@ -142,64 +212,19 @@ export function trace(target: any, propertyName: string, descriptor: PropertyDes
   descriptor.value = function (...args: any[]) {
     const functionName = `${target.constructor.name}.${propertyName}`;
 
-    logger.debug(
-      {
-        function: functionName,
-        arguments: args,
-        timestamp: new Date().toISOString(),
-      },
-      'Function called',
-    );
+    logFunctionEntry(functionName, args);
 
     try {
       const result = method.apply(this, args);
 
-      // Handle async functions
       if (result instanceof Promise) {
-        return result
-          .then((res) => {
-            logger.debug(
-              {
-                function: functionName,
-                result: res,
-                status: 'resolved',
-              },
-              'Async function completed',
-            );
-            return res;
-          })
-          .catch((error) => {
-            logger.error(
-              {
-                function: functionName,
-                error: error.message,
-                status: 'rejected',
-              },
-              'Async function failed',
-            );
-            throw error;
-          });
+        return handleAsyncResult(functionName, result);
       }
 
-      logger.debug(
-        {
-          function: functionName,
-          result,
-          status: 'completed',
-        },
-        'Function completed',
-      );
-
+      logFunctionSuccess(functionName, result);
       return result;
     } catch (error) {
-      logger.error(
-        {
-          function: functionName,
-          error: error instanceof Error ? error.message : error,
-          status: 'error',
-        },
-        'Function failed',
-      );
+      logFunctionError(functionName, error);
       throw error;
     }
   };

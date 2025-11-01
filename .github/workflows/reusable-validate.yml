@@ -157,3 +157,49 @@ jobs:
         # To fix: Run 'pnpm changeset' and commit the generated file
         # For non-code changes: Run 'pnpm changeset --empty'
         run: pnpm changeset:status
+
+  code-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ inputs.pnpm-version }}
+          run_install: false
+          standalone: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check circular dependencies
+        run: pnpm deps:circular
+        continue-on-error: false
+
+      - name: Check code duplication
+        run: pnpm duplication:ci
+        continue-on-error: true
+
+      - name: Generate full metrics report
+        if: always()
+        run: |
+          mkdir -p reports
+          pnpm deps:summary > reports/deps-summary.txt || true
+
+      - name: Upload metrics reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-quality-reports-${{ github.sha }}
+          path: reports/
+          retention-days: 7
