@@ -42,23 +42,34 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Complexity Thresholds**: This project enforces code quality limits via ESLint and dedicated analyzers:
 
-| Metric                    | Warn | Error | Scope        |
-| ------------------------- | ---- | ----- | ------------ |
-| **Cyclomatic Complexity** | 10   | 15    | Per function |
-| **Cognitive Complexity**  | 15   | 20    | Per function |
-| **Max Function Lines**    | 50   | 100   | Per function |
-| **Max Parameters**        | -    | 4     | Per function |
-| **Max Nesting Depth**     | 3    | 4     | Per function |
-| **Code Duplication**      | 2%   | 3%    | Project-wide |
+| Metric                       | Warn | Error | Scope        |
+| ---------------------------- | ---- | ----- | ------------ |
+| **Cyclomatic Complexity**    | 10   | -     | Per function |
+| **Cognitive Complexity**     | 15   | -     | Per function |
+| **Max Function Lines**       | 50   | -     | Per function |
+| **Max Parameters**           | -    | 4     | Per function |
+| **Max Nesting Depth**        | 3    | -     | Per function |
+| **Max Statements**           | 15   | -     | Per function |
+| **Max Nested Callbacks**     | 3    | -     | Per function |
+| **Duplicate String Literal** | 3    | -     | Per file     |
+| **Code Duplication**         | 2%   | -     | Project-wide |
 
-These rules apply to `src/**/*.ts`. Test files have relaxed thresholds (complexity: 15/20, lines: 100, duplication: off).
+Most rules trigger **warnings** in development for flexibility. In CI/strict mode (`pnpm lint:strict`), warnings are treated as failures via `--max-warnings 0`. These rules apply to `src/**/*.ts`.
 
 **Tools Used**:
 
-- **eslint-plugin-sonarjs** - Cognitive complexity (ESLint rule)
-- **ESLint core rules** - Cyclomatic complexity, max lines, max params, max nesting
+- **eslint-plugin-sonarjs** - Cognitive complexity, duplicate strings, identical functions detection
+- **ESLint core rules** - Cyclomatic complexity, max lines, max params, max nesting, max statements, max callbacks
 - **madge** - Circular dependency detection
-- **jscpd** - Code duplication analysis
+- **jscpd** - Code duplication analysis (2% threshold triggers failure)
+
+**Test File Relaxed Thresholds** (`tests/**/*.ts`):
+
+- Cyclomatic complexity: 15 (vs 10 for src)
+- Cognitive complexity: 20 (vs 15 for src)
+- Max function lines: 600 (vs 50 for src) - allows large describe blocks with many test cases
+- Duplicate string checks: disabled
+- All other rules: same as src files
 
 ### Container Security
 
