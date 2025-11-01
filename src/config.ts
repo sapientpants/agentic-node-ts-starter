@@ -177,7 +177,7 @@ function maskSensitiveValue(key: string, value: unknown): string {
  * Format received value for error messages
  */
 function formatReceivedValue(value: string): string {
-  return value === 'undefined' ? '' : ' (received: "' + value + '")';
+  return value === 'undefined' ? '' : ` (received: "${value}")`;
 }
 
 /**
