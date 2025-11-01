@@ -50,11 +50,8 @@ function main(): void {
 
     if (noVerifyPattern.test(cleanedCmd) || shortNPattern.test(cleanedCmd)) {
       // Block with error message (exit code 2)
-      // eslint-disable-next-line no-console
       console.error('Error: Git commands with --no-verify flag are not allowed.');
-      // eslint-disable-next-line no-console
       console.error('This ensures all git hooks and verification steps are properly executed.');
-      // eslint-disable-next-line no-console
       console.error('Please run the git command without the --no-verify flag.');
       process.exit(2);
     }

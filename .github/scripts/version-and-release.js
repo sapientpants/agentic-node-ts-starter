@@ -14,7 +14,6 @@ import fs from 'fs';
 
 // Execute shell command and return trimmed output
 const exec = (cmd) => execSync(cmd, { encoding: 'utf-8', stdio: 'pipe' }).trim();
-// eslint-disable-next-line no-console
 const log = (msg) => console.log(msg);
 
 async function main() {
@@ -110,7 +109,6 @@ async function main() {
   } catch (error) {
     // Error handling with clear message
     // Common errors: permission issues, git conflicts, invalid changesets
-    // eslint-disable-next-line no-console
     console.error('Error:', error.message);
     process.exit(1);
   }

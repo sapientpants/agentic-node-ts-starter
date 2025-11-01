@@ -102,15 +102,16 @@ describe('Logger Validation', () => {
 
     it('should warn about localhost in production', () => {
       const originalEnv = process.env.NODE_ENV;
+      const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
       process.env.NODE_ENV = 'production';
 
       validateSyslogHost('localhost');
-      // eslint-disable-next-line no-console
-      expect(console.warn).toHaveBeenCalledWith(
+      expect(stderrSpy).toHaveBeenCalledWith(
         expect.stringContaining('localhost for syslog in production'),
       );
 
       process.env.NODE_ENV = originalEnv;
+      stderrSpy.mockRestore();
     });
 
     it('should reject extremely long hostnames', () => {
@@ -149,13 +150,14 @@ describe('Logger Validation', () => {
 
     it('should warn about privileged ports in production', () => {
       const originalEnv = process.env.NODE_ENV;
+      const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
       process.env.NODE_ENV = 'production';
 
       validateSyslogPort(80);
-      // eslint-disable-next-line no-console
-      expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('privileged port'));
+      expect(stderrSpy).toHaveBeenCalledWith(expect.stringContaining('privileged port'));
 
       process.env.NODE_ENV = originalEnv;
+      stderrSpy.mockRestore();
     });
   });
 
@@ -173,17 +175,20 @@ describe('Logger Validation', () => {
     });
 
     it('should warn about overly permissive modes', () => {
+      const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+
       validateFileMode(0o666);
-      // eslint-disable-next-line no-console
-      expect(console.warn).toHaveBeenCalledWith(
+      expect(stderrSpy).toHaveBeenCalledWith(
         expect.stringContaining('allow access to other users'),
       );
 
+      stderrSpy.mockClear();
       validateFileMode(0o777);
-      // eslint-disable-next-line no-console
-      expect(console.warn).toHaveBeenCalledWith(
+      expect(stderrSpy).toHaveBeenCalledWith(
         expect.stringContaining('allow access to other users'),
       );
+
+      stderrSpy.mockRestore();
     });
 
     it('should return default for invalid modes', () => {

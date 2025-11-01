@@ -94,8 +94,7 @@ export function validateSyslogHost(host: string): void {
   const localhostVariants = ['localhost', '127.0.0.1', '::1', '0.0.0.0'];
   if (process.env.NODE_ENV === 'production' && localhostVariants.includes(host.toLowerCase())) {
     // Log warning but don't throw - this is a soft restriction
-    // eslint-disable-next-line no-console
-    console.warn('Warning: Using localhost for syslog in production is not recommended');
+    process.stderr.write('Warning: Using localhost for syslog in production is not recommended\n');
   }
 }
 
@@ -119,9 +118,8 @@ export function validateSyslogPort(port: number | undefined): void {
 
   // Warn about privileged ports
   if (port < 1024 && process.env.NODE_ENV === 'production') {
-    // eslint-disable-next-line no-console
-    console.warn(
-      `Warning: Using privileged port ${port} for syslog may require elevated permissions`,
+    process.stderr.write(
+      `Warning: Using privileged port ${port} for syslog may require elevated permissions\n`,
     );
   }
 }
@@ -148,15 +146,13 @@ export function validateFileMode(mode: number | string | undefined): number {
   }
 
   if (isNaN(numericMode) || numericMode < 0 || numericMode > 0o777) {
-    // eslint-disable-next-line no-console
-    console.warn(`Invalid file mode ${mode}, using default ${defaultMode.toString(8)}`);
+    process.stderr.write(`Invalid file mode ${mode}, using default ${defaultMode.toString(8)}\n`);
     return defaultMode;
   }
 
   // Warn if permissions are too open
   if ((numericMode & 0o077) !== 0) {
-    // eslint-disable-next-line no-console
-    console.warn('Warning: Log file permissions allow access to other users/groups');
+    process.stderr.write('Warning: Log file permissions allow access to other users/groups\n');
   }
 
   return numericMode;

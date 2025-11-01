@@ -122,25 +122,49 @@ export type Config = z.infer<typeof ConfigSchema>;
 const SENSITIVE_KEYS = ['PASSWORD', 'TOKEN', 'SECRET', 'KEY'];
 
 /**
- * Mask sensitive values in error messages
+ * Convert value to string safely
  */
+function valueToString(value: unknown): string {
+  // Handle null/undefined
+  if (value == null) {
+    return String(value);
+  }
+
+  // Handle string early
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  const valueType = typeof value;
+
+  // Use switch to handle remaining types
+  switch (valueType) {
+    case 'number':
+      return String(value as number);
+    case 'boolean':
+      return String(value as boolean);
+    case 'bigint':
+      return (value as bigint).toString();
+    case 'symbol':
+      return (value as symbol).toString();
+    case 'object':
+      return JSON.stringify(value);
+    case 'function':
+      return `[Function: ${(value as { name?: string }).name || 'anonymous'}]`;
+    default:
+      return '[Unknown]';
+  }
+}
+
 function maskSensitiveValue(key: string, value: unknown): string {
   const keyUpper = key.toUpperCase();
   const isSensitive = SENSITIVE_KEYS.some((sensitive) => keyUpper.includes(sensitive));
 
   if (!isSensitive || value === undefined || value === null) {
-    if (value === null || value === undefined) {
-      return String(value);
-    }
-    if (typeof value === 'object') {
-      return JSON.stringify(value);
-    }
-    // eslint-disable-next-line @typescript-eslint/no-base-to-string
-    return String(value);
+    return valueToString(value);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-base-to-string
-  const strValue = typeof value === 'object' ? JSON.stringify(value) : String(value);
+  const strValue = valueToString(value);
   if (strValue.length <= 4) {
     return '***';
   }
@@ -223,12 +247,9 @@ function loadConfig(): Config {
     return parsed;
   } catch (error) {
     if (error instanceof z.ZodError) {
-      // eslint-disable-next-line no-console
-      console.error('\n❌ Invalid environment configuration:\n');
-      // eslint-disable-next-line no-console
-      console.error(formatZodError(error));
-      // eslint-disable-next-line no-console
-      console.error('\n💡 Tip: Check .env.example for valid configuration examples\n');
+      process.stderr.write('\n❌ Invalid environment configuration:\n\n');
+      process.stderr.write(formatZodError(error));
+      process.stderr.write('\n\n💡 Tip: Check .env.example for valid configuration examples\n\n');
       process.exit(1);
     }
     throw error;
