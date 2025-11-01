@@ -22,6 +22,15 @@ const DEFAULT_LOG_FILE_PATH = './logs/app.log';
 const FALLBACK_TO_STDOUT_MESSAGE = 'Falling back to stdout';
 
 /**
+ * Fallback logger for initialization errors
+ * Used when the main logger configuration fails
+ */
+const fallbackLogger = pino({
+  level: 'warn',
+  timestamp: pino.stdTimeFunctions.isoTime,
+});
+
+/**
  * Get environment configuration safely
  * This avoids circular dependency with config module
  */
@@ -291,10 +300,11 @@ const createStdoutConfig = (
  * Log validation error and fallback message
  */
 const logValidationError = (context: string, error: unknown): void => {
-  // eslint-disable-next-line no-console
-  console.error(`Invalid ${context}: ${error instanceof Error ? error.message : String(error)}`);
-  // eslint-disable-next-line no-console
-  console.error(FALLBACK_TO_STDOUT_MESSAGE);
+  fallbackLogger.error(
+    { context, error: error instanceof Error ? error.message : String(error) },
+    `Invalid ${context}`,
+  );
+  fallbackLogger.error(FALLBACK_TO_STDOUT_MESSAGE);
 };
 
 /**
@@ -306,12 +316,11 @@ const ensureLogDirectory = (logPath: string): boolean => {
     mkdirSync(dirname(logPath), { recursive: true, mode: 0o750 });
     return true;
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error(
-      `Failed to create log directory: ${error instanceof Error ? error.message : String(error)}`,
+    fallbackLogger.error(
+      { error: error instanceof Error ? error.message : String(error) },
+      'Failed to create log directory',
     );
-    // eslint-disable-next-line no-console
-    console.error(FALLBACK_TO_STDOUT_MESSAGE);
+    fallbackLogger.error(FALLBACK_TO_STDOUT_MESSAGE);
     return false;
   }
 };
@@ -419,9 +428,9 @@ const cleanupPreviousOutput = (previousMode: string | null): void => {
       }
       currentFileStream = null;
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.warn(
-        `Failed to cleanup file stream: ${error instanceof Error ? error.message : String(error)}`,
+      fallbackLogger.warn(
+        { error: error instanceof Error ? error.message : String(error) },
+        'Failed to cleanup file stream',
       );
     }
   }
@@ -456,9 +465,10 @@ export const switchLogOutput = (outputMode: string): void => {
   // This approach maintains the same logger reference for all imports
   Object.setPrototypeOf(logger, Object.getPrototypeOf(newLogger) as object);
   Object.keys(newLogger).forEach((key) => {
-    // Use type assertion to handle dynamic property assignment
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-    (logger as any)[key] = (newLogger as any)[key];
+    // Use Record type for dynamic property assignment
+    const loggerRecord = logger as unknown as Record<string, unknown>;
+    const newLoggerRecord = newLogger as unknown as Record<string, unknown>;
+    loggerRecord[key] = newLoggerRecord[key];
   });
 
   logger.info({ previousMode, newMode: outputMode }, `Logger output switched to ${outputMode}`);

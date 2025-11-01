@@ -4,6 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { z } from 'zod';
 
 describe('Configuration', () => {
   // Store original env
@@ -150,9 +151,58 @@ describe('Configuration', () => {
   });
 
   describe('error formatting', () => {
-    it('should format multiple validation errors clearly', async () => {
-      // Skip this test as the exact Zod error format is implementation detail
-      // The important part is that errors are formatted clearly which is tested via real errors
+    it('should format missing required variable errors', async () => {
+      const { __testExports } = await import('../src/config.js');
+      const { formatZodError } = __testExports;
+
+      // Create a mock Zod error for a missing required field
+      const mockError = {
+        issues: [
+          {
+            code: 'invalid_type' as const,
+            path: ['REQUIRED_FIELD'],
+            message: 'Required',
+            received: 'undefined' as const,
+          },
+        ],
+      } as unknown as z.ZodError;
+
+      const formatted = formatZodError(mockError);
+      expect(formatted).toContain('Missing required variables');
+      expect(formatted).toContain('REQUIRED_FIELD');
+    });
+
+    it('should format invalid format errors', async () => {
+      const { __testExports } = await import('../src/config.js');
+      const { formatZodError } = __testExports;
+
+      // Create a mock Zod error for invalid format
+      const mockError = {
+        issues: [
+          {
+            code: 'invalid_type' as const,
+            path: ['SOME_FIELD'],
+            message: 'Expected string, received number',
+            input: 123,
+          },
+        ],
+      } as z.ZodError;
+
+      const formatted = formatZodError(mockError);
+      expect(formatted).toContain('Invalid format');
+      expect(formatted).toContain('SOME_FIELD');
+    });
+
+    it('should handle empty error list', async () => {
+      const { __testExports } = await import('../src/config.js');
+      const { formatZodError } = __testExports;
+
+      const mockError = {
+        issues: [],
+      } as unknown as z.ZodError;
+
+      const formatted = formatZodError(mockError);
+      expect(formatted).toBe('Invalid configuration');
     });
   });
 
@@ -173,6 +223,25 @@ describe('Configuration', () => {
 
       expect(maskSensitiveValue('PASSWORD', undefined)).toBe('undefined');
       expect(maskSensitiveValue('SECRET', null)).toBe('null');
+    });
+
+    it('should handle special JavaScript types', async () => {
+      const { __testExports } = await import('../src/config.js');
+      const { maskSensitiveValue } = __testExports;
+
+      // Test symbol (use non-sensitive key name)
+      const sym = Symbol('test');
+      expect(maskSensitiveValue('SOME_SYMBOL', sym)).toContain('Symbol(test)');
+
+      // Test bigint (use non-sensitive key name)
+      expect(maskSensitiveValue('ID', BigInt(12345))).toBe('12345');
+
+      // Test function (use non-sensitive key name)
+      const fn = function testFunc() {};
+      expect(maskSensitiveValue('CALLBACK', fn)).toContain('Function');
+
+      // Test object
+      expect(maskSensitiveValue('DATA', { key: 'value' })).toContain('key');
     });
   });
 

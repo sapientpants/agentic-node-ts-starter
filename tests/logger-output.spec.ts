@@ -544,17 +544,19 @@ describe('Logger Output Configuration', () => {
       process.env.LOG_FILE_PATH = '../../sensitive/file.log';
       process.env.NODE_ENV = 'development';
 
-      // Mock console.error to verify fallback
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      // Mock process.stdout.write to verify fallback logger output (pino)
+      const stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
 
       const loggerModule = await import('../src/logger.js');
       logger = loggerModule.logger;
 
-      // Should log error and fall back to stdout
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Invalid log file path'));
-      expect(consoleSpy).toHaveBeenCalledWith('Falling back to stdout');
+      // Should log error via fallback logger (pino JSON format)
+      const calls = stdoutSpy.mock.calls.map((call) => String(call[0]));
+      const allOutput = calls.join('');
+      expect(allOutput).toContain('Invalid log file path');
+      expect(allOutput).toContain('Falling back to stdout');
 
-      consoleSpy.mockRestore();
+      stdoutSpy.mockRestore();
     });
 
     it('should validate file permissions and use secure defaults', async () => {
@@ -563,17 +565,17 @@ describe('Logger Output Configuration', () => {
       process.env.LOG_FILE_PERMISSIONS = '644'; // Should warn about being too open
       process.env.NODE_ENV = 'development';
 
-      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
 
       const loggerModule = await import('../src/logger.js');
       logger = loggerModule.logger;
 
-      // Should warn about overly permissive permissions
-      expect(consoleSpy).toHaveBeenCalledWith(
+      // Should warn about overly permissive permissions via process.stderr.write
+      expect(stderrSpy).toHaveBeenCalledWith(
         expect.stringContaining('allow access to other users'),
       );
 
-      consoleSpy.mockRestore();
+      stderrSpy.mockRestore();
     });
   });
 });
