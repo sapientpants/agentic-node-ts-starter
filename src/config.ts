@@ -174,51 +174,58 @@ function maskSensitiveValue(key: string, value: unknown): string {
 }
 
 /**
+ * Format received value for error messages
+ */
+function formatReceivedValue(value: string): string {
+  return value === 'undefined' ? '' : ' (received: "' + value + '")';
+}
+
+/**
+ * Build error sections from grouped errors
+ */
+function buildErrorSections(groupedErrors: Record<string, string[]>): string[] {
+  const sections: string[] = [];
+  const sectionTitles: Record<string, string> = {
+    missing: 'Missing required variables',
+    invalid: 'Invalid format',
+    other: 'Other errors',
+  };
+
+  for (const [key, title] of Object.entries(sectionTitles)) {
+    const errors = groupedErrors[key];
+    if (errors && errors.length > 0) {
+      sections.push(`${title}:\n${errors.join('\n')}`);
+    }
+  }
+
+  return sections;
+}
+
+/**
  * Format Zod validation errors in a user-friendly way
  */
 function formatZodError(error: z.ZodError): string {
-  const groupedErrors = {
-    missing: [] as string[],
-    invalid: [] as string[],
-    other: [] as string[],
-  };
-
   if (!error.issues.length) {
     return 'Invalid configuration';
   }
 
-  error.issues.forEach((err) => {
+  const groupedErrors = { missing: [] as string[], invalid: [] as string[], other: [] as string[] };
+
+  for (const err of error.issues) {
     const path = err.path.join('.');
     const value = maskSensitiveValue(path, err.code === 'invalid_type' ? undefined : err.input);
+    const receivedValue = formatReceivedValue(value);
 
     if (err.code === 'invalid_type' && 'received' in err && err.received === 'undefined') {
       groupedErrors.missing.push(`  • ${path}: Required but not provided`);
     } else if (err.code === 'invalid_type' || err.code === 'invalid_value') {
-      groupedErrors.invalid.push(
-        `  • ${path}: ${err.message}${value !== 'undefined' ? ` (received: "${value}")` : ''}`,
-      );
+      groupedErrors.invalid.push(`  • ${path}: ${err.message}${receivedValue}`);
     } else {
-      groupedErrors.other.push(
-        `  • ${path}: ${err.message}${value !== 'undefined' ? ` (received: "${value}")` : ''}`,
-      );
+      groupedErrors.other.push(`  • ${path}: ${err.message}${receivedValue}`);
     }
-  });
-
-  const sections: string[] = [];
-
-  if (groupedErrors.missing.length > 0) {
-    sections.push('Missing required variables:\n' + groupedErrors.missing.join('\n'));
   }
 
-  if (groupedErrors.invalid.length > 0) {
-    sections.push('Invalid format:\n' + groupedErrors.invalid.join('\n'));
-  }
-
-  if (groupedErrors.other.length > 0) {
-    sections.push('Other errors:\n' + groupedErrors.other.join('\n'));
-  }
-
-  return sections.join('\n\n');
+  return buildErrorSections(groupedErrors).join('\n\n');
 }
 
 /**
