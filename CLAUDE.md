@@ -34,10 +34,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `pnpm deps:circular` - Find circular dependencies (fails if found)
 - `pnpm deps:graph` - Generate dependency graph
 - `pnpm deps:summary` - Show dependency summary
-- `pnpm duplication` - Check code duplication
-- `pnpm duplication:ci` - Enforce duplication threshold (CI)
-- `pnpm metrics` - Run all quality metrics
-- `pnpm metrics:ci` - Run all metrics with CI enforcement
+- `pnpm duplication` - Check code duplication (fails if >2% threshold exceeded)
+- `pnpm metrics` - Run all quality metrics (deps summary, circular deps, duplication)
 
 **Complexity Thresholds**: This project enforces strict code quality limits via ESLint and dedicated analyzers:
 
