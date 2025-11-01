@@ -120,10 +120,10 @@ jobs:
         run: pnpm typecheck
 
       - name: Linting
-        # Run ESLint with type-aware rules in strict mode
-        # FAILS IF: Any linting errors or warnings (--max-warnings 0)
+        # Run ESLint with type-aware rules
+        # FAILS IF: Any linting errors (complexity, code quality violations)
         # To fix: Run 'pnpm lint:fix' for auto-fixable issues
-        run: pnpm lint:strict
+        run: pnpm lint
 
       - name: Format checking
         # Verify code follows Prettier formatting

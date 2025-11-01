@@ -53,10 +53,10 @@ export default [
       ...tseslint.configs['recommended-type-checked'].rules,
 
       // Core ESLint complexity rules
-      complexity: ['warn', { max: 10 }],
-      'max-depth': ['warn', 3],
+      complexity: ['error', { max: 10 }],
+      'max-depth': ['error', 3],
       'max-lines-per-function': [
-        'warn',
+        'error',
         {
           max: 50,
           skipBlankLines: true,
@@ -64,16 +64,16 @@ export default [
         },
       ],
       'max-params': ['error', { max: 4 }],
-      'max-statements': ['warn', 15],
-      'max-nested-callbacks': ['warn', 3],
+      'max-statements': ['error', 15],
+      'max-nested-callbacks': ['error', 3],
 
       // Cognitive complexity (SonarJS)
-      'sonarjs/cognitive-complexity': ['warn', 15],
+      'sonarjs/cognitive-complexity': ['error', 15],
 
       // Additional code quality rules from SonarJS
-      'sonarjs/no-duplicate-string': ['warn', { threshold: 3 }],
-      'sonarjs/no-identical-functions': 'warn',
-      'sonarjs/prefer-immediate-return': 'warn',
+      'sonarjs/no-duplicate-string': ['error', { threshold: 3 }],
+      'sonarjs/no-identical-functions': 'error',
+      'sonarjs/prefer-immediate-return': 'error',
     },
   },
   // Relaxed complexity rules for test files
@@ -97,9 +97,9 @@ export default [
 
       // Relaxed complexity rules for tests
       // Test files can have larger describe blocks with many test cases
-      complexity: ['warn', 15],
-      'max-lines-per-function': ['warn', { max: 600, skipComments: true, skipBlankLines: true }],
-      'sonarjs/cognitive-complexity': ['warn', 20],
+      complexity: ['error', 15],
+      'max-lines-per-function': ['error', { max: 600, skipComments: true, skipBlankLines: true }],
+      'sonarjs/cognitive-complexity': ['error', 20],
       'sonarjs/no-duplicate-string': 'off', // Allow duplicates in tests
     },
   },

@@ -9,11 +9,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `pnpm install` - Install dependencies (use pnpm 10, Node 22 via mise)
 - `pnpm build` - Build TypeScript to dist/
 - `pnpm typecheck` - Type check without emitting files
-- `pnpm lint` - Run ESLint
+- `pnpm lint` - Run ESLint (fails on any violations)
 - `pnpm lint:fix` - Auto-fix linting issues
 - `pnpm format` - Check Prettier formatting
 - `pnpm format:fix` - Apply Prettier formatting
-- `pnpm precommit` - Run all checks (audit, typecheck, lint, format, test)
+- `pnpm precommit` - Run all checks (audit, typecheck, lint, format, test with coverage)
 - `pnpm verify` - Alias for pnpm precommit (for backwards compatibility)
 
 ### Testing
@@ -30,9 +30,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Code Quality & Complexity
 
-- `pnpm complexity` - Check code complexity (via ESLint)
-- `pnpm complexity:strict` - Check complexity with zero warnings allowed
-- `pnpm deps:circular` - Find circular dependencies
+- `pnpm complexity` - Check code complexity (via ESLint, fails on violations)
+- `pnpm complexity:strict` - Alias for `pnpm complexity`
+- `pnpm deps:circular` - Find circular dependencies (fails if found)
 - `pnpm deps:graph` - Generate dependency graph
 - `pnpm deps:summary` - Show dependency summary
 - `pnpm duplication` - Check code duplication
@@ -40,21 +40,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `pnpm metrics` - Run all quality metrics
 - `pnpm metrics:ci` - Run all metrics with CI enforcement
 
-**Complexity Thresholds**: This project enforces code quality limits via ESLint and dedicated analyzers:
+**Complexity Thresholds**: This project enforces strict code quality limits via ESLint and dedicated analyzers:
 
-| Metric                       | Warn | Error | Scope        |
-| ---------------------------- | ---- | ----- | ------------ |
-| **Cyclomatic Complexity**    | 10   | -     | Per function |
-| **Cognitive Complexity**     | 15   | -     | Per function |
-| **Max Function Lines**       | 50   | -     | Per function |
-| **Max Parameters**           | -    | 4     | Per function |
-| **Max Nesting Depth**        | 3    | -     | Per function |
-| **Max Statements**           | 15   | -     | Per function |
-| **Max Nested Callbacks**     | 3    | -     | Per function |
-| **Duplicate String Literal** | 3    | -     | Per file     |
-| **Code Duplication**         | 2%   | -     | Project-wide |
+| Metric                       | Threshold | Scope        |
+| ---------------------------- | --------- | ------------ |
+| **Cyclomatic Complexity**    | 10        | Per function |
+| **Cognitive Complexity**     | 15        | Per function |
+| **Max Function Lines**       | 50        | Per function |
+| **Max Parameters**           | 4         | Per function |
+| **Max Nesting Depth**        | 3         | Per function |
+| **Max Statements**           | 15        | Per function |
+| **Max Nested Callbacks**     | 3         | Per function |
+| **Duplicate String Literal** | 3 uses    | Per file     |
+| **Code Duplication**         | 2%        | Project-wide |
 
-Most rules trigger **warnings** in development for flexibility. In CI/strict mode (`pnpm lint:strict`), warnings are treated as failures via `--max-warnings 0`. These rules apply to `src/**/*.ts`.
+All violations trigger **errors** and cause `pnpm lint` to fail. These rules apply to `src/**/*.ts`.
 
 **Tools Used**:
 
