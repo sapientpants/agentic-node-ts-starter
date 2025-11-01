@@ -3,8 +3,8 @@
  * Provides security validation for file paths and network hosts.
  */
 
-import { normalize, isAbsolute } from 'path';
-import { isIP } from 'net';
+import { normalize, isAbsolute } from 'node:path';
+import { isIP } from 'node:net';
 
 /**
  * Validates a log file path to prevent security issues
@@ -35,8 +35,8 @@ export function validateLogPath(path: string): void {
     '/proc',
     '/sys',
     '/root',
-    'C:\\Windows',
-    'C:\\Program Files',
+    String.raw`C:\Windows`,
+    String.raw`C:\Program Files`,
   ];
 
   // Check if path starts with any restricted directory
@@ -109,11 +109,11 @@ export function validateSyslogPort(port: number | undefined): void {
   }
 
   if (!Number.isInteger(port)) {
-    throw new Error('Syslog port must be an integer');
+    throw new TypeError('Syslog port must be an integer');
   }
 
   if (port < 1 || port > 65535) {
-    throw new Error('Syslog port must be between 1 and 65535');
+    throw new RangeError('Syslog port must be between 1 and 65535');
   }
 
   // Warn about privileged ports
@@ -140,12 +140,12 @@ export function validateFileMode(mode: number | string | undefined): number {
 
   if (typeof mode === 'string') {
     // Parse octal string (e.g., "0640" or "640")
-    numericMode = parseInt(mode, 8);
+    numericMode = Number.parseInt(mode, 8);
   } else {
     numericMode = mode;
   }
 
-  if (isNaN(numericMode) || numericMode < 0 || numericMode > 0o777) {
+  if (Number.isNaN(numericMode) || numericMode < 0 || numericMode > 0o777) {
     process.stderr.write(`Invalid file mode ${mode}, using default ${defaultMode.toString(8)}\n`);
     return defaultMode;
   }

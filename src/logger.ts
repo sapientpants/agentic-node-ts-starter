@@ -6,8 +6,8 @@
  */
 
 import pino, { type Logger as PinoLogger, type LoggerOptions, type DestinationStream } from 'pino';
-import { mkdirSync } from 'fs';
-import { dirname } from 'path';
+import { mkdirSync } from 'node:fs';
+import { dirname } from 'node:path';
 import {
   validateLogPath,
   validateSyslogHost,
@@ -41,11 +41,11 @@ const getEnvConfig = () => ({
   LOG_FILE_PATH: process.env.LOG_FILE_PATH,
   LOG_FILE_MAX_SIZE: process.env.LOG_FILE_MAX_SIZE,
   LOG_FILE_MAX_FILES: process.env.LOG_FILE_MAX_FILES
-    ? parseInt(process.env.LOG_FILE_MAX_FILES, 10)
+    ? Number.parseInt(process.env.LOG_FILE_MAX_FILES, 10)
     : undefined,
   LOG_SYSLOG_HOST: process.env.LOG_SYSLOG_HOST,
   LOG_SYSLOG_PORT: process.env.LOG_SYSLOG_PORT
-    ? parseInt(process.env.LOG_SYSLOG_PORT, 10)
+    ? Number.parseInt(process.env.LOG_SYSLOG_PORT, 10)
     : undefined,
   LOG_SYSLOG_PROTOCOL: process.env.LOG_SYSLOG_PROTOCOL as 'udp' | 'tcp' | undefined,
   APP_NAME: process.env.APP_NAME || 'agentic-node-ts-starter',
@@ -73,10 +73,11 @@ const getEffectiveLogOutput = (): string => {
 const parseSizeToBytes = (size: string | undefined): number | undefined => {
   if (!size) return undefined;
 
-  const match = size.match(/^(\d+(?:\.\d+)?)\s*([KMGT]?)B?$/i);
-  if (!match || !match[1]) return undefined;
+  const regex = /^(\d+(?:\.\d+)?)\s*([KMGT]?)B?$/i;
+  const match = regex.exec(size);
+  if (!match?.[1]) return undefined;
 
-  const value = parseFloat(match[1]);
+  const value = Number.parseFloat(match[1]);
   const unit = match[2]?.toUpperCase() || '';
 
   const multipliers: Record<string, number> = {
@@ -464,12 +465,12 @@ export const switchLogOutput = (outputMode: string): void => {
   // Replace the exported logger's methods with the new instance
   // This approach maintains the same logger reference for all imports
   Object.setPrototypeOf(logger, Object.getPrototypeOf(newLogger) as object);
-  Object.keys(newLogger).forEach((key) => {
+  for (const key of Object.keys(newLogger)) {
     // Use Record type for dynamic property assignment
     const loggerRecord = logger as unknown as Record<string, unknown>;
     const newLoggerRecord = newLogger as unknown as Record<string, unknown>;
     loggerRecord[key] = newLoggerRecord[key];
-  });
+  }
 
   logger.info({ previousMode, newMode: outputMode }, `Logger output switched to ${outputMode}`);
 };
@@ -525,7 +526,8 @@ export const withTraceContext = (log: Logger, traceId?: string, spanId?: string)
 };
 
 // Export Pino types for use in application
-export type { LoggerOptions, LogContext as LoggerContext };
+export type { LoggerOptions } from 'pino';
+export type { LogContext as LoggerContext };
 
 // Log startup information
 if (getEnvConfig().NODE_ENV !== 'test') {
