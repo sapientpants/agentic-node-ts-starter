@@ -1,5 +1,17 @@
 # agentic-node-ts-starter
 
+## 0.23.1
+
+### Patch Changes
+
+- [#149](https://github.com/sapientpants/agentic-node-ts-starter/pull/149) [`bc42c50`](https://github.com/sapientpants/agentic-node-ts-starter/commit/bc42c504cae8fde7f36009b09526617a3312b8ba) - refactor: remove eslint-disable comments from source code
+  - Replaced console.error/warn with process.stderr.write for bootstrap logging
+  - Created type-safe valueToString() helper to avoid @typescript-eslint/no-base-to-string
+  - Added fallback logger using pino for initialization errors
+  - Fixed unsafe type assertions with proper Record<string, unknown> casting
+  - Updated tests to match new implementation
+  - Coverage improved from 76.66% to 81.66%
+
 ## 0.23.0
 
 ### Minor Changes
