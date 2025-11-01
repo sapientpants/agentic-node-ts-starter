@@ -84,7 +84,7 @@ jobs:
         # This single check can be used as a required status check
         # FAILS IF: Any validation job failed
         # Common failures:
-        #   - validate: Tests fail, coverage below 80%, lint errors, workflow errors, missing changesets
+        #   - validate: Tests fail, coverage below 80%, lint errors, workflow errors, missing changesets, code quality issues
         #   - security: Security vulnerabilities, vulnerable dependencies, audit failures
         #   - docker: Container vulnerabilities or build failures (when enabled)
         run: |

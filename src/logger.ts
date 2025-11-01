@@ -16,6 +16,12 @@ import {
 } from './logger-validation.js';
 
 /**
+ * Constants for logger configuration
+ */
+const DEFAULT_LOG_FILE_PATH = './logs/app.log';
+const FALLBACK_TO_STDOUT_MESSAGE = 'Falling back to stdout';
+
+/**
  * Get environment configuration safely
  * This avoids circular dependency with config module
  */
@@ -86,7 +92,7 @@ const getFileTransportConfig = () => {
     return {
       target: 'pino-roll',
       options: {
-        file: getEnvConfig().LOG_FILE_PATH || './logs/app.log',
+        file: getEnvConfig().LOG_FILE_PATH || DEFAULT_LOG_FILE_PATH,
         size: getEnvConfig().LOG_FILE_MAX_SIZE || '10M',
         ...(getEnvConfig().LOG_FILE_MAX_FILES && {
           limit: { count: getEnvConfig().LOG_FILE_MAX_FILES },
@@ -99,7 +105,7 @@ const getFileTransportConfig = () => {
   return {
     target: 'pino/file',
     options: {
-      destination: getEnvConfig().LOG_FILE_PATH || './logs/app.log',
+      destination: getEnvConfig().LOG_FILE_PATH || DEFAULT_LOG_FILE_PATH,
       mkdir: true,
     },
   };
@@ -121,154 +127,149 @@ const getSyslogTransportConfig = () => {
 };
 
 /**
- * Logger configuration based on environment and output mode
+ * Redacted field paths for sensitive data
  */
-const getLoggerConfig = (outputMode?: string): LoggerOptions => {
-  const isProduction = getEnvConfig().NODE_ENV === 'production';
-  const isDevelopment = getEnvConfig().NODE_ENV === 'development';
-  const isTest = getEnvConfig().NODE_ENV === 'test';
-  const logLevel = getEnvConfig().LOG_LEVEL || (isProduction ? 'info' : 'debug');
-  const effectiveOutput = outputMode || getEffectiveLogOutput();
+const REDACTED_PATHS = [
+  'password',
+  'token',
+  'secret',
+  'authorization',
+  'api_key',
+  'apiKey',
+  '*.password',
+  '*.token',
+  '*.secret',
+  '*.authorization',
+  '*.api_key',
+  '*.apiKey',
+];
 
-  // Base configuration
-  const baseConfig: LoggerOptions = {
-    level: logLevel,
-    timestamp: pino.stdTimeFunctions.isoTime,
-    // Redact sensitive fields by default
-    redact: {
-      paths: [
-        'password',
-        'token',
-        'secret',
-        'authorization',
-        'api_key',
-        'apiKey',
-        '*.password',
-        '*.token',
-        '*.secret',
-        '*.authorization',
-        '*.api_key',
-        '*.apiKey',
-      ],
-      remove: true,
+/**
+ * Create base logger configuration
+ */
+const createBaseConfig = (logLevel: string): LoggerOptions => ({
+  level: logLevel,
+  timestamp: pino.stdTimeFunctions.isoTime,
+  redact: {
+    paths: REDACTED_PATHS,
+    remove: true,
+  },
+});
+
+/**
+ * Create production-specific logger configuration
+ */
+const createProductionConfig = (baseConfig: LoggerOptions): LoggerOptions => ({
+  ...baseConfig,
+  mixin() {
+    return {
+      correlationId: process.env.CORRELATION_ID,
+    };
+  },
+  formatters: {
+    level: (label) => {
+      return { level: label };
     },
-  };
+  },
+});
 
-  // Production mixin for correlation IDs
-  const productionConfig: LoggerOptions = {
-    ...baseConfig,
-    mixin() {
-      return {
-        correlationId: process.env.CORRELATION_ID,
-      };
-    },
-    formatters: {
-      level: (label) => {
-        return { level: label };
-      },
-    },
-  };
+/**
+ * Create test environment configuration
+ */
+const createTestConfig = (baseConfig: LoggerOptions): LoggerOptions => ({
+  ...baseConfig,
+  level: process.env.LOG_LEVEL || 'silent',
+});
 
-  // Test configuration - minimize output
-  if (isTest) {
-    return {
-      ...baseConfig,
-      level: process.env.LOG_LEVEL || 'silent',
-    };
-  }
+/**
+ * Create null output configuration (disabled logging)
+ */
+const createNullConfig = (baseConfig: LoggerOptions): LoggerOptions => ({
+  ...baseConfig,
+  level: 'silent',
+});
 
-  // Handle null output (disable logging)
-  if (effectiveOutput === 'null') {
-    return {
-      ...baseConfig,
-      level: 'silent',
-    };
-  }
+/**
+ * Create file output configuration with validation
+ */
+const createFileConfig = (
+  baseConfig: LoggerOptions,
+  productionConfig: LoggerOptions,
+  isProduction: boolean,
+): LoggerOptions => {
+  const logPath = getEnvConfig().LOG_FILE_PATH || DEFAULT_LOG_FILE_PATH;
 
-  // Handle file output
-  if (effectiveOutput === 'file') {
-    const logPath = getEnvConfig().LOG_FILE_PATH || './logs/app.log';
-
-    // Validate the log path for security
-    try {
-      validateLogPath(logPath);
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error(
-        `Invalid log file path: ${error instanceof Error ? error.message : String(error)}`,
-      );
-      // eslint-disable-next-line no-console
-      console.error('Falling back to stdout');
-      return isProduction ? productionConfig : baseConfig;
-    }
-
-    // Ensure directory exists for file output with proper permissions
-    validateFileMode(process.env.LOG_FILE_PERMISSIONS); // Validates and warns about permissions
-    try {
-      mkdirSync(dirname(logPath), { recursive: true, mode: 0o750 });
-    } catch (error) {
-      // Log the error since logger might not be available yet
-      // eslint-disable-next-line no-console
-      console.error(
-        `Failed to create log directory: ${error instanceof Error ? error.message : String(error)}`,
-      );
-      // eslint-disable-next-line no-console
-      console.error('Falling back to stdout');
-      return isProduction ? productionConfig : baseConfig;
-    }
-
-    const transportConfig = getFileTransportConfig();
-    return {
-      ...(isProduction ? productionConfig : baseConfig),
-      transport: transportConfig,
-    };
-  }
-
-  // Handle syslog output
-  if (effectiveOutput === 'syslog') {
-    // Validate syslog configuration
-    const syslogHost = getEnvConfig().LOG_SYSLOG_HOST || 'localhost';
-    const syslogPort = getEnvConfig().LOG_SYSLOG_PORT;
-
-    try {
-      validateSyslogHost(syslogHost);
-      validateSyslogPort(syslogPort);
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error(
-        `Invalid syslog configuration: ${error instanceof Error ? error.message : String(error)}`,
-      );
-      // eslint-disable-next-line no-console
-      console.error('Falling back to stdout');
-      return isProduction ? productionConfig : baseConfig;
-    }
-
-    const transportConfig = getSyslogTransportConfig();
-    // Syslog transport requires numeric timestamps (epoch milliseconds)
-    // This is because the pino-syslog transport expects numeric timestamps
-    // for proper RFC5424 syslog message formatting
-    const syslogBaseConfig = {
-      ...baseConfig,
-      timestamp: pino.stdTimeFunctions.epochTime,
-    };
-    const syslogProductionConfig = {
-      ...productionConfig,
-      timestamp: pino.stdTimeFunctions.epochTime,
-    };
-    return {
-      ...(isProduction ? syslogProductionConfig : syslogBaseConfig),
-      transport: transportConfig,
-    };
-  }
-
-  // Handle stderr output - no pretty printing to avoid escape sequences
-  if (effectiveOutput === 'stderr') {
+  try {
+    validateLogPath(logPath);
+  } catch (error) {
+    logValidationError('log file path', error);
     return isProduction ? productionConfig : baseConfig;
   }
 
-  // Default stdout output
-  // Development gets pretty printing, production gets structured JSON
-  if (isDevelopment && !isTest) {
+  if (!ensureLogDirectory(logPath)) {
+    return isProduction ? productionConfig : baseConfig;
+  }
+
+  const transportConfig = getFileTransportConfig();
+  return {
+    ...(isProduction ? productionConfig : baseConfig),
+    transport: transportConfig,
+  };
+};
+
+/**
+ * Create syslog output configuration with validation
+ */
+const createSyslogConfig = (
+  baseConfig: LoggerOptions,
+  productionConfig: LoggerOptions,
+  isProduction: boolean,
+): LoggerOptions => {
+  const syslogHost = getEnvConfig().LOG_SYSLOG_HOST || 'localhost';
+  const syslogPort = getEnvConfig().LOG_SYSLOG_PORT;
+
+  try {
+    validateSyslogHost(syslogHost);
+    validateSyslogPort(syslogPort);
+  } catch (error) {
+    logValidationError('syslog configuration', error);
+    return isProduction ? productionConfig : baseConfig;
+  }
+
+  const transportConfig = getSyslogTransportConfig();
+  const syslogBaseConfig = {
+    ...baseConfig,
+    timestamp: pino.stdTimeFunctions.epochTime,
+  };
+  const syslogProductionConfig = {
+    ...productionConfig,
+    timestamp: pino.stdTimeFunctions.epochTime,
+  };
+
+  return {
+    ...(isProduction ? syslogProductionConfig : syslogBaseConfig),
+    transport: transportConfig,
+  };
+};
+
+/**
+ * Environment flags for configuration
+ */
+interface EnvFlags {
+  isDevelopment: boolean;
+  isProduction: boolean;
+  isTest: boolean;
+}
+
+/**
+ * Create stdout output configuration
+ */
+const createStdoutConfig = (
+  baseConfig: LoggerOptions,
+  productionConfig: LoggerOptions,
+  env: EnvFlags,
+): LoggerOptions => {
+  if (env.isDevelopment && !env.isTest) {
     return {
       ...baseConfig,
       transport: {
@@ -283,7 +284,65 @@ const getLoggerConfig = (outputMode?: string): LoggerOptions => {
     };
   }
 
-  return isProduction ? productionConfig : baseConfig;
+  return env.isProduction ? productionConfig : baseConfig;
+};
+
+/**
+ * Log validation error and fallback message
+ */
+const logValidationError = (context: string, error: unknown): void => {
+  // eslint-disable-next-line no-console
+  console.error(`Invalid ${context}: ${error instanceof Error ? error.message : String(error)}`);
+  // eslint-disable-next-line no-console
+  console.error(FALLBACK_TO_STDOUT_MESSAGE);
+};
+
+/**
+ * Ensure log directory exists with proper permissions
+ */
+const ensureLogDirectory = (logPath: string): boolean => {
+  validateFileMode(process.env.LOG_FILE_PERMISSIONS);
+  try {
+    mkdirSync(dirname(logPath), { recursive: true, mode: 0o750 });
+    return true;
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error(
+      `Failed to create log directory: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    // eslint-disable-next-line no-console
+    console.error(FALLBACK_TO_STDOUT_MESSAGE);
+    return false;
+  }
+};
+
+/**
+ * Logger configuration based on environment and output mode
+ */
+const getLoggerConfig = (outputMode?: string): LoggerOptions => {
+  const { NODE_ENV, LOG_LEVEL } = getEnvConfig();
+  const env: EnvFlags = {
+    isProduction: NODE_ENV === 'production',
+    isDevelopment: NODE_ENV === 'development',
+    isTest: NODE_ENV === 'test',
+  };
+  const logLevel = LOG_LEVEL || (env.isProduction ? 'info' : 'debug');
+  const effectiveOutput = outputMode || getEffectiveLogOutput();
+  const baseConfig = createBaseConfig(logLevel);
+  const productionConfig = createProductionConfig(baseConfig);
+
+  if (env.isTest) return createTestConfig(baseConfig);
+  if (effectiveOutput === 'null') return createNullConfig(baseConfig);
+  if (effectiveOutput === 'file') {
+    return createFileConfig(baseConfig, productionConfig, env.isProduction);
+  }
+  if (effectiveOutput === 'syslog') {
+    return createSyslogConfig(baseConfig, productionConfig, env.isProduction);
+  }
+  if (effectiveOutput === 'stderr') {
+    return env.isProduction ? productionConfig : baseConfig;
+  }
+  return createStdoutConfig(baseConfig, productionConfig, env);
 };
 
 /**

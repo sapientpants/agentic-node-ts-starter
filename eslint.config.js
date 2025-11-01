@@ -4,6 +4,7 @@ import tsParser from '@typescript-eslint/parser';
 import eslintConfigPrettier from 'eslint-config-prettier';
 import * as jsonc from 'eslint-plugin-jsonc';
 import jsoncParser from 'jsonc-eslint-parser';
+import sonarjs from 'eslint-plugin-sonarjs';
 import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
 
@@ -13,7 +14,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 export default [
   // Ignore patterns
   {
-    ignores: ['dist/**', 'coverage/**', 'node_modules/**', 'sbom.cdx.json'],
+    ignores: ['dist/**', 'coverage/**', 'node_modules/**', 'sbom.cdx.json', 'reports/**'],
   },
   // Base configuration for all JS/TS files
   {
@@ -32,9 +33,9 @@ export default [
       'no-debugger': 'error',
     },
   },
-  // Type-aware rules for TypeScript files only
+  // Type-aware rules for TypeScript source files
   {
-    files: ['src/**/*.ts', 'tests/**/*.ts'],
+    files: ['src/**/*.ts'],
     languageOptions: {
       parser: tsParser,
       parserOptions: {
@@ -44,8 +45,62 @@ export default [
         tsconfigRootDir: __dirname,
       },
     },
+    plugins: {
+      '@typescript-eslint': tseslint,
+      sonarjs,
+    },
     rules: {
       ...tseslint.configs['recommended-type-checked'].rules,
+
+      // Core ESLint complexity rules
+      complexity: ['error', { max: 10 }],
+      'max-depth': ['error', 3],
+      'max-lines-per-function': [
+        'error',
+        {
+          max: 50,
+          skipBlankLines: true,
+          skipComments: true,
+        },
+      ],
+      'max-params': ['error', { max: 4 }],
+      'max-statements': ['error', 15],
+      'max-nested-callbacks': ['error', 3],
+
+      // Cognitive complexity (SonarJS)
+      'sonarjs/cognitive-complexity': ['error', 15],
+
+      // Additional code quality rules from SonarJS
+      'sonarjs/no-duplicate-string': ['error', { threshold: 2 }],
+      'sonarjs/no-identical-functions': 'error',
+      'sonarjs/prefer-immediate-return': 'error',
+    },
+  },
+  // Relaxed complexity rules for test files
+  {
+    files: ['tests/**/*.ts'],
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        ecmaVersion: 2024,
+        sourceType: 'module',
+        project: true,
+        tsconfigRootDir: __dirname,
+      },
+    },
+    plugins: {
+      '@typescript-eslint': tseslint,
+      sonarjs,
+    },
+    rules: {
+      ...tseslint.configs['recommended-type-checked'].rules,
+
+      // Relaxed complexity rules for tests
+      // Test files can have larger describe blocks with many test cases
+      complexity: ['error', 15],
+      'max-lines-per-function': ['error', { max: 600, skipComments: true, skipBlankLines: true }],
+      'sonarjs/cognitive-complexity': ['error', 20],
+      'sonarjs/no-duplicate-string': 'off', // Allow duplicates in tests
     },
   },
   // JSON/JSONC/JSON5 linting configuration
