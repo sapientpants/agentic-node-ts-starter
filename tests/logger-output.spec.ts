@@ -577,5 +577,25 @@ describe('Logger Output Configuration', () => {
 
       stderrSpy.mockRestore();
     });
+
+    it('should handle directory creation failure gracefully', async () => {
+      process.env.LOG_OUTPUT = 'file';
+      process.env.LOG_FILE_PATH = '/impossible/path/to/create/log.txt';
+      process.env.NODE_ENV = 'development';
+
+      // Mock stdout to capture fallback logger output
+      const stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+
+      const loggerModule = await import('../src/logger.js');
+      logger = loggerModule.logger;
+
+      // Should log error via fallback logger when directory creation fails
+      const calls = stdoutSpy.mock.calls.map((call) => String(call[0]));
+      const allOutput = calls.join('');
+      expect(allOutput).toContain('Failed to create log directory');
+      expect(allOutput).toContain('Falling back to stdout');
+
+      stdoutSpy.mockRestore();
+    });
   });
 });

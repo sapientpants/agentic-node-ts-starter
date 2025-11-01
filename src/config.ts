@@ -122,9 +122,6 @@ export type Config = z.infer<typeof ConfigSchema>;
 const SENSITIVE_KEYS = ['PASSWORD', 'TOKEN', 'SECRET', 'KEY'];
 
 /**
- * Mask sensitive values in error messages
- */
-/**
  * Convert value to string safely
  */
 function valueToString(value: unknown): string {

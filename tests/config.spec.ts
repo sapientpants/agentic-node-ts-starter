@@ -243,6 +243,20 @@ describe('Configuration', () => {
       // Test object
       expect(maskSensitiveValue('DATA', { key: 'value' })).toContain('key');
     });
+
+    it('should handle number and boolean types in valueToString', async () => {
+      const { __testExports } = await import('../src/config.js');
+      const { maskSensitiveValue } = __testExports;
+
+      // Test number types (non-sensitive key to use valueToString directly)
+      expect(maskSensitiveValue('COUNT', 42)).toBe('42');
+      expect(maskSensitiveValue('RATIO', 3.14)).toBe('3.14');
+      expect(maskSensitiveValue('ZERO', 0)).toBe('0');
+
+      // Test boolean types (non-sensitive key to use valueToString directly)
+      expect(maskSensitiveValue('ENABLED', true)).toBe('true');
+      expect(maskSensitiveValue('DISABLED', false)).toBe('false');
+    });
   });
 
   describe('config helper functions', () => {
