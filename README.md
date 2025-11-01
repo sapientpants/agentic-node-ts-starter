@@ -6,8 +6,6 @@
 [![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=agentic-node-ts-starter&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=agentic-node-ts-starter)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=agentic-node-ts-starter&metric=coverage)](https://sonarcloud.io/summary/new_code?id=agentic-node-ts-starter)
 [![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=agentic-node-ts-starter&metric=duplicated_lines_density)](https://sonarcloud.io/summary/new_code?id=agentic-node-ts-starter)
-[![npm version](https://img.shields.io/npm/v/agentic-node-ts-starter.svg)](https://www.npmjs.com/package/agentic-node-ts-starter)
-[![npm downloads](https://img.shields.io/npm/dm/agentic-node-ts-starter.svg)](https://www.npmjs.com/package/agentic-node-ts-starter)
 [![License](https://img.shields.io/npm/l/agentic-node-ts-starter.svg)](https://github.com/sapientpants/agentic-node-ts-starter/blob/main/LICENSE)
 
 A **batteries-included** TypeScript starter template with comprehensive testing, code quality automation, and security scanning. Built for modern Node.js development with AI-assisted (agentic) coding workflow.
