@@ -24,7 +24,13 @@ export function wait(ms: number): Promise<void> {
 /**
  * Create a mock logger that captures log calls for testing
  */
-export function createMockLogger() {
+export function createMockLogger(): {
+  debug: ReturnType<typeof vi.fn>;
+  info: ReturnType<typeof vi.fn>;
+  warn: ReturnType<typeof vi.fn>;
+  error: ReturnType<typeof vi.fn>;
+  child: ReturnType<typeof vi.fn>;
+} {
   return {
     debug: vi.fn(),
     info: vi.fn(),
@@ -52,7 +58,10 @@ export function expectErrorMessage(error: unknown, expectedMessage: string | Reg
 /**
  * Create a test environment with common setup
  */
-export function createTestEnvironment() {
+export function createTestEnvironment(): {
+  mocks: { logger: ReturnType<typeof createMockLogger> };
+  cleanup: () => void;
+} {
   const mocks = {
     logger: createMockLogger(),
   };
