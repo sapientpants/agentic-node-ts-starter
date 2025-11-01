@@ -188,7 +188,6 @@ jobs:
 
       - name: Check code duplication
         run: pnpm duplication:ci
-        continue-on-error: true
 
       - name: Generate full metrics report
         if: always()
