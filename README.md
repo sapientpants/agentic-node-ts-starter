@@ -1,6 +1,30 @@
 # Agentic Node + TypeScript Starter
 
+## 📊 Build Status & Quality Metrics
+
+### CI/CD Workflows
+
 [![Main](https://github.com/sapientpants/agentic-node-ts-starter/actions/workflows/main.yml/badge.svg)](https://github.com/sapientpants/agentic-node-ts-starter/actions/workflows/main.yml)
+[![PR](https://github.com/sapientpants/agentic-node-ts-starter/actions/workflows/pr.yml/badge.svg)](https://github.com/sapientpants/agentic-node-ts-starter/actions/workflows/pr.yml)
+[![CodeQL](https://github.com/sapientpants/agentic-node-ts-starter/actions/workflows/codeql.yml/badge.svg)](https://github.com/sapientpants/agentic-node-ts-starter/actions/workflows/codeql.yml)
+
+### Test Coverage & Quality
+
+[![Lines Coverage](<https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fsapientpants%2Fagentic-node-ts-starter%2Fmain%2Fquality-metrics.json&query=%24.coverage.lines&suffix=%25&label=Coverage%20(Lines)&color=brightgreen>)](https://github.com/sapientpants/agentic-node-ts-starter/actions)
+[![Branches Coverage](<https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fsapientpants%2Fagentic-node-ts-starter%2Fmain%2Fquality-metrics.json&query=%24.coverage.branches&suffix=%25&label=Coverage%20(Branches)&color=brightgreen>)](https://github.com/sapientpants/agentic-node-ts-starter/actions)
+[![Functions Coverage](<https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fsapientpants%2Fagentic-node-ts-starter%2Fmain%2Fquality-metrics.json&query=%24.coverage.functions&suffix=%25&label=Coverage%20(Functions)&color=brightgreen>)](https://github.com/sapientpants/agentic-node-ts-starter/actions)
+
+### Code Quality Metrics
+
+[![Code Duplication](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fsapientpants%2Fagentic-node-ts-starter%2Fmain%2Fquality-metrics.json&query=%24.duplication.percentage&suffix=%25&label=Duplication&color=brightgreen)](https://github.com/sapientpants/agentic-node-ts-starter/actions)
+[![Mutation Score](https://img.shields.io/badge/Mutation%20Score-N%2FA-lightgrey)](https://github.com/sapientpants/agentic-node-ts-starter/actions)
+
+### Meta
+
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Node Version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fsapientpants%2Fagentic-node-ts-starter%2Fmain%2Fquality-metrics.json&query=%24.nodeVersion&label=Node.js&color=339933&logo=node.js)](https://nodejs.org)
+[![Package Manager](https://img.shields.io/badge/pnpm-10.17.0-orange.svg?logo=pnpm)](https://pnpm.io)
+[![Version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fsapientpants%2Fagentic-node-ts-starter%2Fmain%2Fquality-metrics.json&query=%24.version&label=Version)](https://github.com/sapientpants/agentic-node-ts-starter/releases)
 
 A **batteries-included** TypeScript starter template with comprehensive testing, code quality automation, and security scanning. Built for modern Node.js development with AI-assisted (agentic) coding workflow.
 
@@ -88,6 +112,115 @@ pnpm sbom         # Generate SBOM
 ```
 
 **Full command reference:** [docs/DEVELOPMENT.md](./docs/DEVELOPMENT.md)
+
+## 📊 Code Quality Dashboard
+
+Comprehensive quality metrics tracked automatically on every CI run:
+
+### Testing Metrics
+
+| Metric                 | Current | Threshold | Status     | Local Command        |
+| ---------------------- | ------- | --------- | ---------- | -------------------- |
+| **Line Coverage**      | 93.77%  | ≥80%      | ✅ Pass    | `pnpm test:coverage` |
+| **Branch Coverage**    | 84.95%  | ≥80%      | ✅ Pass    | `pnpm test:coverage` |
+| **Function Coverage**  | 100%    | ≥80%      | ✅ Pass    | `pnpm test:coverage` |
+| **Statement Coverage** | 93.65%  | ≥80%      | ✅ Pass    | `pnpm test:coverage` |
+| **Mutation Score**     | N/A     | ≥80%      | ⏳ Pending | `pnpm mutation-test` |
+
+### Code Quality Metrics
+
+| Metric                      | Current | Threshold | Status  | Local Command        |
+| --------------------------- | ------- | --------- | ------- | -------------------- |
+| **Code Duplication**        | 0%      | <2%       | ✅ Pass | `pnpm duplication`   |
+| **Cyclomatic Complexity**   | Max 10  | ≤10       | ✅ Pass | `pnpm lint`          |
+| **Max Function Lines**      | Max 50  | ≤50       | ✅ Pass | `pnpm lint`          |
+| **Max Function Parameters** | Max 4   | ≤4        | ✅ Pass | `pnpm lint`          |
+| **Max Nesting Depth**       | Max 3   | ≤3        | ✅ Pass | `pnpm lint`          |
+| **Circular Dependencies**   | 0       | 0         | ✅ Pass | `pnpm deps:circular` |
+| **Dead Code**               | 0       | 0         | ✅ Pass | `pnpm dead-code`     |
+
+### Security Metrics
+
+| Metric                        | Status | Tool        | Local Command         |
+| ----------------------------- | ------ | ----------- | --------------------- |
+| **Critical Vulnerabilities**  | ✅ 0   | pnpm audit  | `pnpm audit`          |
+| **High Vulnerabilities**      | ✅ 0   | OSV Scanner | CI only               |
+| **CodeQL Findings**           | ✅ 0   | CodeQL      | CI only               |
+| **Container Vulnerabilities** | ✅ 0   | Trivy       | `pnpm scan:container` |
+
+### Build & Dependencies
+
+| Metric                     | Status  | Tool       | Local Command         |
+| -------------------------- | ------- | ---------- | --------------------- |
+| **TypeScript Compilation** | ✅ Pass | tsc        | `pnpm typecheck`      |
+| **ESLint Violations**      | ✅ 0    | ESLint     | `pnpm lint`           |
+| **Prettier Formatting**    | ✅ Pass | Prettier   | `pnpm format`         |
+| **Workflow Validation**    | ✅ Pass | actionlint | `pnpm lint:workflows` |
+
+### Tools & Analyzers Used
+
+- **Coverage:** Vitest with V8 coverage provider
+- **Mutation Testing:** Stryker Mutator (JavaScript/TypeScript)
+- **Duplication:** jscpd (Copy/Paste Detector)
+- **Complexity:** ESLint with complexity rules
+- **Circular Deps:** madge (dependency graph analyzer)
+- **Dead Code:** Knip (unused exports, files, dependencies, types)
+- **Security:** pnpm audit, OSV Scanner, CodeQL, Trivy
+- **Type Safety:** TypeScript strict mode + type-aware ESLint rules
+
+> **Note:** Metrics are auto-updated on every push to main as part of the build workflow. The `quality-metrics.json` file is committed automatically after validation completes.
+
+## 🎯 Quality Standards
+
+This project enforces strict quality standards to ensure maintainability, security, and reliability:
+
+### Why These Standards?
+
+**80% Coverage Minimum** - Ensures comprehensive test coverage without requiring 100% (which can lead to diminishing returns)
+
+**Low Complexity Limits** - Functions with cyclomatic complexity >10 are harder to understand, test, and maintain
+
+**Zero Duplication Target** - DRY principle reduces maintenance burden and bugs
+
+**No Circular Dependencies** - Prevents tight coupling and enables better modularity
+
+**No Dead Code** - Keeps codebase lean and maintainable
+
+**Zero Critical/High Vulnerabilities** - Security-first approach protects users and infrastructure
+
+### Complexity Rationale
+
+| Limit                     | Rationale                                                         |
+| ------------------------- | ----------------------------------------------------------------- |
+| Cyclomatic Complexity ≤10 | Industry standard for maintainable code (NIST, IEEE)              |
+| Max 50 Lines/Function     | Single screen view improves comprehension                         |
+| Max 4 Parameters          | Reduces cognitive load, encourages better abstractions            |
+| Max 3 Nesting Depth       | Prevents deeply nested code that's hard to reason about           |
+| Max 15 Statements         | Forces function decomposition, improves testability               |
+| Code Duplication <2%      | Minimal threshold allowing for small necessary repetition         |
+| Mutation Score ≥80%       | Ensures tests actually verify behavior, not just achieve coverage |
+
+### Test File Exceptions
+
+Test files (`tests/**/*.ts`) have relaxed limits:
+
+- Cyclomatic complexity: ≤15 (vs 10)
+- Max lines per function: ≤600 (vs 50) - allows large describe blocks with many test cases
+
+### Pre-commit Quality Gates
+
+The `pnpm precommit` command runs checks in optimized order for fast feedback:
+
+1. **Security** (`pnpm audit`) - Blocks commits with critical vulnerabilities
+2. **Formatting** (`pnpm format`) - Fast, easy to fix
+3. **YAML/Markdown Linting** - Fast file validation
+4. **Workflow Validation** - Prevents broken GitHub Actions
+5. **Type Checking** (`pnpm typecheck`) - Required for type-aware lint rules
+6. **Linting** (`pnpm lint`) - Comprehensive quality checks
+7. **Structural Analysis** - Circular deps, duplication, dead code
+8. **Tests with Coverage** (`pnpm test:coverage`) - Slowest check runs last
+
+**Mutation testing** is excluded from pre-commit due to performance - run it periodically (weekly/monthly).
 
 ## 🤖 Claude Code Integration
 
