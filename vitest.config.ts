@@ -28,10 +28,10 @@ export default defineConfig({
         '**/*.example.ts', // Example files - not part of production code
       ],
       thresholds: {
-        branches: 80,
-        functions: 80,
-        lines: 80,
-        statements: 80,
+        branches: 84, // Current: 84.95%, Goal: 90% - see PR#160 for plan
+        functions: 90,
+        lines: 90,
+        statements: 90,
       },
     },
   },

@@ -438,10 +438,38 @@ const cleanupPreviousOutput = (previousMode: string | null): void => {
 };
 
 /**
- * Switch logger output to a different destination at runtime
- * @param outputMode - The destination to switch to (stdout, stderr, file, syslog, null)
+ * Switch logger output to a different destination at runtime.
  *
- * Note: This implementation mutates the exported logger instance to maintain
+ * Dynamically changes where log messages are written without restarting the application.
+ * This is useful for debugging, testing, or changing log destinations based on runtime conditions.
+ *
+ * @param outputMode - The destination to switch to. Valid values:
+ *   - `'stdout'` - Standard output (console)
+ *   - `'stderr'` - Standard error stream
+ *   - `'file'` - Write to log file (configured via LOG_FILE_PATH)
+ *   - `'syslog'` - Send to syslog server (requires syslog configuration)
+ *   - `'null'` - Discard all log messages
+ *
+ * @throws {Error} If the output mode is invalid or if required configuration is missing
+ *   (e.g., switching to 'file' without LOG_FILE_PATH, or 'syslog' without SYSLOG_HOST)
+ *
+ * @example
+ * ```typescript
+ * // Switch to file logging
+ * switchLogOutput('file');
+ * logger.info('This will be written to the log file');
+ *
+ * // Switch to null output (disable logging)
+ * switchLogOutput('null');
+ * logger.info('This message will be discarded');
+ *
+ * // Switch back to console
+ * switchLogOutput('stdout');
+ * logger.info('Back to console output');
+ * ```
+ *
+ * @remarks
+ * This implementation mutates the exported logger instance to maintain
  * backward compatibility with existing code that imports the logger directly.
  * While this approach is more complex than a factory pattern, it ensures that
  * all existing logger references throughout the application automatically use
@@ -475,7 +503,34 @@ export const switchLogOutput = (outputMode: string): void => {
 };
 
 /**
- * Get current logger output mode
+ * Get the current logger output mode.
+ *
+ * Returns the active destination where log messages are being written.
+ * Useful for debugging, testing, or conditional logic based on logging configuration.
+ *
+ * @returns The current output mode as a string. Possible values:
+ *   - `'stdout'` - Logging to standard output
+ *   - `'stderr'` - Logging to standard error stream
+ *   - `'file'` - Logging to file
+ *   - `'syslog'` - Logging to syslog server
+ *   - `'null'` - Logging disabled
+ *
+ * @example
+ * ```typescript
+ * const currentMode = getLoggerOutputMode();
+ * console.log(`Current logger output: ${currentMode}`); // e.g., "Current logger output: stdout"
+ *
+ * // Conditional logic based on output mode
+ * if (getLoggerOutputMode() === 'file') {
+ *   // Perform file-specific operations
+ *   console.log('Logs are being written to file');
+ * }
+ * ```
+ *
+ * @remarks
+ * If the output mode has been explicitly set via {@link switchLogOutput}, this function
+ * returns that value. Otherwise, it returns the effective output mode determined from
+ * environment variables (LOG_OUTPUT or NODE_ENV-based defaults).
  */
 export const getLoggerOutputMode = (): string => {
   return currentOutputMode || getEffectiveLogOutput();

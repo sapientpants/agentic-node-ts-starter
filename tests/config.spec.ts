@@ -257,6 +257,25 @@ describe('Configuration', () => {
       expect(maskSensitiveValue('ENABLED', true)).toBe('true');
       expect(maskSensitiveValue('DISABLED', false)).toBe('false');
     });
+
+    it('should handle all edge case types in valueToString', async () => {
+      const { __testExports } = await import('../src/config.js');
+      const { maskSensitiveValue } = __testExports;
+
+      // Test explicit undefined
+      expect(maskSensitiveValue('OPTIONAL', undefined)).toBe('undefined');
+
+      // Test string type (explicitly test the string case branch)
+      expect(maskSensitiveValue('TEXT', 'hello')).toBe('hello');
+      expect(maskSensitiveValue('NAME', 'world')).toBe('world');
+
+      // Test function without a name (uses variable name)
+      const anonFunc = () => {};
+      const result = maskSensitiveValue('HANDLER', anonFunc);
+      expect(result).toContain('[Function:');
+      // Arrow functions get named after their variable
+      expect(result).toMatch(/\[Function:\s*\w+\]/);
+    });
   });
 
   describe('config helper functions', () => {
