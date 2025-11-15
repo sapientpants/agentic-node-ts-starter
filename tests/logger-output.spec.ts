@@ -167,15 +167,19 @@ describe('Logger Output Configuration', () => {
       // Log a message
       logger.info('Test message for file output');
 
-      // Wait for file to be created with a simple retry mechanism
-      // This is more reliable than a fixed timeout
+      // Wait for file to be created and content to be written
+      // with a retry mechanism for CI environments
       let attempts = 0;
-      const maxAttempts = 20;
-      const retryDelay = 50;
+      const maxAttempts = 40; // Increased for CI
+      const retryDelay = 100; // Increased delay
+      let content = '';
 
       while (attempts < maxAttempts) {
         if (existsSync(testLogFile)) {
-          break;
+          content = readFileSync(testLogFile, 'utf-8');
+          if (content.includes('Test message for file output')) {
+            break;
+          }
         }
         await new Promise((resolve) => setTimeout(resolve, retryDelay));
         attempts++;
@@ -185,7 +189,6 @@ describe('Logger Output Configuration', () => {
       expect(existsSync(testLogFile)).toBe(true);
 
       // Read and verify content
-      const content = readFileSync(testLogFile, 'utf-8');
       expect(content).toContain('Test message for file output');
     });
 
