@@ -8,6 +8,12 @@ import unicorn from 'eslint-plugin-unicorn';
 import promisePlugin from 'eslint-plugin-promise';
 import importPlugin from 'eslint-plugin-import';
 import noBarrelFiles from 'eslint-plugin-no-barrel-files';
+import sonarjs from 'eslint-plugin-sonarjs';
+import security from 'eslint-plugin-security';
+import eslintComments from '@eslint-community/eslint-plugin-eslint-comments';
+import n from 'eslint-plugin-n';
+import regexp from 'eslint-plugin-regexp';
+import jsdoc from 'eslint-plugin-jsdoc';
 import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
 
@@ -54,6 +60,12 @@ export default [
       promise: promisePlugin,
       import: importPlugin,
       'no-barrel-files': noBarrelFiles,
+      sonarjs,
+      security,
+      '@eslint-community/eslint-comments': eslintComments,
+      n,
+      regexp,
+      jsdoc,
     },
     settings: {
       'import/resolver': {
@@ -138,6 +150,27 @@ export default [
       'unicorn/prefer-array-flat-map': 'error',
       'unicorn/no-array-reduce': 'error',
       'unicorn/prefer-ternary': 'error',
+
+      // SonarJS - Code quality and bug detection
+      ...sonarjs.configs.recommended.rules,
+
+      // Security - Security-focused linting
+      ...security.configs.recommended.rules,
+
+      // ESLint Comments - Validate ESLint directive comments
+      ...eslintComments.configs.recommended.rules,
+
+      // Node.js - Node.js best practices
+      ...n.configs['recommended-module'].rules,
+
+      // RegExp - Advanced regex validation and optimization
+      ...regexp.configs['flat/recommended'].rules,
+
+      // JSDoc - Documentation quality and validation
+      ...jsdoc.configs['flat/recommended-typescript-flavor'].rules,
+      'jsdoc/require-jsdoc': 'off', // Don't require JSDoc everywhere, use selectively
+      'jsdoc/require-param-description': 'warn',
+      'jsdoc/require-returns-description': 'warn',
     },
   },
   // Allow barrel files for index.ts entry points and legitimate re-exports

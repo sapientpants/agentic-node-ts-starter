@@ -19,17 +19,27 @@ This file provides guidance to AI agents (such as Claude Code at claude.ai/code)
 
 1. `pnpm audit` - Security first (critical vulnerabilities block commits)
 2. `pnpm format` - Instant feedback, easy to fix
-3. `pnpm lint:yaml` - Fast file linting
-4. `pnpm lint:markdown` - Fast file linting
-5. `pnpm lint:workflows` - Fast workflow validation
-6. `pnpm typecheck` - Required for type-aware lint rules
-7. `pnpm lint` - Comprehensive quality checks (depends on typecheck)
-8. `pnpm deps:circular` - Structural analysis
-9. `pnpm duplication` - Structural analysis
-10. `pnpm dead-code` - Unused code detection
-11. `pnpm test:coverage` - Slowest check, runs last
+3. `pnpm lint:spelling` - Fast spell checking
+4. `pnpm lint:yaml` - Fast file linting
+5. `pnpm lint:markdown` - Fast file linting
+6. `pnpm lint:workflows` - Fast workflow validation
+7. `pnpm typecheck` - Required for type-aware lint rules
+8. `pnpm lint` - Comprehensive quality checks (12 ESLint plugins, depends on typecheck)
+9. `pnpm deps:circular` - Circular dependency detection (madge)
+10. `pnpm deps:cruise` - Architectural dependency validation (dependency-cruiser)
+11. `pnpm duplication` - Code duplication analysis (jscpd)
+12. `pnpm dead-code` - Unused exports/files/deps/types (Knip)
+13. `pnpm ts-prune` - Unused TypeScript exports (ts-prune)
+14. `pnpm test:coverage` - Slowest check, runs last (80% minimum threshold)
 
-**Note:** Mutation testing (`pnpm mutation-test`) is not included in precommit due to performance - run it periodically (weekly/monthly) instead.
+**Note:** The following tools are excluded from precommit due to performance/use-case:
+
+- `pnpm mutation-test` - Run periodically (weekly/monthly)
+- `pnpm scan:secrets` - Run manually or in CI (can use `scan:secrets:protect` for staged changes)
+- `pnpm publint` / `pnpm attw` - Run before publishing, not every commit
+- `pnpm size` - Run before release or when concerned about bundle size
+- `pnpm license:check` - Run when adding dependencies or before release
+- `pnpm deps:unused` - Too many false positives, use Knip instead (already in precommit)
 
 ### Testing
 
@@ -161,6 +171,64 @@ https://img.shields.io/badge/dynamic/json
 - **Severity Threshold**: Default fails on HIGH and CRITICAL vulnerabilities
 - **False Positives**: Add CVEs to `.trivyignore` with explanatory comments
 - **CI/CD Integration**: Scans run automatically before Docker Hub publication (Trivy installed automatically in CI)
+
+### Secret Scanning
+
+**Prerequisites**: Gitleaks must be installed locally (`brew install gitleaks` on macOS) or run in CI.
+
+- `pnpm scan:secrets` - Scan repository for secrets (default mode)
+- `pnpm scan:secrets:protect` - Scan staged changes only (pre-commit mode)
+- `pnpm scan:secrets:history` - Scan full git history (comprehensive audit)
+- `pnpm scan:secrets:report` - Generate JSON report in reports/gitleaks-report.json
+- **Configuration**: `.gitleaks.toml` (extends default rules)
+- **Allowlist**: `.gitleaksignore` for false positives (document reasons)
+- **Integration**: Can be added to pre-commit hooks or run manually/in CI
+
+### Package Publishing & Validation
+
+- `pnpm publint` - Validate package.json for npm publishing (checks exports, files field)
+- `pnpm attw` - Check TypeScript types exports with arethetypeswrong
+- `pnpm ts-prune` - Find unused TypeScript exports (complements Knip)
+- `pnpm pkg:validate` - Run both publint and attw together
+- **Note**: publint and attw are for pre-release validation, ts-prune runs in precommit
+
+### Documentation Generation
+
+- `pnpm docs:generate` - Generate API documentation with TypeDoc (output: docs/)
+- `pnpm docs:api` - Build project and extract API surface with Microsoft API Extractor
+- **Configuration**: `typedoc.json` and `api-extractor.json`
+- **Output**: TypeDoc generates HTML docs, API Extractor creates API reports and .d.ts rollups
+
+### Advanced Dependency Analysis
+
+- `pnpm deps:cruise` - Validate dependencies against architectural rules (dependency-cruiser)
+- `pnpm deps:cruise:graph` - Generate visual dependency graph (SVG)
+- `pnpm deps:unused` - Find unused dependencies with depcheck
+- **Configuration**: `.dependency-cruiser.js` defines dependency rules and constraints
+- **Complements**: Works alongside existing madge-based circular dependency detection
+
+### License Compliance
+
+- `pnpm license:check` - Display license summary for all dependencies
+- `pnpm license:report` - Generate detailed JSON license report
+- `pnpm license:csv` - Generate CSV license report
+- **Use**: Ensure license compatibility, generate compliance reports for legal review
+
+### Performance & Size Monitoring
+
+- `pnpm size` - Check bundle size against limits (fails if exceeded)
+- `pnpm perf:bench` - HTTP benchmark with autocannon (100 concurrent, 10s duration)
+- **Configuration**: `.size-limit.json` defines size limits per bundle
+- **Use**: Prevent bundle bloat, establish performance baselines
+
+### Developer Experience
+
+- `pnpm commit` - Interactive conventional commit creation with commitizen
+- **Branch Validation**: validate-branch-name enforces pattern: `<type>/<description>`
+  - Valid types: feat, fix, docs, style, refactor, perf, test, chore, revert
+  - Example: `feat/add-authentication` or `fix/memory-leak`
+  - Configuration: `.validate-branch-namerc.json`
+- **Test UI**: `pnpm test:ui` - Visual test interface with @vitest/ui
 
 ### Release & Security
 
@@ -305,13 +373,31 @@ Available slash commands in `.claude/commands/`:
 - **Package Manager**: pnpm 10.15.0 (specified in package.json)
 - **Node Version**: >=22.0.0 (engines requirement)
 - **TypeScript**: Strict mode with NodeNext module resolution
-- **Testing**: Vitest with V8 coverage provider
-- **Linting**: ESLint 9 with TypeScript support and type-aware rules enabled
-  - Catches floating promises, unsafe type assertions, and other type-safety issues
+- **Testing**: Vitest with V8 coverage provider + @vitest/ui for visual testing interface
+- **Linting**: ESLint 9 with comprehensive plugin ecosystem (11 plugins)
+  - **@typescript-eslint**: Type-aware rules (floating promises, unsafe assertions, strict boolean expressions)
+  - **eslint-plugin-sonarjs**: Code quality and bug detection (cognitive complexity, duplicate conditions)
+  - **eslint-plugin-security**: Security-focused linting (eval detection, unsafe regex, command injection)
+  - **eslint-plugin-n**: Node.js best practices (deprecated APIs, proper file extensions)
+  - **@eslint-community/eslint-plugin-eslint-comments**: ESLint directive validation
+  - **eslint-plugin-regexp**: Advanced regex validation and optimization
+  - **eslint-plugin-jsdoc**: JSDoc/TSDoc documentation quality
+  - **eslint-plugin-unicorn**: Modern JavaScript patterns
+  - **eslint-plugin-promise**: Promise/async best practices
+  - **eslint-plugin-import**: Import organization and circular dependency detection
+  - **eslint-plugin-no-barrel-files**: Barrel file anti-pattern prevention
+  - **eslint-plugin-jsonc**: JSON/JSONC/JSON5 linting
   - Type-aware rules apply to `src/**/*.ts` and `tests/**/*.ts` files
-  - Performance impact: ~1.5s for full project lint (acceptable trade-off for improved safety)
+  - Performance: ~2-3s for full project lint (enhanced coverage)
 - **Formatting**: Prettier 3 with ESLint integration
 - **Versioning**: Changesets for automated version management
+- **Documentation**: TypeDoc (API docs) + Microsoft API Extractor (API surface analysis)
+- **Package Publishing**: publint + arethetypeswrong + ts-prune
+- **Dependency Analysis**: madge + dependency-cruiser + depcheck
+- **Secret Scanning**: Gitleaks (configuration in .gitleaks.toml)
+- **License Compliance**: license-checker
+- **Performance**: size-limit (bundle size tracking) + autocannon (HTTP benchmarking)
+- **Developer Experience**: commitizen (conventional commits) + validate-branch-name
 
 ## Changeset Best Practices
 

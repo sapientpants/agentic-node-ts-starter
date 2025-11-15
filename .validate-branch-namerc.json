@@ -1,0 +1,4 @@
+{
+  "pattern": "^(main|develop|(feat|fix|docs|style|refactor|perf|test|chore|revert)/[a-z0-9-]+)$",
+  "errorMsg": "Branch name must follow the pattern: <type>/<description>\nValid types: feat, fix, docs, style, refactor, perf, test, chore, revert\nExample: feat/add-authentication or fix/memory-leak\nProtected branches: main, develop"
+}

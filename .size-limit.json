@@ -1,0 +1,8 @@
+[
+  {
+    "name": "Main bundle",
+    "path": "dist/index.js",
+    "limit": "50 KB",
+    "ignore": ["pino", "zod"]
+  }
+]

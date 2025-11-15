@@ -73,6 +73,7 @@ const getEffectiveLogOutput = (): string => {
 const parseSizeToBytes = (size: string | undefined): number | undefined => {
   if (!size) return undefined;
 
+  // eslint-disable-next-line security/detect-unsafe-regex -- Simple size parsing regex, no exponential backtracking
   const regex = /^(\d+(?:\.\d+)?)\s*([KMGT]?)B?$/i;
   const match = regex.exec(size);
   if (!match?.[1]) return undefined;
@@ -88,6 +89,7 @@ const parseSizeToBytes = (size: string | undefined): number | undefined => {
     T: 1024 * 1024 * 1024 * 1024,
   };
 
+  // eslint-disable-next-line security/detect-object-injection -- unit comes from regex match, constrained to [KMGT] or empty string
   return Math.floor(value * (multipliers[unit] || 1));
 };
 
@@ -313,6 +315,7 @@ const logValidationError = (context: string, error: unknown): void => {
 const ensureLogDirectory = (logPath: string): boolean => {
   validateFileMode(process.env.LOG_FILE_PERMISSIONS);
   try {
+    // eslint-disable-next-line security/detect-non-literal-fs-filename -- logPath validated by pino-file transport
     mkdirSync(dirname(logPath), { recursive: true, mode: 0o750 });
     return true;
   } catch (error) {
@@ -496,6 +499,7 @@ export const switchLogOutput = (outputMode: string): void => {
     // Use Record type for dynamic property assignment
     const loggerRecord = logger as unknown as Record<string, unknown>;
     const newLoggerRecord = newLogger as unknown as Record<string, unknown>;
+    // eslint-disable-next-line security/detect-object-injection -- key from Object.keys() is safe
     loggerRecord[key] = newLoggerRecord[key];
   }
 
