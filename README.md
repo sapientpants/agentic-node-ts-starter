@@ -17,7 +17,7 @@
 ### Code Quality Metrics
 
 [![Code Duplication](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fsapientpants%2Fagentic-node-ts-starter%2Fmain%2Fquality-metrics.json&query=%24.duplication.percentage&suffix=%25&label=Duplication&color=brightgreen)](https://github.com/sapientpants/agentic-node-ts-starter/actions)
-[![Mutation Score](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fsapientpants%2Fagentic-node-ts-starter%2Fmain%2Fquality-metrics.json&query=%24.mutation.score&suffix=%25&label=Mutation%20Score&color=yellow)](https://github.com/sapientpants/agentic-node-ts-starter/actions)
+[![Mutation Score](https://img.shields.io/badge/Mutation%20Score-N%2FA-lightgrey)](https://github.com/sapientpants/agentic-node-ts-starter/actions)
 
 ### Meta
 

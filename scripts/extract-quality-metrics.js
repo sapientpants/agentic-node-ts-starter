@@ -140,7 +140,8 @@ function extractMutationMetrics() {
     totalRuntimeErrors +
     totalCompileErrors;
 
-  const totalDetected = totalKilled + totalTimeout;
+  // Runtime errors are counted as detected (mutants that cause observable failures)
+  const totalDetected = totalKilled + totalTimeout + totalRuntimeErrors;
   const totalValid = totalMutants - totalIgnored - totalCompileErrors;
   const mutationScore = totalValid > 0 ? Math.round((totalDetected / totalValid) * 100) : null;
 
@@ -158,21 +159,15 @@ function extractMutationMetrics() {
 }
 
 /**
- * Get package version
+ * Read package.json once and extract version info
  */
-function getPackageVersion() {
+function getPackageInfo() {
   const packagePath = join(projectRoot, 'package.json');
   const packageJson = readJsonFile(packagePath);
-  return packageJson?.version || '0.0.0';
-}
-
-/**
- * Get Node.js version requirement
- */
-function getNodeVersion() {
-  const packagePath = join(projectRoot, 'package.json');
-  const packageJson = readJsonFile(packagePath);
-  return packageJson?.engines?.node || '>=22.0.0';
+  return {
+    version: packageJson?.version || '0.0.0',
+    nodeVersion: packageJson?.engines?.node || '>=22.0.0',
+  };
 }
 
 /**
@@ -183,12 +178,13 @@ function extractMetrics() {
   const coverage = extractCoverageMetrics();
   const duplication = extractDuplicationMetrics();
   const mutation = extractMutationMetrics();
+  const packageInfo = getPackageInfo();
 
   const metrics = {
     schemaVersion: '1.0.0',
     generatedAt: timestamp,
-    version: getPackageVersion(),
-    nodeVersion: getNodeVersion(),
+    version: packageInfo.version,
+    nodeVersion: packageInfo.nodeVersion,
     coverage: {
       lines: coverage.lines,
       statements: coverage.statements,
