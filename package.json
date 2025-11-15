@@ -44,7 +44,7 @@
     "clean": "rimraf dist coverage",
     "reset": "pnpm clean && pnpm install",
     "quick-check": "pnpm typecheck && pnpm lint && pnpm test",
-    "precommit": "pnpm audit --audit-level low && pnpm format && pnpm lint:yaml && pnpm lint:markdown && pnpm lint:workflows && pnpm typecheck && pnpm lint && pnpm deps:circular && pnpm duplication && pnpm dead-code && pnpm test:coverage",
+    "precommit": "pnpm audit --audit-level critical && pnpm format && pnpm lint:yaml && pnpm lint:markdown && pnpm lint:workflows && pnpm typecheck && pnpm lint && pnpm deps:circular && pnpm duplication && pnpm dead-code && pnpm test:coverage",
     "setup": "./scripts/setup.sh",
     "lint-staged": "lint-staged",
     "sbom": "pnpm dlx @cyclonedx/cdxgen -o sbom.cdx.json",
@@ -77,8 +77,7 @@
   },
   "pnpm": {
     "overrides": {
-      "tar": ">=7.5.2",
-      "js-yaml": ">=4.1.1"
+      "tar": ">=7.5.2"
     }
   },
   "dependencies": {
