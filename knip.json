@@ -1,0 +1,9 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": ["src/index.ts"],
+  "project": ["src/**/*.ts"],
+  "ignore": ["**/*.spec.ts", "**/*.test.ts", "tests/**", "src/**/*.example.ts"],
+  "ignoreDependencies": ["pino-roll", "pino-syslog", "pino-pretty", "@fast-check/vitest", "vite"],
+  "ignoreBinaries": ["open"],
+  "ignoreExportsUsedInFile": true
+}

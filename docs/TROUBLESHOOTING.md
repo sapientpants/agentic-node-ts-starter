@@ -267,7 +267,7 @@ pnpm format:fix
 pnpm lint:fix
 
 # Run all checks
-pnpm verify
+pnpm precommit
 
 # Emergency bypass (not recommended)
 git commit --no-verify -m "message"
@@ -450,7 +450,7 @@ When something's not working, try these in order:
 1. ✅ Check Node version: `node --version` (must be >= 22)
 2. ✅ Check pnpm version: `pnpm --version` (must be 10.15.0)
 3. ✅ Clear and reinstall: `rm -rf node_modules && pnpm install`
-4. ✅ Run verify: `pnpm verify`
+4. ✅ Run all checks: `pnpm precommit`
 5. ✅ Check for changesets: `pnpm changeset:status`
 6. ✅ Update dependencies: `pnpm update`
 7. ✅ Restart your IDE/terminal

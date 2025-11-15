@@ -13,8 +13,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `pnpm lint:fix` - Auto-fix linting issues
 - `pnpm format` - Check Prettier formatting
 - `pnpm format:fix` - Apply Prettier formatting
-- `pnpm precommit` - Run all checks (audit, typecheck, lint, format, test with coverage)
-- `pnpm verify` - Alias for pnpm precommit (for backwards compatibility)
+- `pnpm precommit` - Run all quality checks in optimized order (see below)
+
+**Pre-commit Check Order (optimized for fast feedback and fail-fast):**
+
+1. `pnpm audit` - Security first (critical vulnerabilities block commits)
+2. `pnpm format` - Instant feedback, easy to fix
+3. `pnpm lint:yaml` - Fast file linting
+4. `pnpm lint:markdown` - Fast file linting
+5. `pnpm lint:workflows` - Fast workflow validation
+6. `pnpm typecheck` - Required for type-aware lint rules
+7. `pnpm lint` - Comprehensive quality checks (depends on typecheck)
+8. `pnpm deps:circular` - Structural analysis
+9. `pnpm duplication` - Structural analysis
+10. `pnpm dead-code` - Unused code detection
+11. `pnpm test:coverage` - Slowest check, runs last
+
+**Note:** Mutation testing (`pnpm mutation-test`) is not included in precommit due to performance - run it periodically (weekly/monthly) instead.
 
 ### Testing
 
@@ -34,38 +49,62 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `pnpm deps:circular` - Find circular dependencies (fails if found)
 - `pnpm deps:graph` - Generate dependency graph
 - `pnpm deps:summary` - Show dependency summary
+- `pnpm deps:check` - Check for outdated dependencies
+- `pnpm deps:update:minor` - Update dependencies to latest minor versions
+- `pnpm deps:update:patch` - Update dependencies to latest patch versions
+- `pnpm dead-code` - Find unused exports, files, dependencies, and types (via Knip)
+- `pnpm dead-code:production` - Find dead code in production dependencies only
 - `pnpm duplication` - Check code duplication (fails if >2% threshold exceeded)
+- `pnpm mutation-test` - Run mutation testing to verify test quality (via Stryker)
+- `pnpm mutation-test:incremental` - Run mutation testing with incremental mode (faster)
 - `pnpm metrics` - Run all quality metrics (deps summary, circular deps, duplication)
 
 **Complexity Thresholds**: This project enforces strict code quality limits via ESLint and dedicated analyzers:
 
-| Metric                       | Threshold | Scope        |
-| ---------------------------- | --------- | ------------ |
-| **Cyclomatic Complexity**    | 10        | Per function |
-| **Cognitive Complexity**     | 15        | Per function |
-| **Max Function Lines**       | 50        | Per function |
-| **Max Parameters**           | 4         | Per function |
-| **Max Nesting Depth**        | 3         | Per function |
-| **Max Statements**           | 15        | Per function |
-| **Max Nested Callbacks**     | 3         | Per function |
-| **Duplicate String Literal** | 2 uses    | Per file     |
-| **Code Duplication**         | 2%        | Project-wide |
+| Metric                    | Threshold | Scope        |
+| ------------------------- | --------- | ------------ |
+| **Cyclomatic Complexity** | 10        | Per function |
+| **Max Function Lines**    | 50        | Per function |
+| **Max Parameters**        | 4         | Per function |
+| **Max Nesting Depth**     | 3         | Per function |
+| **Max Statements**        | 15        | Per function |
+| **Max Nested Callbacks**  | 3         | Per function |
+| **Code Duplication**      | 2%        | Project-wide |
 
 All violations trigger **errors** and cause `pnpm lint` to fail. These rules apply to `src/**/*.ts`.
 
 **Tools Used**:
 
-- **eslint-plugin-sonarjs** - Cognitive complexity, duplicate strings, identical functions detection
+- **@typescript-eslint/eslint-plugin** - Strict TypeScript type checking with type-aware rules
+  - Floating promise detection
+  - Strict boolean expressions
+  - Unnecessary conditions and type assertions
+  - Promise/async best practices
+- **eslint-plugin-unicorn** - Modern JavaScript patterns and code quality
+  - Modern Math APIs
+  - Node.js protocol imports
+  - String manipulation best practices
+  - Array method preferences
+- **eslint-plugin-promise** - Promise/async patterns and error handling
+  - Promise return values
+  - Catch or return enforcement
+  - Async/await preference
+- **eslint-plugin-import** - Import/export organization and circular dependency detection
+  - No circular dependencies
+  - Import ordering
+  - No duplicate imports
+- **eslint-plugin-no-barrel-files** - Prevent barrel file anti-patterns
 - **ESLint core rules** - Cyclomatic complexity, max lines, max params, max nesting, max statements, max callbacks
 - **madge** - Circular dependency detection
 - **jscpd** - Code duplication analysis (2% threshold triggers failure)
+- **Knip** - Dead code detection (unused exports, files, dependencies, types)
+- **Stryker Mutator** - Mutation testing for test quality verification (80% threshold)
+- **npm-check-updates** - Dependency freshness tracking
 
 **Test File Relaxed Thresholds** (`tests/**/*.ts`):
 
 - Cyclomatic complexity: 15 (vs 10 for src)
-- Cognitive complexity: 20 (vs 15 for src)
 - Max function lines: 600 (vs 50 for src) - allows large describe blocks with many test cases
-- Duplicate string checks: disabled
 - All other rules: same as src files
 
 ### Container Security
@@ -194,7 +233,7 @@ import { myFunction } from './module'; // ✗ Wrong
 
 1. (Optional) Use `/spec-feature` to create a feature spec as a GitHub issue
 2. Implement with tests (property-based for core logic)
-3. Run `pnpm verify` before committing
+3. Run `pnpm precommit` before committing (runs all quality checks)
 4. Use Conventional Commits format (`feat:`, `fix:`, etc.)
 5. Add a changeset for your changes: `pnpm changeset`
 6. Create a pull request for review - **never push directly to main**
@@ -290,7 +329,7 @@ pnpm changeset --empty
 git checkout -b feature/my-feature
 
 # After implementing changes
-pnpm verify  # Ensure all checks pass
+pnpm precommit  # Ensure all checks pass
 
 # Add a changeset
 pnpm changeset
@@ -367,7 +406,7 @@ Closes #42"
 
 ### Before Committing
 
-1. **Always run `pnpm verify`** - Ensures all checks pass (typecheck, lint, format, tests)
+1. **Always run `pnpm precommit`** - Ensures all checks pass in optimized order (see Development Commands section for details)
 2. **Use conventional commits** - Format: `type(scope): description` (e.g., `feat: add dark mode`)
 3. **Add changesets** - Run `pnpm changeset` to document your changes for the release notes
 4. **Use the correct import syntax** - Always use `.js` extension for local ES module imports

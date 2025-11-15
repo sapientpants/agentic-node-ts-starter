@@ -99,14 +99,13 @@ const getFileTransportConfig = () => {
 
   if (maxSize) {
     // For rotation, use pino-roll transport if size limits are specified
+    const maxFiles = getEnvConfig().LOG_FILE_MAX_FILES;
     return {
       target: 'pino-roll',
       options: {
         file: getEnvConfig().LOG_FILE_PATH || DEFAULT_LOG_FILE_PATH,
         size: getEnvConfig().LOG_FILE_MAX_SIZE || '10M',
-        ...(getEnvConfig().LOG_FILE_MAX_FILES && {
-          limit: { count: getEnvConfig().LOG_FILE_MAX_FILES },
-        }),
+        ...(maxFiles !== undefined ? { limit: { count: maxFiles } } : {}),
       },
     };
   }

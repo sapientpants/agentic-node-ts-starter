@@ -9,6 +9,7 @@
  * ============================================================================
  */
 
+import { z } from 'zod';
 import { createChildLogger } from './logger.js';
 
 const logger = createChildLogger('index');
@@ -21,7 +22,6 @@ export function add(a: number, b: number): number {
 }
 
 // Example of a zod-validated function input
-import { z } from 'zod';
 export const CreateUser = z.object({
   id: z
     .string()
