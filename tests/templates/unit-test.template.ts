@@ -8,20 +8,18 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createTestEnvironment } from '../helpers/test-utils.js';
 
 // Import the module you're testing
 // import { functionToTest } from '../src/module.js';
 
 describe('MODULE_NAME', () => {
-  const { mocks, cleanup } = createTestEnvironment();
-
   beforeEach(() => {
     // Setup before each test
   });
 
   afterEach(() => {
-    cleanup();
+    // Cleanup after each test
+    vi.clearAllMocks();
   });
 
   describe('FUNCTION_NAME', () => {
@@ -55,8 +53,9 @@ describe('MODULE_NAME', () => {
 
   describe('logging', () => {
     it('should log appropriate messages', () => {
-      // Verify logging behavior
-      // expect(mocks.logger.info).toHaveBeenCalledWith(expectedLogMessage);
+      // Verify logging behavior using vi.spyOn or mock the logger
+      // const loggerSpy = vi.spyOn(logger, 'info');
+      // expect(loggerSpy).toHaveBeenCalledWith(expectedLogMessage);
     });
   });
 });
