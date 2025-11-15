@@ -1,5 +1,17 @@
 # agentic-node-ts-starter
 
+## 0.25.0
+
+### Minor Changes
+
+- [#157](https://github.com/sapientpants/agentic-node-ts-starter/pull/157) [`b00da44`](https://github.com/sapientpants/agentic-node-ts-starter/commit/b00da4474be2f9d3f53bd324a68e988a2122e5a2) - feat: implement comprehensive quality metrics dashboard in README
+  - Added automated quality metrics extraction system
+  - Created comprehensive badge grid with 13+ quality indicators
+  - Implemented detailed quality dashboard with testing, code quality, and security metrics
+  - Added quality standards section explaining thresholds and rationale
+  - Integrated metrics update into main workflow for automatic badge updates
+  - Added `pnpm metrics:update` command for manual metric extraction
+
 ## 0.24.0
 
 ### Minor Changes
