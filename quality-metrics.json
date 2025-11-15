@@ -1,11 +1,11 @@
 {
   "schemaVersion": "1.0.0",
-  "generatedAt": "2025-11-15T13:38:53.240Z",
-  "version": "0.25.0",
+  "generatedAt": "2025-11-15T22:05:30.996Z",
+  "version": "0.26.0",
   "nodeVersion": ">=22.0.0",
   "coverage": {
-    "lines": 93.77,
-    "statements": 93.65,
+    "lines": 93.93,
+    "statements": 93.81,
     "functions": 100,
     "branches": 84.95,
     "threshold": {
