@@ -23,7 +23,7 @@
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Node Version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fsapientpants%2Fagentic-node-ts-starter%2Fmain%2Fquality-metrics.json&query=%24.nodeVersion&label=Node.js&color=339933&logo=node.js)](https://nodejs.org)
-[![Package Manager](https://img.shields.io/badge/pnpm-10.17.0-orange.svg?logo=pnpm)](https://pnpm.io)
+[![Package Manager](https://img.shields.io/badge/pnpm-10.22.0-orange.svg?logo=pnpm)](https://pnpm.io)
 [![Version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fsapientpants%2Fagentic-node-ts-starter%2Fmain%2Fquality-metrics.json&query=%24.version&label=Version)](https://github.com/sapientpants/agentic-node-ts-starter/releases)
 
 A **batteries-included** TypeScript starter template with comprehensive testing, code quality automation, and security scanning. Built for modern Node.js development with AI-assisted (agentic) coding workflow.
