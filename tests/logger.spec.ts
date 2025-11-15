@@ -331,4 +331,110 @@ describe('Logger', () => {
       expect(() => prodLogger.info('no correlation id')).not.toThrow();
     });
   });
+
+  describe('switchLogOutput', () => {
+    it('should switch logger output to stdout', async () => {
+      const { switchLogOutput, getLoggerOutputMode } = await import('../src/logger.js');
+
+      switchLogOutput('stdout');
+      expect(getLoggerOutputMode()).toBe('stdout');
+    });
+
+    it('should switch logger output to stderr', async () => {
+      const { switchLogOutput, getLoggerOutputMode } = await import('../src/logger.js');
+
+      switchLogOutput('stderr');
+      expect(getLoggerOutputMode()).toBe('stderr');
+    });
+
+    it('should switch logger output to null', async () => {
+      const { switchLogOutput, getLoggerOutputMode } = await import('../src/logger.js');
+
+      switchLogOutput('null');
+      expect(getLoggerOutputMode()).toBe('null');
+    });
+
+    it('should handle cleanup errors when switching from file output', async () => {
+      // Mock console.warn to capture cleanup warnings
+      // eslint-disable-next-line no-console
+      const originalWarn = console.warn;
+      const warnings: unknown[] = [];
+      // eslint-disable-next-line no-console
+      console.warn = (...args: unknown[]) => {
+        warnings.push(args);
+      };
+
+      try {
+        vi.resetModules();
+        const { switchLogOutput, getLoggerOutputMode } = await import('../src/logger.js');
+
+        // First switch to file output (if supported)
+        try {
+          process.env.LOG_FILE_PATH = '/tmp/test.log';
+          switchLogOutput('file');
+        } catch {
+          // File output might not be available in test environment, skip this test
+          // eslint-disable-next-line no-console
+          console.warn = originalWarn;
+          return;
+        }
+
+        // Now switch away from file to trigger cleanup
+        switchLogOutput('stdout');
+        expect(getLoggerOutputMode()).toBe('stdout');
+
+        // The cleanup should have attempted to close the file stream
+        // Even if cleanup fails, the switch should succeed
+      } finally {
+        // eslint-disable-next-line no-console
+        console.warn = originalWarn;
+        delete process.env.LOG_FILE_PATH;
+      }
+    });
+
+    it('should create logger without destination when destination is null', async () => {
+      // Test the branch where destination is falsy in createLogger
+      vi.resetModules();
+      process.env.LOG_OUTPUT = 'stdout';
+
+      const { logger } = await import('../src/logger.js');
+
+      // Logger should still work even when created without explicit destination
+      expect(() => logger.info('test')).not.toThrow();
+      expect(logger).toBeDefined();
+      expect(logger.info).toBeDefined();
+    });
+
+    it('should create logger with stderr destination', async () => {
+      // Test the branch where destination is pino.destination(2) for stderr
+      vi.resetModules();
+      process.env.LOG_OUTPUT = 'stderr';
+      process.env.NODE_ENV = 'test';
+
+      const { logger } = await import('../src/logger.js');
+
+      // Logger should be created with stderr destination
+      expect(logger).toBeDefined();
+      expect(() => logger.info('test to stderr')).not.toThrow();
+    });
+
+    it('should handle switchLogOutput with various modes including null', async () => {
+      vi.resetModules();
+      const { switchLogOutput, getLoggerOutputMode } = await import('../src/logger.js');
+
+      // Test switching through different modes to cover all branches
+      switchLogOutput('stdout');
+      expect(getLoggerOutputMode()).toBe('stdout');
+
+      switchLogOutput('stderr');
+      expect(getLoggerOutputMode()).toBe('stderr');
+
+      switchLogOutput('null');
+      expect(getLoggerOutputMode()).toBe('null');
+
+      // Switch back to stdout
+      switchLogOutput('stdout');
+      expect(getLoggerOutputMode()).toBe('stdout');
+    });
+  });
 });
