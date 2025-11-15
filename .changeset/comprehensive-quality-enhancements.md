@@ -68,18 +68,18 @@ This major enhancement adds best-in-class quality tooling across all dimensions:
 - Integration guidance for each tool category
 
 **Precommit Integration:**
-All new quality tools integrated into optimized precommit workflow (15 checks total):
+New quality tools integrated into optimized precommit workflow (14 checks total):
 
 - Added dependency-cruiser architectural validation
-- Added depcheck unused dependency detection
 - Added ts-prune TypeScript export analysis
 - Tools run in fail-fast order: security → formatting → linting → analysis → tests
+- depcheck excluded from precommit due to false positives (available via `pnpm deps:unused`)
 - Performance-intensive tools (mutation testing, secrets scanning, size limits) excluded by design
 
 **Impact:**
 
 - ESLint coverage expanded from 6 to 12 plugins
-- Precommit checks expanded from 11 to 15 steps
+- Precommit checks expanded from 11 to 14 steps
 - Security scanning enhanced (static + secrets + container)
 - Developer experience significantly improved
 - Documentation generation automated

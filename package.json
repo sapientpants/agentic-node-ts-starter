@@ -60,7 +60,7 @@
     "clean": "rimraf dist coverage",
     "reset": "pnpm clean && pnpm install",
     "quick-check": "pnpm typecheck && pnpm lint && pnpm test",
-    "precommit": "pnpm audit --audit-level critical && pnpm format && pnpm lint:spelling && pnpm lint:yaml && pnpm lint:markdown && pnpm lint:workflows && pnpm typecheck && pnpm lint && pnpm deps:circular && pnpm deps:cruise && pnpm deps:unused && pnpm duplication && pnpm dead-code && pnpm ts-prune && pnpm test:coverage",
+    "precommit": "pnpm audit --audit-level critical && pnpm format && pnpm lint:spelling && pnpm lint:yaml && pnpm lint:markdown && pnpm lint:workflows && pnpm typecheck && pnpm lint && pnpm deps:circular && pnpm deps:cruise && pnpm duplication && pnpm dead-code && pnpm ts-prune && pnpm test:coverage",
     "setup": "./scripts/setup.sh",
     "lint-staged": "lint-staged",
     "sbom": "pnpm dlx @cyclonedx/cdxgen -o sbom.cdx.json",

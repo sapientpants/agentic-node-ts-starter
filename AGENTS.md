@@ -27,11 +27,10 @@ This file provides guidance to AI agents (such as Claude Code at claude.ai/code)
 8. `pnpm lint` - Comprehensive quality checks (12 ESLint plugins, depends on typecheck)
 9. `pnpm deps:circular` - Circular dependency detection (madge)
 10. `pnpm deps:cruise` - Architectural dependency validation (dependency-cruiser)
-11. `pnpm deps:unused` - Unused dependency detection (depcheck)
-12. `pnpm duplication` - Code duplication analysis (jscpd)
-13. `pnpm dead-code` - Unused exports/files/deps/types (Knip)
-14. `pnpm ts-prune` - Unused TypeScript exports (ts-prune)
-15. `pnpm test:coverage` - Slowest check, runs last (80% minimum threshold)
+11. `pnpm duplication` - Code duplication analysis (jscpd)
+12. `pnpm dead-code` - Unused exports/files/deps/types (Knip)
+13. `pnpm ts-prune` - Unused TypeScript exports (ts-prune)
+14. `pnpm test:coverage` - Slowest check, runs last (80% minimum threshold)
 
 **Note:** The following tools are excluded from precommit due to performance/use-case:
 
@@ -40,6 +39,7 @@ This file provides guidance to AI agents (such as Claude Code at claude.ai/code)
 - `pnpm publint` / `pnpm attw` - Run before publishing, not every commit
 - `pnpm size` - Run before release or when concerned about bundle size
 - `pnpm license:check` - Run when adding dependencies or before release
+- `pnpm deps:unused` - Too many false positives, use Knip instead (already in precommit)
 
 ### Testing
 

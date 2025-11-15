@@ -3,7 +3,14 @@
   "entry": ["src/index.ts", "tests/**/*.spec.ts"],
   "project": ["src/**/*.ts", "tests/**/*.ts"],
   "ignore": ["src/**/*.example.ts", "tests/**/*.template.ts"],
-  "ignoreDependencies": ["pino-roll", "pino-syslog", "pino-pretty", "@fast-check/vitest", "vite"],
-  "ignoreBinaries": ["open"],
+  "ignoreDependencies": [
+    "pino-roll",
+    "pino-syslog",
+    "pino-pretty",
+    "@fast-check/vitest",
+    "vite",
+    "validate-branch-name"
+  ],
+  "ignoreBinaries": ["open", "dot"],
   "ignoreExportsUsedInFile": true
 }
