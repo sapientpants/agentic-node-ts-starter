@@ -573,7 +573,7 @@ Target users: [who will use this]
 - To update dependencies: [process]
 ```
 
-### Example Project-Specific CLAUDE.md Addition
+### Example Project-Specific AGENTS.md Addition
 
 ```markdown
 ## Project: E-Commerce API
