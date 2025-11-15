@@ -91,8 +91,12 @@ const shutdown = (signal: string) => {
 };
 
 // Handle shutdown signals
-process.on('SIGTERM', () => shutdown('SIGTERM'));
-process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => {
+  shutdown('SIGTERM');
+});
+process.on('SIGINT', () => {
+  shutdown('SIGINT');
+});
 
 // Handle uncaught errors
 process.on('uncaughtException', (error) => {

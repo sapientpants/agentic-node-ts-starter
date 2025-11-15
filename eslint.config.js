@@ -4,7 +4,10 @@ import tsParser from '@typescript-eslint/parser';
 import eslintConfigPrettier from 'eslint-config-prettier';
 import * as jsonc from 'eslint-plugin-jsonc';
 import jsoncParser from 'jsonc-eslint-parser';
-import sonarjs from 'eslint-plugin-sonarjs';
+import unicorn from 'eslint-plugin-unicorn';
+import promisePlugin from 'eslint-plugin-promise';
+import importPlugin from 'eslint-plugin-import';
+import noBarrelFiles from 'eslint-plugin-no-barrel-files';
 import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
 
@@ -47,7 +50,18 @@ export default [
     },
     plugins: {
       '@typescript-eslint': tseslint,
-      sonarjs,
+      unicorn,
+      promise: promisePlugin,
+      import: importPlugin,
+      'no-barrel-files': noBarrelFiles,
+    },
+    settings: {
+      'import/resolver': {
+        typescript: {
+          project: __dirname,
+        },
+        node: true,
+      },
     },
     rules: {
       ...tseslint.configs['recommended-type-checked'].rules,
@@ -67,13 +81,70 @@ export default [
       'max-statements': ['error', 15],
       'max-nested-callbacks': ['error', 3],
 
-      // Cognitive complexity (SonarJS)
-      'sonarjs/cognitive-complexity': ['error', 15],
+      // Strict TypeScript rules
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/no-misused-promises': [
+        'error',
+        {
+          checksVoidReturn: true,
+          checksConditionals: true,
+        },
+      ],
+      '@typescript-eslint/await-thenable': 'error',
+      '@typescript-eslint/require-await': 'error',
+      '@typescript-eslint/no-unnecessary-type-assertion': 'error',
+      '@typescript-eslint/no-unnecessary-condition': 'error',
+      '@typescript-eslint/strict-boolean-expressions': [
+        'error',
+        {
+          allowString: true,
+          allowNumber: true,
+          allowNullableObject: true,
+          allowNullableBoolean: true,
+          allowNullableString: true,
+          allowNullableNumber: true,
+          allowAny: false,
+        },
+      ],
+      '@typescript-eslint/no-confusing-void-expression': 'error',
+      '@typescript-eslint/no-meaningless-void-operator': 'error',
+      '@typescript-eslint/switch-exhaustiveness-check': 'error',
+      '@typescript-eslint/promise-function-async': 'error',
 
-      // Additional code quality rules from SonarJS
-      'sonarjs/no-duplicate-string': ['error', { threshold: 2 }],
-      'sonarjs/no-identical-functions': 'error',
-      'sonarjs/prefer-immediate-return': 'error',
+      // Promise best practices
+      'promise/always-return': 'error',
+      'promise/catch-or-return': 'error',
+      'promise/no-nesting': 'error',
+      'promise/prefer-await-to-then': 'error',
+
+      // Import organization
+      'import/no-cycle': ['error', { maxDepth: Infinity }],
+      'import/no-self-import': 'error',
+      'import/no-useless-path-segments': 'error',
+      'import/no-duplicates': 'error',
+      'import/first': 'error',
+      'import/no-mutable-exports': 'error',
+      'import/no-absolute-path': 'error',
+
+      // Barrel files
+      'no-barrel-files/no-barrel-files': 'error',
+
+      // Unicorn rules - selective modern patterns
+      'unicorn/no-nested-ternary': 'error',
+      'unicorn/prefer-modern-math-apis': 'error',
+      'unicorn/throw-new-error': 'error',
+      'unicorn/prefer-node-protocol': 'error',
+      'unicorn/prefer-string-slice': 'error',
+      'unicorn/prefer-array-flat-map': 'error',
+      'unicorn/no-array-reduce': 'error',
+      'unicorn/prefer-ternary': 'error',
+    },
+  },
+  // Allow barrel files for index.ts entry points and legitimate re-exports
+  {
+    files: ['**/index.ts', '**/logger.ts'],
+    rules: {
+      'no-barrel-files/no-barrel-files': 'off',
     },
   },
   // Relaxed complexity rules for test files
@@ -90,7 +161,6 @@ export default [
     },
     plugins: {
       '@typescript-eslint': tseslint,
-      sonarjs,
     },
     rules: {
       ...tseslint.configs['recommended-type-checked'].rules,
@@ -99,8 +169,6 @@ export default [
       // Test files can have larger describe blocks with many test cases
       complexity: ['error', 15],
       'max-lines-per-function': ['error', { max: 600, skipComments: true, skipBlankLines: true }],
-      'sonarjs/cognitive-complexity': ['error', 20],
-      'sonarjs/no-duplicate-string': 'off', // Allow duplicates in tests
     },
   },
   // JSON/JSONC/JSON5 linting configuration

@@ -136,14 +136,8 @@ export function validateFileMode(mode: number | string | undefined): number {
     return defaultMode;
   }
 
-  let numericMode: number;
-
-  if (typeof mode === 'string') {
-    // Parse octal string (e.g., "0640" or "640")
-    numericMode = Number.parseInt(mode, 8);
-  } else {
-    numericMode = mode;
-  }
+  // Parse octal string (e.g., "0640" or "640") or use numeric value
+  const numericMode = typeof mode === 'string' ? Number.parseInt(mode, 8) : mode;
 
   if (Number.isNaN(numericMode) || numericMode < 0 || numericMode > 0o777) {
     process.stderr.write(`Invalid file mode ${mode}, using default ${defaultMode.toString(8)}\n`);

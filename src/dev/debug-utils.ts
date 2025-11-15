@@ -70,6 +70,7 @@ export function timed(target: any, propertyName: string, descriptor: PropertyDes
 
       // Handle async functions
       if (result instanceof Promise) {
+        // eslint-disable-next-line promise/prefer-await-to-then -- Using finally for performance measurement
         return result.finally(() => timer.end());
       }
 
@@ -167,30 +168,35 @@ const logFunctionError = (functionName: string, error: unknown): void => {
 /**
  * Handle async function result
  */
+// eslint-disable-next-line @typescript-eslint/promise-function-async -- Intentionally not async to chain promises
 const handleAsyncResult = (functionName: string, promise: Promise<any>): Promise<any> => {
-  return promise
-    .then((res) => {
-      logger.debug(
-        {
-          function: functionName,
-          result: res,
-          status: 'resolved',
-        },
-        'Async function completed',
-      );
-      return res;
-    })
-    .catch((error) => {
-      logger.error(
-        {
-          function: functionName,
-          error: error.message,
-          status: 'rejected',
-        },
-        'Async function failed',
-      );
-      throw error;
-    });
+  return (
+    promise
+      // eslint-disable-next-line promise/prefer-await-to-then -- Debug utility uses promise chains for logging
+      .then((res) => {
+        logger.debug(
+          {
+            function: functionName,
+            result: res,
+            status: 'resolved',
+          },
+          'Async function completed',
+        );
+        return res;
+      })
+      // eslint-disable-next-line promise/prefer-await-to-then -- Debug utility uses promise chains for logging
+      .catch((error) => {
+        logger.error(
+          {
+            function: functionName,
+            error: error.message,
+            status: 'rejected',
+          },
+          'Async function failed',
+        );
+        throw error;
+      })
+  );
 };
 
 /**

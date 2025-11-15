@@ -124,6 +124,7 @@ const SENSITIVE_KEYS = ['PASSWORD', 'TOKEN', 'SECRET', 'KEY'];
 /**
  * Convert value to string safely
  */
+// eslint-disable-next-line complexity -- Switch exhaustiveness requires all typeof cases
 function valueToString(value: unknown): string {
   // Handle null/undefined
   if (value == null) {
@@ -139,6 +140,8 @@ function valueToString(value: unknown): string {
 
   // Use switch to handle remaining types
   switch (valueType) {
+    case 'string':
+      return value as string;
     case 'number':
       return String(value as number);
     case 'boolean':
@@ -151,6 +154,8 @@ function valueToString(value: unknown): string {
       return JSON.stringify(value);
     case 'function':
       return `[Function: ${(value as { name?: string }).name || 'anonymous'}]`;
+    case 'undefined':
+      return 'undefined';
     default:
       return '[Unknown]';
   }

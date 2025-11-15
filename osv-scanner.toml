@@ -24,3 +24,20 @@ id = "GHSA-9965-vmph-33xx"
 # - Mitigation: Project does not use validator's isURL() function for security-critical validation
 # - Will re-evaluate when upstream releases a fix
 # Issue: https://osv.dev/GHSA-9965-vmph-33xx
+
+[[IgnoredVulns]]
+id = "GHSA-mh29-5h37-fv8m"
+# Reason: Medium severity (CVSS 5.3) prototype pollution vulnerability in js-yaml
+# CVE: CVE-2025-64718
+# - js-yaml < 4.1.1 is a transitive dependency via @changesets/parse@0.4.1
+# - Fixed in js-yaml 4.1.1, but @changesets/parse does not support js-yaml v4
+# - @changesets/parse uses deprecated safeLoad() API (removed in js-yaml v4)
+# - Latest @changesets versions (including 3.0.0-next.1) still use js-yaml ^3.13.1
+# - Risk: Prototype pollution only when parsing UNTRUSTED YAML documents
+# - Mitigation: Our usage is SAFE - @changesets/parse only processes changeset files in .changeset/ which are:
+#   * Developer-written source code (not user input)
+#   * Committed to git and reviewed in PRs
+#   * Part of our trusted codebase
+# - Alternative mitigation: Run Node with --disable-proto=delete flag
+# - Will re-evaluate when @changesets/parse releases js-yaml v4 support
+# Issue: https://github.com/nodeca/js-yaml/security/advisories/GHSA-mh29-5h37-fv8m

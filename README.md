@@ -1,11 +1,6 @@
 # Agentic Node + TypeScript Starter
 
 [![Main](https://github.com/sapientpants/agentic-node-ts-starter/actions/workflows/main.yml/badge.svg)](https://github.com/sapientpants/agentic-node-ts-starter/actions/workflows/main.yml)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=agentic-node-ts-starter&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=agentic-node-ts-starter)
-[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=agentic-node-ts-starter&metric=bugs)](https://sonarcloud.io/summary/new_code?id=agentic-node-ts-starter)
-[![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=agentic-node-ts-starter&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=agentic-node-ts-starter)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=agentic-node-ts-starter&metric=coverage)](https://sonarcloud.io/summary/new_code?id=agentic-node-ts-starter)
-[![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=agentic-node-ts-starter&metric=duplicated_lines_density)](https://sonarcloud.io/summary/new_code?id=agentic-node-ts-starter)
 
 A **batteries-included** TypeScript starter template with comprehensive testing, code quality automation, and security scanning. Built for modern Node.js development with AI-assisted (agentic) coding workflow.
 
