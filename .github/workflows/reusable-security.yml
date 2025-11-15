@@ -18,7 +18,7 @@ on:
       pnpm-version:
         description: 'pnpm version (should match package.json packageManager)'
         type: string
-        default: '10.17.0' # UPDATE: When upgrading pnpm
+        default: '10.22.0' # UPDATE: When upgrading pnpm
       run-osv-scan:
         description: 'Run OSV scanner for dependency vulnerabilities'
         type: boolean

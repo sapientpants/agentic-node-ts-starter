@@ -93,3 +93,7 @@ MD049:
 # MD050/strong-style - Strong style
 MD050:
   style: 'asterisk' # Use ** for bold
+
+# MD060/table-column-style - Table column style
+# Disabled as it conflicts with Prettier's table formatting
+MD060: false
