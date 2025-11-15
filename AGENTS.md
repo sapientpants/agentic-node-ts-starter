@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to AI agents (such as Claude Code at claude.ai/code) when working with code in this repository.
 
 ## Development Commands
 
@@ -512,7 +512,7 @@ Required variables:
 
 - `ENABLE_DOCKER_RELEASE` - Set to 'true' to enable Docker builds
 
-## Customizing CLAUDE.md for Your Project
+## Customizing AGENTS.md for Your Project
 
 When adapting this template for your specific project, update this file to include:
 
