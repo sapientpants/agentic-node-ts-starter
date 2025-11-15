@@ -53,7 +53,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `pnpm deps:update:minor` - Update dependencies to latest minor versions
 - `pnpm deps:update:patch` - Update dependencies to latest patch versions
 - `pnpm dead-code` - Find unused exports, files, dependencies, and types (via Knip)
-- `pnpm dead-code:production` - Find dead code in production dependencies only
 - `pnpm duplication` - Check code duplication (fails if >2% threshold exceeded)
 - `pnpm mutation-test` - Run mutation testing to verify test quality (via Stryker)
 - `pnpm mutation-test:incremental` - Run mutation testing with incremental mode (faster)

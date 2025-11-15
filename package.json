@@ -28,7 +28,6 @@
     "deps:update:patch": "ncu -u --target patch",
     "deps:update:latest": "ncu -u --target latest",
     "dead-code": "knip",
-    "dead-code:production": "knip --production",
     "duplication": "jscpd src/",
     "mutation-test": "stryker run",
     "mutation-test:incremental": "stryker run --incremental",

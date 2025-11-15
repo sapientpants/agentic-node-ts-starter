@@ -25,11 +25,13 @@ This release enhances code quality enforcement with a suite of native TypeScript
 
 **New Commands:**
 
-- `pnpm dead-code` - Find unused code
-- `pnpm mutation-test` - Verify test quality
+- `pnpm dead-code` - Find unused exports, files, dependencies, and types
+- `pnpm mutation-test` - Verify test quality (80% threshold)
+- `pnpm mutation-test:incremental` - Faster incremental mutation testing
 - `pnpm deps:check` - Check for outdated dependencies
 - `pnpm deps:update:minor` - Update to latest minor versions
 - `pnpm deps:update:patch` - Update to latest patch versions
+- `pnpm deps:update:latest` - Update to latest versions
 
 **Breaking Changes:**
 
