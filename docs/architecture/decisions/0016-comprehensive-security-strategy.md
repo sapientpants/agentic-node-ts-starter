@@ -1,4 +1,4 @@
-# 17. Comprehensive Security Strategy
+# 16. Comprehensive Security Strategy
 
 Date: 2025-08-30
 
@@ -24,7 +24,6 @@ The original strategy was solid but could be enhanced with additional analysis a
 We extended the security strategy to create a comprehensive, multi-layered approach:
 
 1. **Enhanced Static Analysis**:
-   - SonarCloud security rules complementing CodeQL
    - Security hotspot detection for sensitive patterns
    - OWASP Top 10 vulnerability detection
    - CWE classification for all issues
@@ -36,7 +35,6 @@ We extended the security strategy to create a comprehensive, multi-layered appro
    - Integration with PR workflow
 
 3. **Comprehensive Coverage**:
-   - **Source Code**: CodeQL + SonarQube analysis
    - **Dependencies**: OSV Scanner for known CVEs
    - **Containers**: Trivy for image scanning
    - **Code Quality**: Security-related code smells
@@ -84,5 +82,4 @@ Extends mitigations from ADR-0009:
 ## References
 
 - [ADR-0009: Original Security Scanning Strategy](./0009-container-and-security-scanning-strategy.md)
-- [ADR-0011: SonarQube Code Quality Integration](./0011-sonarqube-code-quality-integration.md)
 - [ADR-0013: Claude Code Development Environment](./0013-claude-code-development-environment.md)

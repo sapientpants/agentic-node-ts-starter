@@ -1,4 +1,4 @@
-# 15. Extended Code Quality Toolchain
+# 14. Extended Code Quality Toolchain
 
 Date: 2025-08-30
 
@@ -31,7 +31,6 @@ We extended the code quality toolchain to cover all aspects of the project:
    - GitHub Actions linting with actionlint
 
 2. **Continuous Quality Monitoring** (ADR-0011):
-   - SonarCloud integration for code quality analysis
    - Automated issue detection and remediation
    - Quality gates on pull requests
    - Historical tracking of metrics
@@ -48,7 +47,6 @@ The extended toolchain maintains the original foundation while adding:
 - **Unified Pre-commit Hooks**: All linters run via lint-staged
 - **Parallel CI/CD Execution**: Linters run concurrently for performance
 - **Automatic Fixing**: Most issues can be auto-fixed with `:fix` commands
-- **Quality Gates**: SonarCloud blocks merging of low-quality code
 - **Automated Remediation**: Claude commands for fixing common issues
 
 ## Consequences
@@ -86,5 +84,4 @@ Extends mitigations from ADR-0006:
 
 - [ADR-0006: Original Code Quality Toolchain](./0006-code-quality-toolchain-eslint-prettier-strict-typescript.md)
 - [ADR-0010: Extended Linting Strategy](./0010-extended-linting-strategy.md)
-- [ADR-0011: SonarQube Code Quality Integration](./0011-sonarqube-code-quality-integration.md)
-- [ADR-0012: Runtime Validation with Zod](./0012-runtime-validation-with-zod.md)
+- [ADR-0011: Runtime Validation with Zod](./0011-runtime-validation-with-zod.md)

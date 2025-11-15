@@ -54,7 +54,7 @@
 
 ### Patch Changes
 
-- [#150](https://github.com/sapientpants/agentic-node-ts-starter/pull/150) [`eedabf7`](https://github.com/sapientpants/agentic-node-ts-starter/commit/eedabf7a6ec5130a8a268169f1b9d4c9ce1812e6) - fix: resolve all 23 open SonarQube code quality issues
+- [#150](https://github.com/sapientpants/agentic-node-ts-starter/pull/150) [`eedabf7`](https://github.com/sapientpants/agentic-node-ts-starter/commit/eedabf7a6ec5130a8a268169f1b9d4c9ce1812e6) - fix: resolve code quality issues
   - Use node: prefix for built-in module imports (fs, path, net)
   - Replace parseInt/parseFloat with Number.parseInt/parseFloat
   - Replace isNaN with Number.isNaN
@@ -113,7 +113,6 @@
   - Code duplication checked in CI
 
   **Tools Added:**
-  - eslint-plugin-sonarjs (cognitive complexity)
   - madge (circular dependency detection)
   - jscpd (code duplication analysis)
 
@@ -385,15 +384,14 @@
 
   New ADRs documenting recent decisions:
   - ADR-0010: Extended Linting Strategy for markdown, YAML, JSON, and GitHub Actions linting
-  - ADR-0011: SonarQube Code Quality Integration for continuous monitoring
-  - ADR-0012: Runtime Validation with Zod for type-safe validation
-  - ADR-0013: Claude Code Development Environment for AI-assisted development
-  - ADR-0014: Node Version Management Strategy using mise
+  - ADR-0011: Runtime Validation with Zod for type-safe validation
+  - ADR-0012: Claude Code Development Environment for AI-assisted development
+  - ADR-0013: Node Version Management Strategy using mise
 
   New ADRs superseding/extending previous decisions:
-  - ADR-0015: Extended Code Quality Toolchain (supersedes ADR-0006)
-  - ADR-0016: Enhanced CI/CD Platform (extends ADR-0008)
-  - ADR-0017: Comprehensive Security Strategy (extends ADR-0009)
+  - ADR-0014: Extended Code Quality Toolchain (supersedes ADR-0006)
+  - ADR-0015: Enhanced CI/CD Platform (extends ADR-0008)
+  - ADR-0016: Comprehensive Security Strategy (extends ADR-0009)
 
   Updated original ADRs to reference new ones following proper immutable ADR patterns
 
@@ -401,22 +399,13 @@
 
 ### Patch Changes
 
-- [#90](https://github.com/sapientpants/agentic-node-ts-starter/pull/90) [`9ceb406`](https://github.com/sapientpants/agentic-node-ts-starter/commit/9ceb40611178e4342a8fabe34eb7df381b54b954) - fix: resolve SonarQube issues
+- [#90](https://github.com/sapientpants/agentic-node-ts-starter/pull/90) [`9ceb406`](https://github.com/sapientpants/agentic-node-ts-starter/commit/9ceb40611178e4342a8fabe34eb7df381b54b954) - fix: resolve quality issues
 
-  Fixed 18 SonarQube issues to improve code quality:
+  Fixed 18 issues to improve code quality:
   - Fixed 2 MINOR issues: Updated deprecated Zod methods (uuid and email) with proper options
   - Fixed 1 MAJOR issue: Marked startTime field as readonly in PerformanceTimer class
-  - Excluded test template files from SonarQube analysis (15 BLOCKER false positives)
 
   The template files are intentionally incomplete examples and should not be analyzed for test assertions.
-
-## 0.19.0
-
-### Minor Changes
-
-- [#89](https://github.com/sapientpants/agentic-node-ts-starter/pull/89) [`cdf0649`](https://github.com/sapientpants/agentic-node-ts-starter/commit/cdf06491dfcd151bd95a90cdc63f804bc02663e1) - feat: add Claude command to fix SonarQube issues
-
-  Add `/fix-sonarqube-issues` command that automates the process of identifying and fixing SonarQube issues. The command first checks if issues exist before creating a branch, then fixes issues by priority (BLOCKER → CRITICAL → MAJOR → MINOR → INFO), validates changes, creates a changeset, commits, and creates a PR. Streamlines code quality improvements by automating the entire workflow from issue detection to PR creation.
 
 ## 0.18.0
 
@@ -489,15 +478,12 @@
   - Remove conditional coverage generation
   - Always run tests with coverage in CI for better visibility
   - Upload coverage artifacts for all builds
-  - Ensure SonarQube always receives coverage data
 
 ## 0.14.0
 
 ### Minor Changes
 
-- [#80](https://github.com/sapientpants/agentic-node-ts-starter/pull/80) [`a9dffcc`](https://github.com/sapientpants/agentic-node-ts-starter/commit/a9dffcc3fdda75c72e946babcd46f67e643a2c7e) - feat: Add SonarCloud integration for continuous code quality monitoring
-  - Integrate SonarQube scan in CI/CD pipeline for automated code analysis
-  - Configure sonar-project.properties with TypeScript and coverage settings
+- [#80](https://github.com/sapientpants/agentic-node-ts-starter/pull/80) [`a9dffcc`](https://github.com/sapientpants/agentic-node-ts-starter/commit/a9dffcc3fdda75c72e946babcd46f67e643a2c7e) - feat: Add quality integration for continuous code quality monitoring
   - Enable quality gate enforcement with existing LCOV coverage reports
   - Provide continuous feedback on code maintainability, security, and reliability
 

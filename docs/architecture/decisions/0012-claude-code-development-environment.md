@@ -1,4 +1,4 @@
-# 13. Claude Code Development Environment
+# 12. Claude Code Development Environment
 
 Date: 2025-08-30
 
@@ -47,7 +47,6 @@ We standardized on **Claude Code** (claude.ai/code) as the primary AI-assisted d
   - `/spec-feature`: Create feature specifications as GitHub issues
   - `/implement-github-issue`: Full implementation workflow for issues
   - `/update-dependencies`: Automated dependency updates with PR
-  - `/fix-sonarqube-issues`: Automated code quality remediation
 
 - **Safety Hooks** (`.claude/hooks/`):
   - `block-git-no-verify.ts`: Prevents bypassing of git hooks
@@ -65,7 +64,6 @@ We standardized on **Claude Code** (claude.ai/code) as the primary AI-assisted d
 - **Integration Points**:
   - GitHub CLI for repository operations
   - Model Context Protocol (MCP) for tool integration
-  - SonarQube API for quality management
   - CI/CD pipeline for validation
 
 ## Consequences

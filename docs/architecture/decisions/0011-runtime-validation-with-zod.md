@@ -1,4 +1,4 @@
-# 12. Runtime Validation with Zod
+# 11. Runtime Validation with Zod
 
 Date: 2025-08-30
 

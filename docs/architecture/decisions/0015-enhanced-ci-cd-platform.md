@@ -1,4 +1,4 @@
-# 16. Enhanced CI/CD Platform
+# 15. Enhanced CI/CD Platform
 
 Date: 2025-08-30
 
@@ -23,23 +23,16 @@ The original platform provided the foundation, but additional integrations were 
 
 We enhanced the CI/CD platform with additional integrations while maintaining the core GitHub Actions infrastructure:
 
-1. **SonarCloud Integration**:
-   - Automatic analysis on every pull request
-   - Quality gates preventing low-quality merges
-   - Pull request decoration with inline feedback
-   - SARIF integration with GitHub Security tab
-
-2. **Extended Validation Pipeline**:
+1. **Extended Validation Pipeline**:
    - Markdown linting for all documentation
    - YAML validation for configuration files
    - JSON linting for data files
    - GitHub Actions workflow validation with actionlint
 
-3. **Automated Workflows**:
+2. **Automated Workflows**:
    - Claude Code commands for automated remediation
    - Dependency update automation
    - Feature implementation from GitHub issues
-   - SonarQube issue auto-fixing
 
 ### Implementation Details
 
@@ -66,7 +59,6 @@ All benefits from ADR-0008, plus:
 
 All challenges from ADR-0008, plus:
 
-- **Additional Services**: Dependency on SonarCloud
 - **Complex Workflows**: More steps in CI/CD pipeline
 - **Longer Build Times**: Additional 2-3 minutes for analysis
 - **Configuration Overhead**: More tools to configure
@@ -84,5 +76,4 @@ Extends mitigations from ADR-0008:
 
 - [ADR-0008: Original CI/CD Platform](./0008-ci-cd-platform-github-actions.md)
 - [ADR-0010: Extended Linting Strategy](./0010-extended-linting-strategy.md)
-- [ADR-0011: SonarQube Code Quality Integration](./0011-sonarqube-code-quality-integration.md)
-- [ADR-0013: Claude Code Development Environment](./0013-claude-code-development-environment.md)
+- [ADR-0012: Claude Code Development Environment](./0012-claude-code-development-environment.md)
