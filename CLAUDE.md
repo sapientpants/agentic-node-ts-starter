@@ -57,6 +57,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `pnpm mutation-test` - Run mutation testing to verify test quality (via Stryker)
 - `pnpm mutation-test:incremental` - Run mutation testing with incremental mode (faster)
 - `pnpm metrics` - Run all quality metrics (deps summary, circular deps, duplication)
+- `pnpm metrics:update` - Extract and update quality-metrics.json file for README badges
 
 **Complexity Thresholds**: This project enforces strict code quality limits via ESLint and dedicated analyzers:
 
@@ -105,6 +106,50 @@ All violations trigger **errors** and cause `pnpm lint` to fail. These rules app
 - Cyclomatic complexity: 15 (vs 10 for src)
 - Max function lines: 600 (vs 50 for src) - allows large describe blocks with many test cases
 - All other rules: same as src files
+
+### Quality Metrics Dashboard
+
+The project includes an automated quality metrics system that powers the comprehensive dashboard in README.md:
+
+**Files:**
+
+- `quality-metrics.json` - Auto-generated metrics file (updated by CI on every main build)
+- `scripts/extract-quality-metrics.js` - Metrics extraction script
+- `.github/workflows/main.yml` - Contains `update-metrics` job that updates metrics
+
+**Metrics Tracked:**
+
+- **Test Coverage** - Lines, branches, functions, statements (from Vitest coverage reports)
+- **Code Duplication** - Percentage, lines, tokens, clones (from jscpd reports)
+- **Mutation Testing** - Score, mutants killed/survived (from Stryker reports, when available)
+- **Complexity Thresholds** - Documented limits for reference
+
+**How It Works:**
+
+1. On push to main, validation workflow runs quality checks (tests, duplication analysis, etc.)
+2. Validation workflow uploads coverage and quality reports as artifacts
+3. `update-metrics` job downloads the artifacts and extracts metrics
+4. `quality-metrics.json` is updated and committed automatically (if changed)
+5. README badges use shields.io dynamic JSON endpoint to display current metrics from the committed file
+
+**Manual Update:**
+
+Run `pnpm metrics:update` locally after running quality checks to update the metrics file manually.
+
+**Badge URLs:**
+
+Badges in README.md use shields.io dynamic JSON endpoints:
+
+```
+https://img.shields.io/badge/dynamic/json
+  ?url=https://raw.githubusercontent.com/.../quality-metrics.json
+  &query=$.coverage.lines
+  &suffix=%25
+  &label=Coverage
+  &color=brightgreen
+```
+
+**Note:** After updating `quality-metrics.json`, badges will refresh automatically (shields.io caches for ~5 minutes).
 
 ### Container Security
 

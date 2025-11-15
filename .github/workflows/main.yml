@@ -44,6 +44,67 @@ jobs:
     uses: ./.github/workflows/reusable-validate.yml
 
   # =============================================================================
+  # UPDATE QUALITY METRICS
+  # Extract metrics from validation reports and update quality-metrics.json
+  # =============================================================================
+
+  update-metrics:
+    name: Update Quality Metrics
+    runs-on: ubuntu-latest
+    needs: validate
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.RELEASE_TOKEN }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.0
+          run_install: false
+          standalone: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Download coverage reports
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-${{ github.sha }}
+          path: coverage/
+
+      - name: Download code quality reports
+        uses: actions/download-artifact@v4
+        with:
+          name: code-quality-reports-${{ github.sha }}
+          path: reports/
+
+      - name: Extract quality metrics
+        run: node scripts/extract-quality-metrics.js
+
+      - name: Check for changes
+        id: check_changes
+        run: |
+          git diff --exit-code quality-metrics.json || echo "changed=true" >> $GITHUB_OUTPUT
+
+      - name: Commit quality metrics
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          git config --local user.email "${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com"
+          git config --local user.name "${{ github.actor }}"
+          git add quality-metrics.json
+          git commit -m "chore: update quality metrics [skip actions]"
+          git push
+
+  # =============================================================================
   # SECURITY SCANNING PHASE
   # Parallel security scans to identify vulnerabilities before release
   # =============================================================================

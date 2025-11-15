@@ -32,6 +32,7 @@
     "mutation-test": "stryker run",
     "mutation-test:incremental": "stryker run --incremental",
     "metrics": "pnpm deps:summary && pnpm deps:circular && pnpm duplication",
+    "metrics:update": "node scripts/extract-quality-metrics.js",
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
     "test": "vitest run --reporter=verbose",

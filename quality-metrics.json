@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0.0",
+  "generatedAt": "2025-11-15T06:44:52.810Z",
+  "version": "0.23.2",
+  "nodeVersion": ">=22.0.0",
+  "coverage": {
+    "lines": 93.77,
+    "statements": 93.65,
+    "functions": 100,
+    "branches": 84.95,
+    "threshold": {
+      "lines": 80,
+      "statements": 80,
+      "functions": 80,
+      "branches": 80
+    }
+  },
+  "duplication": {
+    "percentage": 0,
+    "lines": 0,
+    "tokens": 0,
+    "clones": 0,
+    "threshold": {
+      "percentage": 2
+    }
+  },
+  "mutation": {
+    "score": null,
+    "killed": 0,
+    "survived": 0,
+    "timeout": 0,
+    "noCoverage": 0,
+    "ignored": 0,
+    "runtimeErrors": 0,
+    "compileErrors": 0,
+    "totalMutants": 0,
+    "threshold": {
+      "score": 80
+    }
+  },
+  "complexity": {
+    "threshold": {
+      "cyclomatic": 10,
+      "maxLines": 50,
+      "maxParams": 4,
+      "maxDepth": 3,
+      "maxStatements": 15
+    }
+  }
+}
