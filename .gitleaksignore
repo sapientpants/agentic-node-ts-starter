@@ -1,0 +1,8 @@
+# Gitleaks ignore file
+# Add file paths or secrets to ignore (use with caution and document why)
+
+# Example: Ignore test fixtures with dummy secrets
+# tests/fixtures/test-credentials.json
+
+# Example: Ignore specific false positive by commit hash
+# commit:abc123def456

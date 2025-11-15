@@ -98,7 +98,8 @@ export function validateSyslogHost(host: string): void {
 
   // Validate hostname format (RFC 1123)
   const hostnameRegex =
-    /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+    // eslint-disable-next-line security/detect-unsafe-regex -- RFC 1123 hostname validation, bounded by length check above
+    /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$/i;
 
   if (!hostnameRegex.test(host)) {
     throw new Error('Syslog host must be a valid hostname or IP address');

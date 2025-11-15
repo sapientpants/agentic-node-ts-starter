@@ -1,0 +1,25 @@
+# Gitleaks configuration file
+# For full configuration options, see: https://github.com/gitleaks/gitleaks
+
+title = "Gitleaks Config for agentic-node-ts-starter"
+
+[extend]
+# Use the default gitleaks rules
+useDefault = true
+
+[allowlist]
+description = "Allowlist for false positives"
+
+# Ignore common test/example patterns
+paths = [
+  '''\.env\.example$''',
+  '''\.env\.template$''',
+  '''/test/fixtures/''',
+  '''/tests/fixtures/''',
+]
+
+# Ignore specific strings that are not secrets
+regexes = [
+  '''test-api-key-12345''',  # Example test key pattern
+  '''dummy-secret''',        # Example dummy secret
+]

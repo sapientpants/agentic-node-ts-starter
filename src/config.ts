@@ -197,6 +197,7 @@ function buildErrorSections(groupedErrors: Record<string, string[]>): string[] {
   };
 
   for (const [key, title] of Object.entries(sectionTitles)) {
+    // eslint-disable-next-line security/detect-object-injection -- key comes from Object.entries() which is safe
     const errors = groupedErrors[key];
     if (errors && errors.length > 0) {
       sections.push(`${title}:\n${errors.join('\n')}`);
@@ -262,6 +263,7 @@ function loadConfig(): Config {
       process.stderr.write('\n❌ Invalid environment configuration:\n\n');
       process.stderr.write(formatZodError(error));
       process.stderr.write('\n\n💡 Tip: Check .env.example for valid configuration examples\n\n');
+      // eslint-disable-next-line n/no-process-exit -- Fatal config error at startup requires process.exit
       process.exit(1);
     }
     throw error;
@@ -286,6 +288,7 @@ export const config = loadConfig();
  * ```
  */
 export function getConfig<K extends keyof Config>(key: K): Config[K] {
+  // eslint-disable-next-line security/detect-object-injection -- key is type-safe, constrained to keyof Config
   return config[key];
 }
 
@@ -302,6 +305,7 @@ export function getConfig<K extends keyof Config>(key: K): Config[K] {
  * ```
  */
 export function hasConfig<K extends keyof Config>(key: K): boolean {
+  // eslint-disable-next-line security/detect-object-injection, sonarjs/different-types-comparison -- key is type-safe; comparison needed for optional properties
   return config[key] !== undefined;
 }
 

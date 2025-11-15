@@ -84,12 +84,14 @@ const shutdown = (signal: string) => {
 
   server.close(() => {
     logger.info('Server closed');
+    // eslint-disable-next-line n/no-process-exit -- Graceful shutdown requires process.exit
     process.exit(0);
   });
 
   // Force shutdown after timeout
   setTimeout(() => {
     logger.error('Forced shutdown after timeout');
+    // eslint-disable-next-line n/no-process-exit -- Forced shutdown requires process.exit
     process.exit(1);
   }, SHUTDOWN_TIMEOUT_MS);
 };
@@ -105,10 +107,12 @@ process.on('SIGINT', () => {
 // Handle uncaught errors
 process.on('uncaughtException', (error) => {
   logger.fatal({ error }, 'Uncaught exception');
+  // eslint-disable-next-line n/no-process-exit -- Fatal error handler requires process.exit
   process.exit(1);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
   logger.fatal({ reason, promise }, 'Unhandled rejection');
+  // eslint-disable-next-line n/no-process-exit -- Fatal error handler requires process.exit
   process.exit(1);
 });
