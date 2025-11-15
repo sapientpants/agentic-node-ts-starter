@@ -14,6 +14,10 @@ import { createChildLogger } from './logger.js';
 
 const logger = createChildLogger('server');
 
+// Server configuration constants
+const DEFAULT_SERVER_PORT = 3000; // Default HTTP server port
+const SHUTDOWN_TIMEOUT_MS = 10000; // Force shutdown after 10 seconds (10000ms)
+
 // Content type constants
 const CONTENT_TYPE_JSON = 'application/json';
 const CONTENT_TYPE_TEXT = 'text/plain';
@@ -59,13 +63,13 @@ const server = http.createServer((req, res) => {
 });
 
 // Port configuration with proper error handling
-let PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+let PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : DEFAULT_SERVER_PORT;
 if (isNaN(PORT)) {
   logger.error(
     { portEnv: process.env.PORT },
-    'Invalid PORT environment variable, falling back to 3000',
+    `Invalid PORT environment variable, falling back to ${DEFAULT_SERVER_PORT}`,
   );
-  PORT = 3000;
+  PORT = DEFAULT_SERVER_PORT;
 }
 const HOST = process.env.HOST || '0.0.0.0';
 
@@ -83,11 +87,11 @@ const shutdown = (signal: string) => {
     process.exit(0);
   });
 
-  // Force shutdown after 10 seconds
+  // Force shutdown after timeout
   setTimeout(() => {
     logger.error('Forced shutdown after timeout');
     process.exit(1);
-  }, 10000);
+  }, SHUTDOWN_TIMEOUT_MS);
 };
 
 // Handle shutdown signals

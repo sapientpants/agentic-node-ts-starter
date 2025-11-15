@@ -171,6 +171,13 @@ export default [
       'max-lines-per-function': ['error', { max: 600, skipComments: true, skipBlankLines: true }],
     },
   },
+  // Script files - allow console.log for CLI output
+  {
+    files: ['scripts/**/*.js', '.github/scripts/**/*.js', '.claude/hooks/**/*.ts'],
+    rules: {
+      'no-console': 'off', // Console output is appropriate for CLI scripts
+    },
+  },
   // JSON/JSONC/JSON5 linting configuration
   {
     files: ['**/*.json', '**/*.json5', '**/*.jsonc'],

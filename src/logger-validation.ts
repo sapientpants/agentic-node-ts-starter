@@ -6,6 +6,20 @@
 import { normalize, isAbsolute } from 'node:path';
 import { isIP } from 'node:net';
 
+// Path validation constants
+const MAX_PATH_LENGTH = 4096; // Maximum allowed path length
+
+// Network validation constants
+const MAX_HOSTNAME_LENGTH = 255; // Maximum hostname length per RFC 1123
+const MIN_PORT_NUMBER = 1; // Minimum valid port number
+const MAX_PORT_NUMBER = 65535; // Maximum valid port number
+const PRIVILEGED_PORT_THRESHOLD = 1024; // Ports below this require elevated permissions
+
+// File permission constants
+const DEFAULT_FILE_MODE = 0o640; // Default file permissions: rw-r-----
+const MAX_FILE_MODE = 0o777; // Maximum allowed file permissions
+const OTHER_USERS_PERMISSION_MASK = 0o077; // Mask for checking other users/groups permissions
+
 /**
  * Validates a log file path to prevent security issues
  * @param path - The file path to validate
@@ -57,8 +71,8 @@ export function validateLogPath(path: string): void {
   }
 
   // Check path length (prevent buffer overflow attacks)
-  if (path.length > 4096) {
-    throw new Error('Log file path is too long (max 4096 characters)');
+  if (path.length > MAX_PATH_LENGTH) {
+    throw new Error(`Log file path is too long (max ${MAX_PATH_LENGTH} characters)`);
   }
 }
 
@@ -78,8 +92,8 @@ export function validateSyslogHost(host: string): void {
   }
 
   // Check host length first
-  if (host.length > 255) {
-    throw new Error('Syslog host is too long (max 255 characters)');
+  if (host.length > MAX_HOSTNAME_LENGTH) {
+    throw new Error(`Syslog host is too long (max ${MAX_HOSTNAME_LENGTH} characters)`);
   }
 
   // Validate hostname format (RFC 1123)
@@ -112,12 +126,12 @@ export function validateSyslogPort(port: number | undefined): void {
     throw new TypeError('Syslog port must be an integer');
   }
 
-  if (port < 1 || port > 65535) {
-    throw new RangeError('Syslog port must be between 1 and 65535');
+  if (port < MIN_PORT_NUMBER || port > MAX_PORT_NUMBER) {
+    throw new RangeError(`Syslog port must be between ${MIN_PORT_NUMBER} and ${MAX_PORT_NUMBER}`);
   }
 
   // Warn about privileged ports
-  if (port < 1024 && process.env.NODE_ENV === 'production') {
+  if (port < PRIVILEGED_PORT_THRESHOLD && process.env.NODE_ENV === 'production') {
     process.stderr.write(
       `Warning: Using privileged port ${port} for syslog may require elevated permissions\n`,
     );
@@ -130,22 +144,22 @@ export function validateSyslogPort(port: number | undefined): void {
  * @returns The validated mode or default
  */
 export function validateFileMode(mode: number | string | undefined): number {
-  const defaultMode = 0o640; // rw-r-----
-
   if (mode === undefined) {
-    return defaultMode;
+    return DEFAULT_FILE_MODE;
   }
 
   // Parse octal string (e.g., "0640" or "640") or use numeric value
   const numericMode = typeof mode === 'string' ? Number.parseInt(mode, 8) : mode;
 
-  if (Number.isNaN(numericMode) || numericMode < 0 || numericMode > 0o777) {
-    process.stderr.write(`Invalid file mode ${mode}, using default ${defaultMode.toString(8)}\n`);
-    return defaultMode;
+  if (Number.isNaN(numericMode) || numericMode < 0 || numericMode > MAX_FILE_MODE) {
+    process.stderr.write(
+      `Invalid file mode ${mode}, using default ${DEFAULT_FILE_MODE.toString(8)}\n`,
+    );
+    return DEFAULT_FILE_MODE;
   }
 
   // Warn if permissions are too open
-  if ((numericMode & 0o077) !== 0) {
+  if ((numericMode & OTHER_USERS_PERMISSION_MASK) !== 0) {
     process.stderr.write('Warning: Log file permissions allow access to other users/groups\n');
   }
 
