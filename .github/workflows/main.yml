@@ -104,6 +104,7 @@ jobs:
           git config --local user.name "${{ github.actor }}"
           git add quality-metrics.json
           git commit --no-verify -m "chore: update quality metrics [skip ci]"
+          git pull --rebase origin main
           git push
 
   # =============================================================================
