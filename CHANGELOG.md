@@ -1,5 +1,13 @@
 # agentic-node-ts-starter
 
+## 0.26.2
+
+### Patch Changes
+
+- [`e032eeb`](https://github.com/sapientpants/agentic-node-ts-starter/commit/e032eeb5b2ba6e78ac8feeec93e8da3b5d14a2be) - fix(ci): handle race condition in quality metrics update
+
+  Fixed a race condition where the quality metrics update job fails when the release process pushes a version bump commit to main before the metrics update completes. Added `git pull --rebase origin main` before pushing to handle concurrent updates.
+
 ## 0.26.1
 
 ### Patch Changes
