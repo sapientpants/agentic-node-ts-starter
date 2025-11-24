@@ -150,7 +150,7 @@
     "husky": "^9.1.7",
     "jscpd": "4.0.5",
     "jsonc-eslint-parser": "2.4.1",
-    "knip": "5.69.1",
+    "knip": "5.70.1",
     "license-checker": "25.0.1",
     "lint-staged": "^16.2.6",
     "madge": "8.0.0",
