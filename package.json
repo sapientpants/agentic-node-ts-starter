@@ -116,7 +116,7 @@
     "@cyclonedx/cdxgen": "11.11.0",
     "@eslint-community/eslint-plugin-eslint-comments": "4.5.0",
     "@fast-check/vitest": "^0.2.3",
-    "@microsoft/api-extractor": "7.55.0",
+    "@microsoft/api-extractor": "7.55.1",
     "@size-limit/preset-small-lib": "11.2.0",
     "@stryker-mutator/core": "9.3.0",
     "@stryker-mutator/typescript-checker": "9.3.0",
