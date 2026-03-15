@@ -35,7 +35,7 @@ The Main workflow creates GitHub releases that should trigger the Publish workfl
    - Name: `RELEASE_TOKEN`
    - Value: Your PAT
 
-3. The Main workflow will automatically use `RELEASE_TOKEN` if available, falling back to `GITHUB_TOKEN` if not configured.
+3. The Main workflow requires `RELEASE_TOKEN` and will fail early with a clear error if it is not configured.
 
 ## Workflows
 

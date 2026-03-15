@@ -34,6 +34,25 @@ permissions:
 
 jobs:
   # =============================================================================
+  # PRE-FLIGHT CHECK
+  # Verify required secrets are configured before running release jobs
+  # =============================================================================
+
+  check-token:
+    name: Check RELEASE_TOKEN
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify RELEASE_TOKEN is configured
+        env:
+          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        run: |
+          if [ -z "$RELEASE_TOKEN" ]; then
+            echo "::error::RELEASE_TOKEN secret is not configured. See .github/WORKFLOWS.md for setup instructions."
+            exit 1
+          fi
+          echo "RELEASE_TOKEN is configured"
+
+  # =============================================================================
   # VALIDATION PHASE
   # Runs all quality checks in parallel to ensure code meets standards
   # =============================================================================
@@ -51,7 +70,7 @@ jobs:
   update-metrics:
     name: Update Quality Metrics
     runs-on: ubuntu-latest
-    needs: validate
+    needs: [validate, check-token]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -122,6 +141,7 @@ jobs:
   # =============================================================================
 
   build:
+    needs: check-token
     runs-on: ubuntu-latest
     outputs:
       artifact-name: dist-${{ github.sha }}
