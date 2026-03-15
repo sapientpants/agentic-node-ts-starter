@@ -585,8 +585,6 @@ export const withTraceContext = (log: Logger, traceId?: string, spanId?: string)
 
 // Export Pino types for use in application
 export type { LoggerOptions } from 'pino';
-export type { LogContext as LoggerContext };
-
 // Log startup information
 if (getEnvConfig().NODE_ENV !== 'test') {
   const effectiveOutput = getEffectiveLogOutput();
