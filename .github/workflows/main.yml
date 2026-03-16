@@ -42,15 +42,22 @@ jobs:
     name: Check RELEASE_TOKEN
     runs-on: ubuntu-latest
     steps:
-      - name: Verify RELEASE_TOKEN is configured
+      - name: Verify RELEASE_TOKEN is configured and valid
         env:
-          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          REPO: ${{ github.repository }}
         run: |
-          if [ -z "$RELEASE_TOKEN" ]; then
+          if [ -z "$GH_TOKEN" ]; then
             echo "::error::RELEASE_TOKEN secret is not configured. See .github/WORKFLOWS.md for setup instructions."
             exit 1
           fi
-          echo "RELEASE_TOKEN is configured"
+
+          # Validate the token can access repository contents via git (matches checkout requirements)
+          if ! git ls-remote --heads "https://x-access-token:$GH_TOKEN@github.com/$REPO.git" >/dev/null 2>&1; then
+            echo "::error::RELEASE_TOKEN is configured but cannot access the repository. The token may be expired or have insufficient permissions."
+            exit 1
+          fi
+          echo "RELEASE_TOKEN is configured and valid"
 
   # =============================================================================
   # VALIDATION PHASE
