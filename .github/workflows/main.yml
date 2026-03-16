@@ -52,8 +52,8 @@ jobs:
             exit 1
           fi
 
-          # Validate the token actually works by making an API call
-          if ! gh api "repos/$REPO" --silent 2>/dev/null; then
+          # Validate the token can access repository contents via git (matches checkout requirements)
+          if ! git ls-remote --heads "https://x-access-token:$GH_TOKEN@github.com/$REPO.git" >/dev/null 2>&1; then
             echo "::error::RELEASE_TOKEN is configured but cannot access the repository. The token may be expired or have insufficient permissions."
             exit 1
           fi
