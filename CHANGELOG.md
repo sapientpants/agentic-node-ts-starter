@@ -1,5 +1,21 @@
 # agentic-node-ts-starter
 
+## 0.26.3
+
+### Patch Changes
+
+- [#168](https://github.com/sapientpants/agentic-node-ts-starter/pull/168) [`3a0d2fa`](https://github.com/sapientpants/agentic-node-ts-starter/commit/3a0d2fa992159953fd953102027d711d6b65f332) - chore: update dependencies and fix security vulnerabilities
+
+  Production: pino 10.1.0→10.3.1, zod 4.1.12→4.3.6
+  Dev: @cyclonedx/cdxgen 11.11.0→12.1.2 (fixes 28 transitive vulnerabilities), 26 other packages updated
+  Security: Added pnpm overrides for tar, minimatch, flatted, rollup, lodash transitive vulnerabilities
+  Removed unused LoggerContext type export detected by updated Knip
+  Vitest currently resolved to 4.0.9 in the lockfile due to a type incompatibility with exactOptionalPropertyTypes (package.json still specifies ^4.0.9)
+
+- [#171](https://github.com/sapientpants/agentic-node-ts-starter/pull/171) [`ebc0132`](https://github.com/sapientpants/agentic-node-ts-starter/commit/ebc013291223edd88ba52e6f8510f49f5c6e0d8d) - fix(ci): decouple checkout from RELEASE_TOKEN to prevent authentication failures
+
+- [#172](https://github.com/sapientpants/agentic-node-ts-starter/pull/172) [`2e874c6`](https://github.com/sapientpants/agentic-node-ts-starter/commit/2e874c6b8976e839adf668375bb26709bdcdb10b) - fix(ci): use actions/checkout token parameter instead of manual git extraheader for RELEASE_TOKEN pushes
+
 ## 0.26.2
 
 ### Patch Changes
