@@ -2,7 +2,7 @@
 
 ## Project Setup
 
-- **Node**: 22+ (via mise: `node = "22"`)
+- **Node**: 24+ (via mise: `node = "24"`)
 - **Package Manager**: pnpm 10.22.0 (via mise: `pnpm = "10.22.0"`)
 - **TypeScript**: Strict mode, NodeNext modules, ES2022 target
 - **ES Modules**: Always use `.js` extension in imports: `import { foo } from './module.js'`

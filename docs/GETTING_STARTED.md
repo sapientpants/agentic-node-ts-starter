@@ -39,7 +39,7 @@ The project includes a `mise.toml` file to automatically manage Node.js and pnpm
 eval "$(mise activate bash)"  # or zsh
 
 # Install the exact versions specified in mise.toml
-mise install        # Installs Node 22 and pnpm 10.22.0
+ mise install        # Installs Node 24 and pnpm 10.22.0
 pnpm install       # Install dependencies
 ```
 
@@ -47,13 +47,13 @@ pnpm install       # Install dependencies
 
 ```bash
 # Using nvm
-nvm install 22
-nvm use 22
+nvm install 24
+nvm use 24
 npm install -g pnpm@10.22.0
 
 # OR using fnm
-fnm install 22
-fnm use 22
+fnm install 24
+fnm use 24
 npm install -g pnpm@10.22.0
 
 # Then install dependencies
@@ -62,13 +62,13 @@ pnpm install
 
 #### Option C: Manual Installation
 
-1. Install [Node.js 22+](https://nodejs.org/) directly
+1. Install [Node.js 24+](https://nodejs.org/) directly
 2. Install pnpm: `npm install -g pnpm@10.22.0`
 3. Install dependencies: `pnpm install`
 
 ⚠️ **Important**: This project requires:
 
-- Node.js >= 22.0.0
+- Node.js >= 24.0.0
 - pnpm 10.22.0 (exact version)
 
 ### 3. Set Up Configuration (Required)
@@ -244,9 +244,9 @@ git commit -m "test commit" --dry-run
 # Should trigger pre-commit validation
 
 # 5. Check that your environment is configured
-node -e "console.log('Node:', process.version)"
+ node -e "console.log('Node:', process.version)"
 pnpm --version
-# Should show Node 22+ and pnpm 10.22.0
+# Should show Node 24+ and pnpm 10.22.0
 ```
 
 If all checks pass, your project is ready for development!
@@ -314,7 +314,7 @@ npx prisma init
    ```bash
    # Check that mise is managing versions correctly
    mise list          # Shows installed tools
-   node --version     # Should show v22.x.x
+    node --version     # Should show v24.x.x
    pnpm --version     # Should show 10.22.0
    ```
 

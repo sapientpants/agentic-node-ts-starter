@@ -58,9 +58,9 @@ fi
 if ! command -v node &> /dev/null; then
     if command -v mise &> /dev/null; then
         log "Installing Node.js via mise..."
-        mise install node@22
+         mise install node@24
     else
-        error "Node.js not found. Please install Node.js 22+ or install mise first."
+         error "Node.js not found. Please install Node.js 24+ or install mise first."
     fi
 fi
 
