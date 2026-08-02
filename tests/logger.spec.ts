@@ -304,12 +304,12 @@ describe('Logger', () => {
       // Capture output to verify formatting
       const outputs: string[] = [];
       const originalWrite = process.stdout.write.bind(process.stdout);
-      process.stdout.write = ((chunk: string | Uint8Array): boolean => {
+      process.stdout.write = (chunk: string | Uint8Array): boolean => {
         if (typeof chunk === 'string') {
           outputs.push(chunk);
         }
         return true;
-      }) as typeof process.stdout.write;
+      };
 
       const { logger: prodLogger } = await import('../src/logger.js');
       prodLogger.info({ test: 'data' }, 'formatted message');

@@ -123,6 +123,7 @@ const SENSITIVE_KEYS = ['PASSWORD', 'TOKEN', 'SECRET', 'KEY'];
 
 /**
  * Convert value to string safely
+ * @param value
  */
 // eslint-disable-next-line complexity -- Switch exhaustiveness requires all typeof cases
 function valueToString(value: unknown): string {
@@ -143,9 +144,9 @@ function valueToString(value: unknown): string {
     case 'string':
       return value as string;
     case 'number':
-      return String(value as number);
+      return `${value as number}`;
     case 'boolean':
-      return String(value as boolean);
+      return `${value as boolean}`;
     case 'bigint':
       return (value as bigint).toString();
     case 'symbol':
@@ -180,6 +181,7 @@ function maskSensitiveValue(key: string, value: unknown): string {
 
 /**
  * Format received value for error messages
+ * @param value
  */
 function formatReceivedValue(value: string): string {
   return value === 'undefined' ? '' : ` (received: "${value}")`;
@@ -187,6 +189,7 @@ function formatReceivedValue(value: string): string {
 
 /**
  * Build error sections from grouped errors
+ * @param groupedErrors
  */
 function buildErrorSections(groupedErrors: Record<string, string[]>): string[] {
   const sections: string[] = [];
@@ -209,6 +212,7 @@ function buildErrorSections(groupedErrors: Record<string, string[]>): string[] {
 
 /**
  * Format Zod validation errors in a user-friendly way
+ * @param error
  */
 function formatZodError(error: z.ZodError): string {
   if (!error.issues.length) {
@@ -280,7 +284,6 @@ export const config = loadConfig();
  * Type-safe configuration getter
  * @param key - Configuration key to retrieve
  * @returns The configuration value for the specified key
- *
  * @example
  * ```typescript
  * const port = getConfig('PORT'); // TypeScript knows this is a number
@@ -296,7 +299,6 @@ export function getConfig<K extends keyof Config>(key: K): Config[K] {
  * Check if a configuration value is defined (for optional configs)
  * @param key - Configuration key to check
  * @returns true if the configuration value is defined
- *
  * @example
  * ```typescript
  * if (hasConfig('DATABASE_URL')) {

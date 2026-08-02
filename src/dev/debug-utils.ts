@@ -26,6 +26,7 @@ export class PerformanceTimer {
 
   /**
    * Mark an intermediate checkpoint
+   * @param checkpointLabel
    */
   checkpoint(checkpointLabel: string): number {
     const elapsed = performance.now() - this.startTime;
@@ -48,6 +49,9 @@ export class PerformanceTimer {
 
 /**
  * Decorator for timing function execution
+ * @param target
+ * @param propertyName
+ * @param descriptor
  */
 export function timed(target: any, propertyName: string, descriptor: PropertyDescriptor) {
   if (process.env.NODE_ENV !== 'development') {
@@ -87,6 +91,7 @@ export function timed(target: any, propertyName: string, descriptor: PropertyDes
 
 /**
  * Memory usage monitoring
+ * @param label
  */
 export function logMemoryUsage(label: string = 'memory-check'): void {
   if (process.env.NODE_ENV !== 'development') return;
@@ -108,6 +113,9 @@ export function logMemoryUsage(label: string = 'memory-check'): void {
 
 /**
  * Deep object inspection for debugging
+ * @param obj
+ * @param label
+ * @param maxDepth
  */
 export function inspect(obj: unknown, label: string = 'inspect', maxDepth: number = 3): void {
   if (process.env.NODE_ENV !== 'development') return;
@@ -125,6 +133,8 @@ export function inspect(obj: unknown, label: string = 'inspect', maxDepth: numbe
 
 /**
  * Log function entry
+ * @param functionName
+ * @param args
  */
 const logFunctionEntry = (functionName: string, args: any[]): void => {
   logger.debug(
@@ -139,6 +149,8 @@ const logFunctionEntry = (functionName: string, args: any[]): void => {
 
 /**
  * Log successful function completion
+ * @param functionName
+ * @param result
  */
 const logFunctionSuccess = (functionName: string, result: any): void => {
   logger.debug(
@@ -153,6 +165,8 @@ const logFunctionSuccess = (functionName: string, result: any): void => {
 
 /**
  * Log function error
+ * @param functionName
+ * @param error
  */
 const logFunctionError = (functionName: string, error: unknown): void => {
   logger.error(
@@ -167,6 +181,8 @@ const logFunctionError = (functionName: string, error: unknown): void => {
 
 /**
  * Handle async function result
+ * @param functionName
+ * @param promise
  */
 // eslint-disable-next-line @typescript-eslint/promise-function-async -- Intentionally not async to chain promises
 const handleAsyncResult = (functionName: string, promise: Promise<any>): Promise<any> => {
@@ -201,6 +217,9 @@ const handleAsyncResult = (functionName: string, promise: Promise<any>): Promise
 
 /**
  * Function call tracer for debugging
+ * @param target
+ * @param propertyName
+ * @param descriptor
  */
 export function trace(target: any, propertyName: string, descriptor: PropertyDescriptor) {
   if (process.env.NODE_ENV !== 'development') {
@@ -240,6 +259,8 @@ export function trace(target: any, propertyName: string, descriptor: PropertyDes
 
 /**
  * Simple assertion function for development debugging
+ * @param condition
+ * @param message
  */
 export function assert(condition: boolean, message: string): asserts condition {
   if (process.env.NODE_ENV === 'production') return;
@@ -252,6 +273,7 @@ export function assert(condition: boolean, message: string): asserts condition {
 
 /**
  * Development-only feature flag
+ * @param fn
  */
 export function devOnly<T>(fn: () => T): T | undefined {
   if (process.env.NODE_ENV === 'development') {
@@ -266,6 +288,8 @@ export function devOnly<T>(fn: () => T): T | undefined {
 export const devConsole = {
   /**
    * Log with automatic JSON formatting
+   * @param obj
+   * @param label
    */
   log: (obj: unknown, label?: string) => {
     if (process.env.NODE_ENV === 'development') {
@@ -275,6 +299,7 @@ export const devConsole = {
 
   /**
    * Table display for arrays/objects
+   * @param data
    */
   table: (data: Record<string, any>[] | Record<string, any>) => {
     if (process.env.NODE_ENV === 'development') {
@@ -284,6 +309,8 @@ export const devConsole = {
 
   /**
    * Group related log statements
+   * @param label
+   * @param fn
    */
   group: (label: string, fn: () => void) => {
     if (process.env.NODE_ENV === 'development') {
@@ -298,6 +325,8 @@ export const devConsole = {
 
   /**
    * Time a code block
+   * @param label
+   * @param fn
    */
   time: <T>(label: string, fn: () => T): T => {
     if (process.env.NODE_ENV === 'development') {
