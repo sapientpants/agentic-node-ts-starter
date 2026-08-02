@@ -69,6 +69,7 @@ const getEffectiveLogOutput = (): string => {
 
 /**
  * Parse size string (e.g., "10M", "1G") to bytes
+ * @param size
  */
 const parseSizeToBytes = (size: string | undefined): number | undefined => {
   if (!size) return undefined;
@@ -157,6 +158,7 @@ const REDACTED_PATHS = [
 
 /**
  * Create base logger configuration
+ * @param logLevel
  */
 const createBaseConfig = (logLevel: string): LoggerOptions => ({
   level: logLevel,
@@ -169,6 +171,7 @@ const createBaseConfig = (logLevel: string): LoggerOptions => ({
 
 /**
  * Create production-specific logger configuration
+ * @param baseConfig
  */
 const createProductionConfig = (baseConfig: LoggerOptions): LoggerOptions => ({
   ...baseConfig,
@@ -186,6 +189,7 @@ const createProductionConfig = (baseConfig: LoggerOptions): LoggerOptions => ({
 
 /**
  * Create test environment configuration
+ * @param baseConfig
  */
 const createTestConfig = (baseConfig: LoggerOptions): LoggerOptions => ({
   ...baseConfig,
@@ -194,6 +198,7 @@ const createTestConfig = (baseConfig: LoggerOptions): LoggerOptions => ({
 
 /**
  * Create null output configuration (disabled logging)
+ * @param baseConfig
  */
 const createNullConfig = (baseConfig: LoggerOptions): LoggerOptions => ({
   ...baseConfig,
@@ -202,6 +207,9 @@ const createNullConfig = (baseConfig: LoggerOptions): LoggerOptions => ({
 
 /**
  * Create file output configuration with validation
+ * @param baseConfig
+ * @param productionConfig
+ * @param isProduction
  */
 const createFileConfig = (
   baseConfig: LoggerOptions,
@@ -230,6 +238,9 @@ const createFileConfig = (
 
 /**
  * Create syslog output configuration with validation
+ * @param baseConfig
+ * @param productionConfig
+ * @param isProduction
  */
 const createSyslogConfig = (
   baseConfig: LoggerOptions,
@@ -274,6 +285,9 @@ interface EnvFlags {
 
 /**
  * Create stdout output configuration
+ * @param baseConfig
+ * @param productionConfig
+ * @param env
  */
 const createStdoutConfig = (
   baseConfig: LoggerOptions,
@@ -300,6 +314,8 @@ const createStdoutConfig = (
 
 /**
  * Log validation error and fallback message
+ * @param context
+ * @param error
  */
 const logValidationError = (context: string, error: unknown): void => {
   fallbackLogger.error(
@@ -311,6 +327,7 @@ const logValidationError = (context: string, error: unknown): void => {
 
 /**
  * Ensure log directory exists with proper permissions
+ * @param logPath
  */
 const ensureLogDirectory = (logPath: string): boolean => {
   validateFileMode(process.env.LOG_FILE_PERMISSIONS);
@@ -330,6 +347,7 @@ const ensureLogDirectory = (logPath: string): boolean => {
 
 /**
  * Logger configuration based on environment and output mode
+ * @param outputMode
  */
 const getLoggerConfig = (outputMode?: string): LoggerOptions => {
   const { NODE_ENV, LOG_LEVEL } = getEnvConfig();
@@ -359,6 +377,7 @@ const getLoggerConfig = (outputMode?: string): LoggerOptions => {
 
 /**
  * Get the appropriate destination stream based on output mode
+ * @param outputMode
  */
 const getDestination = (outputMode?: string): DestinationStream | undefined => {
   const effectiveOutput = outputMode || getEffectiveLogOutput();
@@ -384,6 +403,7 @@ export interface Logger extends PinoLogger {
 
 /**
  * Wrap a Pino logger with the withContext method
+ * @param baseLogger
  */
 const wrapLoggerWithContext = (baseLogger: PinoLogger): Logger => {
   const logger = baseLogger as Logger;
@@ -396,6 +416,7 @@ const wrapLoggerWithContext = (baseLogger: PinoLogger): Logger => {
 
 /**
  * Create a logger instance with the provided configuration
+ * @param outputMode
  */
 const createLogger = (outputMode?: string): Logger => {
   const config = getLoggerConfig(outputMode);
@@ -445,17 +466,14 @@ const cleanupPreviousOutput = (previousMode: string | null): void => {
  *
  * Dynamically changes where log messages are written without restarting the application.
  * This is useful for debugging, testing, or changing log destinations based on runtime conditions.
- *
  * @param outputMode - The destination to switch to. Valid values:
  *   - `'stdout'` - Standard output (console)
  *   - `'stderr'` - Standard error stream
  *   - `'file'` - Write to log file (configured via LOG_FILE_PATH)
  *   - `'syslog'` - Send to syslog server (requires syslog configuration)
  *   - `'null'` - Discard all log messages
- *
  * @throws {Error} If the output mode is invalid or if required configuration is missing
  *   (e.g., switching to 'file' without LOG_FILE_PATH, or 'syslog' without SYSLOG_HOST)
- *
  * @example
  * ```typescript
  * // Switch to file logging
@@ -470,7 +488,6 @@ const cleanupPreviousOutput = (previousMode: string | null): void => {
  * switchLogOutput('stdout');
  * logger.info('Back to console output');
  * ```
- *
  * @remarks
  * This implementation mutates the exported logger instance to maintain
  * backward compatibility with existing code that imports the logger directly.
@@ -511,14 +528,12 @@ export const switchLogOutput = (outputMode: string): void => {
  *
  * Returns the active destination where log messages are being written.
  * Useful for debugging, testing, or conditional logic based on logging configuration.
- *
  * @returns The current output mode as a string. Possible values:
  *   - `'stdout'` - Logging to standard output
  *   - `'stderr'` - Logging to standard error stream
  *   - `'file'` - Logging to file
  *   - `'syslog'` - Logging to syslog server
  *   - `'null'` - Logging disabled
- *
  * @example
  * ```typescript
  * const currentMode = getLoggerOutputMode();
@@ -530,7 +545,6 @@ export const switchLogOutput = (outputMode: string): void => {
  *   console.log('Logs are being written to file');
  * }
  * ```
- *
  * @remarks
  * If the output mode has been explicitly set via {@link switchLogOutput}, this function
  * returns that value. Otherwise, it returns the effective output mode determined from
@@ -564,7 +578,6 @@ export const createChildLogger = (name: string, context: LogContext = {}): Logge
  * const spanContext = span?.spanContext();
  * const tracedLogger = withTraceContext(logger, spanContext?.traceId, spanContext?.spanId);
  * ```
- *
  * @param log - The logger instance to enhance with trace context
  * @param traceId - The trace ID from OpenTelemetry context
  * @param spanId - The span ID from OpenTelemetry context
