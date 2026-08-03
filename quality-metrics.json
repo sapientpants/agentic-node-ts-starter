@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
-  "generatedAt": "2026-03-16T21:23:10.425Z",
-  "version": "0.26.2",
-  "nodeVersion": ">=22.0.0",
+  "generatedAt": "2026-08-03T15:01:26.970Z",
+  "version": "0.26.3",
+  "nodeVersion": ">=24.0.0",
   "coverage": {
     "lines": 93.93,
     "statements": 93.81,
