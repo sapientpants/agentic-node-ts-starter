@@ -43,7 +43,7 @@ A **batteries-included** TypeScript starter template with comprehensive testing,
 
 ## 🛠️ Tech Stack
 
-**Core:** Node.js 22+ • TypeScript ^5.9.2 (strict) • pnpm 10.15  
+**Core:** Node.js 24+ • TypeScript ^5.9.2 (strict) • pnpm 10.15  
 **Testing:** Vitest • fast-check (property testing) • 80% coverage minimum  
 **Quality:** ESLint 9 • Prettier • Husky • Commitlint  
 **Security:** CodeQL • OSV Scanner • SBOM • SLSA attestations  
@@ -67,7 +67,7 @@ A **batteries-included** TypeScript starter template with comprehensive testing,
 git clone https://github.com/sapientpants/agentic-node-ts-starter.git my-project
 cd my-project
 
-# Install dependencies (requires Node.js 22+ and pnpm 10.15)
+# Install dependencies (requires Node.js 24+ and pnpm 10.15)
 pnpm install
 
 # Set up configuration (required)
@@ -83,7 +83,7 @@ pnpm verify  # Full quality check
 pnpm dev     # TypeScript watch mode
 ```
 
-**Prerequisites:** Node.js 22+, pnpm 10.15, GitHub repo (for CI/CD)  
+**Prerequisites:** Node.js 24+, pnpm 10.15, GitHub repo (for CI/CD)  
 **Full setup guide:** [docs/GETTING_STARTED.md](./docs/GETTING_STARTED.md)
 
 ## 📚 Key Commands

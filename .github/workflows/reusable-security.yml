@@ -14,7 +14,7 @@ on:
       node-version:
         description: 'Node.js version (should match package.json engines.node)'
         type: string
-        default: '22' # UPDATE: When upgrading Node.js
+        default: '24' # UPDATE: When upgrading Node.js
       pnpm-version:
         description: 'pnpm version (should match package.json packageManager)'
         type: string

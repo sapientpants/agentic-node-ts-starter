@@ -172,7 +172,7 @@ describe('Container Security Scanning', () => {
       // Create a secure test Dockerfile
       const dockerfilePath = join(testDir, 'Dockerfile.secure');
       const secureDockerfile = `
-FROM node:22-alpine
+FROM node:24-alpine
 RUN adduser -D nonroot
 USER nonroot
 WORKDIR /app

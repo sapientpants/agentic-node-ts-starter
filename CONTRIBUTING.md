@@ -4,7 +4,7 @@ Thank you for your interest in contributing! This guide will help you get starte
 
 ## 📋 Prerequisites
 
-- Node.js 22+ (managed via [mise](https://mise.jdx.dev/))
+- Node.js 24+ (managed via [mise](https://mise.jdx.dev/))
 - pnpm 10+ (managed via mise)
 - Git
 
