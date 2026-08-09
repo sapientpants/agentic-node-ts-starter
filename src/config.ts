@@ -123,7 +123,8 @@ const SENSITIVE_KEYS = ['PASSWORD', 'TOKEN', 'SECRET', 'KEY'];
 
 /**
  * Convert value to string safely
- * @param value
+ * @param {unknown} value - The value to convert to a string
+ * @returns {string} String representation of the value
  */
 // eslint-disable-next-line complexity -- Switch exhaustiveness requires all typeof cases
 function valueToString(value: unknown): string {
@@ -181,7 +182,8 @@ function maskSensitiveValue(key: string, value: unknown): string {
 
 /**
  * Format received value for error messages
- * @param value
+ * @param {string} value - The received value string to format
+ * @returns {string} Formatted string for display in error messages
  */
 function formatReceivedValue(value: string): string {
   return value === 'undefined' ? '' : ` (received: "${value}")`;
@@ -189,7 +191,8 @@ function formatReceivedValue(value: string): string {
 
 /**
  * Build error sections from grouped errors
- * @param groupedErrors
+ * @param {Record<string, string[]>} groupedErrors - Record mapping error category keys to arrays of error messages
+ * @returns {string[]} Array of formatted error section strings
  */
 function buildErrorSections(groupedErrors: Record<string, string[]>): string[] {
   const sections: string[] = [];
@@ -212,7 +215,8 @@ function buildErrorSections(groupedErrors: Record<string, string[]>): string[] {
 
 /**
  * Format Zod validation errors in a user-friendly way
- * @param error
+ * @param {z.ZodError} error - The Zod validation error to format
+ * @returns {string} Formatted error message string
  */
 function formatZodError(error: z.ZodError): string {
   if (!error.issues.length) {
