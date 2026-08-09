@@ -22,8 +22,8 @@ const OTHER_USERS_PERMISSION_MASK = 0o077; // Mask for checking other users/grou
 
 /**
  * Validates a log file path to prevent security issues
- * @param path - The file path to validate
- * @throws Error if the path is invalid or potentially dangerous
+ * @param {string} path - The file path to validate
+ * @throws {Error} if the path is invalid or potentially dangerous
  */
 export function validateLogPath(path: string): void {
   if (!path || typeof path !== 'string') {
@@ -78,8 +78,8 @@ export function validateLogPath(path: string): void {
 
 /**
  * Validates a syslog host to ensure it's a valid hostname or IP address
- * @param host - The hostname or IP address to validate
- * @throws Error if the host is invalid
+ * @param {string} host - The hostname or IP address to validate
+ * @throws {Error} if the host is invalid
  */
 export function validateSyslogHost(host: string): void {
   if (!host || typeof host !== 'string') {
@@ -115,8 +115,8 @@ export function validateSyslogHost(host: string): void {
 
 /**
  * Validates syslog port number
- * @param port - The port number to validate
- * @throws Error if the port is invalid
+ * @param {number | undefined} port - The port number to validate
+ * @throws {Error | TypeError | RangeError} if the port is invalid
  */
 export function validateSyslogPort(port: number | undefined): void {
   if (port === undefined) {
@@ -141,8 +141,8 @@ export function validateSyslogPort(port: number | undefined): void {
 
 /**
  * Validates file permissions mode
- * @param mode - The octal permission mode
- * @returns The validated mode or default
+ * @param {number | string | undefined} mode - The octal permission mode
+ * @returns {number} The validated mode or default
  */
 export function validateFileMode(mode: number | string | undefined): number {
   if (mode === undefined) {

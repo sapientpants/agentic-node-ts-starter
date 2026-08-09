@@ -244,6 +244,7 @@ function formatZodError(error: z.ZodError): string {
 
 /**
  * Load and validate environment configuration
+ * @returns {Config} Validated configuration object
  */
 function loadConfig(): Config {
   try {
@@ -286,8 +287,8 @@ export const config = loadConfig();
 
 /**
  * Type-safe configuration getter
- * @param key - Configuration key to retrieve
- * @returns The configuration value for the specified key
+ * @param {K} key - Configuration key to retrieve
+ * @returns {Config[K]} The configuration value for the specified key
  * @example
  * ```typescript
  * const port = getConfig('PORT'); // TypeScript knows this is a number
@@ -301,8 +302,8 @@ export function getConfig<K extends keyof Config>(key: K): Config[K] {
 
 /**
  * Check if a configuration value is defined (for optional configs)
- * @param key - Configuration key to check
- * @returns true if the configuration value is defined
+ * @param {K} key - Configuration key to check
+ * @returns {boolean} true if the configuration value is defined
  * @example
  * ```typescript
  * if (hasConfig('DATABASE_URL')) {
@@ -317,7 +318,7 @@ export function hasConfig<K extends keyof Config>(key: K): boolean {
 
 /**
  * Get all configuration keys (useful for debugging)
- * @returns Array of configuration keys
+ * @returns {Array<keyof Config>} Array of configuration keys
  */
 export function getConfigKeys(): Array<keyof Config> {
   return Object.keys(config) as Array<keyof Config>;
