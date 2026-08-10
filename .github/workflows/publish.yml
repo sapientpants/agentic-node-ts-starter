@@ -66,7 +66,7 @@ jobs:
           echo "📦 Publishing to NPM: $VERSION"
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           # IMPORTANT: Checkout the exact release tag, not latest main
           # This ensures we publish exactly what was released
@@ -74,7 +74,7 @@ jobs:
 
       - name: Setup Node.js
         # Node.js is required for npm publish command
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
           # Configure npm registry for authentication
@@ -98,7 +98,7 @@ jobs:
         id: download
         # Download the pre-built, pre-scanned NPM package from main workflow
         # This ensures we publish exactly what was tested
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: ${{ steps.artifact.outputs.artifact_name }}
           path: ./npm-artifact
@@ -187,12 +187,12 @@ jobs:
           echo "📦 Publishing to GitHub Packages: $VERSION"
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ steps.version.outputs.tag }}
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
           # GitHub Packages npm registry URL
@@ -214,7 +214,7 @@ jobs:
 
       - name: Download pre-built NPM package
         id: download
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: ${{ steps.artifact.outputs.artifact_name }}
           path: ./npm-artifact

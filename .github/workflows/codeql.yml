@@ -29,19 +29,19 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0 # Full history for accurate analysis
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v5
         with:
           version: 10.22.0
           run_install: false
           standalone: true
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 24
           cache: pnpm
@@ -58,7 +58,7 @@ jobs:
       - name: Initialize CodeQL
         # Setup CodeQL for JavaScript/TypeScript analysis
         # Detects: XSS, SQL injection, path traversal, command injection, etc.
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: javascript-typescript
           # Optionally specify additional queries to run
@@ -67,6 +67,6 @@ jobs:
       - name: Perform CodeQL Analysis
         # Analyze code and upload results to Security tab
         # Results viewable at: Security > Code scanning alerts
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
         with:
           category: '/language:javascript-typescript'

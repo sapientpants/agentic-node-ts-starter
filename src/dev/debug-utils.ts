@@ -26,7 +26,8 @@ export class PerformanceTimer {
 
   /**
    * Mark an intermediate checkpoint
-   * @param checkpointLabel
+   * @param {string} checkpointLabel - The checkpoint label
+   * @returns {number} Elapsed time in milliseconds
    */
   checkpoint(checkpointLabel: string): number {
     const elapsed = performance.now() - this.startTime;
@@ -39,6 +40,7 @@ export class PerformanceTimer {
 
   /**
    * Stop the timer and log the result
+   * @returns {number} Total elapsed time in milliseconds
    */
   end(): number {
     const elapsed = performance.now() - this.startTime;
@@ -49,9 +51,10 @@ export class PerformanceTimer {
 
 /**
  * Decorator for timing function execution
- * @param target
- * @param propertyName
- * @param descriptor
+ * @param {object} target - The class prototype
+ * @param {string} propertyName - The property name
+ * @param {PropertyDescriptor} descriptor - The property descriptor
+ * @returns {PropertyDescriptor} Modified property descriptor
  */
 export function timed(target: any, propertyName: string, descriptor: PropertyDescriptor) {
   if (process.env.NODE_ENV !== 'development') {
@@ -91,7 +94,8 @@ export function timed(target: any, propertyName: string, descriptor: PropertyDes
 
 /**
  * Memory usage monitoring
- * @param label
+ * @param {string} [label] - The label for the memory check (default: 'memory-check')
+ * @returns {void}
  */
 export function logMemoryUsage(label: string = 'memory-check'): void {
   if (process.env.NODE_ENV !== 'development') return;
@@ -113,9 +117,10 @@ export function logMemoryUsage(label: string = 'memory-check'): void {
 
 /**
  * Deep object inspection for debugging
- * @param obj
- * @param label
- * @param maxDepth
+ * @param {unknown} obj - The object to inspect
+ * @param {string} [label] - The label for the inspection (default: 'inspect')
+ * @param {number} [maxDepth] - The maximum depth for nested objects (default: 3)
+ * @returns {void}
  */
 export function inspect(obj: unknown, label: string = 'inspect', maxDepth: number = 3): void {
   if (process.env.NODE_ENV !== 'development') return;
@@ -133,8 +138,9 @@ export function inspect(obj: unknown, label: string = 'inspect', maxDepth: numbe
 
 /**
  * Log function entry
- * @param functionName
- * @param args
+ * @param {string} functionName - The function name
+ * @param {unknown[]} args - The function arguments
+ * @returns {void}
  */
 const logFunctionEntry = (functionName: string, args: any[]): void => {
   logger.debug(
@@ -149,8 +155,9 @@ const logFunctionEntry = (functionName: string, args: any[]): void => {
 
 /**
  * Log successful function completion
- * @param functionName
- * @param result
+ * @param {string} functionName - The function name
+ * @param {unknown} result - The function result
+ * @returns {void}
  */
 const logFunctionSuccess = (functionName: string, result: any): void => {
   logger.debug(
@@ -165,8 +172,9 @@ const logFunctionSuccess = (functionName: string, result: any): void => {
 
 /**
  * Log function error
- * @param functionName
- * @param error
+ * @param {string} functionName - The function name
+ * @param {unknown} error - The error that occurred
+ * @returns {void}
  */
 const logFunctionError = (functionName: string, error: unknown): void => {
   logger.error(
@@ -181,8 +189,9 @@ const logFunctionError = (functionName: string, error: unknown): void => {
 
 /**
  * Handle async function result
- * @param functionName
- * @param promise
+ * @param {string} functionName - The function name
+ * @param {Promise<unknown>} promise - The async function promise
+ * @returns {Promise<unknown>} The original promise
  */
 // eslint-disable-next-line @typescript-eslint/promise-function-async -- Intentionally not async to chain promises
 const handleAsyncResult = (functionName: string, promise: Promise<any>): Promise<any> => {
@@ -217,9 +226,10 @@ const handleAsyncResult = (functionName: string, promise: Promise<any>): Promise
 
 /**
  * Function call tracer for debugging
- * @param target
- * @param propertyName
- * @param descriptor
+ * @param {object} target - The class prototype
+ * @param {string} propertyName - The property name
+ * @param {PropertyDescriptor} descriptor - The property descriptor
+ * @returns {PropertyDescriptor} Modified property descriptor
  */
 export function trace(target: any, propertyName: string, descriptor: PropertyDescriptor) {
   if (process.env.NODE_ENV !== 'development') {
@@ -259,8 +269,9 @@ export function trace(target: any, propertyName: string, descriptor: PropertyDes
 
 /**
  * Simple assertion function for development debugging
- * @param condition
- * @param message
+ * @param {boolean} condition - The condition to assert
+ * @param {string} message - The error message if assertion fails
+ * @returns {void}
  */
 export function assert(condition: boolean, message: string): asserts condition {
   if (process.env.NODE_ENV === 'production') return;
@@ -273,7 +284,8 @@ export function assert(condition: boolean, message: string): asserts condition {
 
 /**
  * Development-only feature flag
- * @param fn
+ * @param {() => T} fn - The function to execute in development mode
+ * @returns {T | undefined} The function result in development, undefined in production
  */
 export function devOnly<T>(fn: () => T): T | undefined {
   if (process.env.NODE_ENV === 'development') {
@@ -288,8 +300,9 @@ export function devOnly<T>(fn: () => T): T | undefined {
 export const devConsole = {
   /**
    * Log with automatic JSON formatting
-   * @param obj
-   * @param label
+   * @param {unknown} obj - The object to log
+   * @param {string} [label] - Optional label for the log entry
+   * @returns {void}
    */
   log: (obj: unknown, label?: string) => {
     if (process.env.NODE_ENV === 'development') {
@@ -299,7 +312,8 @@ export const devConsole = {
 
   /**
    * Table display for arrays/objects
-   * @param data
+   * @param {Record<string, unknown>[] | Record<string, unknown>} data - The data to display
+   * @returns {void}
    */
   table: (data: Record<string, any>[] | Record<string, any>) => {
     if (process.env.NODE_ENV === 'development') {
@@ -309,8 +323,9 @@ export const devConsole = {
 
   /**
    * Group related log statements
-   * @param label
-   * @param fn
+   * @param {string} label - The group label
+   * @param {() => void} fn - The function to execute within the group
+   * @returns {void}
    */
   group: (label: string, fn: () => void) => {
     if (process.env.NODE_ENV === 'development') {
@@ -325,8 +340,9 @@ export const devConsole = {
 
   /**
    * Time a code block
-   * @param label
-   * @param fn
+   * @param {string} label - The timer label
+   * @param {() => T} fn - The function to time
+   * @returns {T} The function result
    */
   time: <T>(label: string, fn: () => T): T => {
     if (process.env.NODE_ENV === 'development') {
