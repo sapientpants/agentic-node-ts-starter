@@ -48,8 +48,6 @@ jobs:
   # Results appear in Security tab of the PR
   security:
     uses: ./.github/workflows/reusable-security.yml
-    with:
-      run-osv-scan: false # TODO: Re-enable when osv-scanner-action supports Node.js 24 runners
 
   # =============================================================================
   # DOCKER CONTAINER VALIDATION
