@@ -76,7 +76,7 @@ jobs:
 
   osv-scan:
     if: inputs.run-osv-scan
-    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v2.5.0
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@f4cfcc01edc9c8b756a9b873b7a623ca674da51e
     with:
       # Scan entire project including all manifests (package.json, pnpm-lock.yaml)
       scan-args: |-
