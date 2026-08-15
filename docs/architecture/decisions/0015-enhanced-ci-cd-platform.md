@@ -30,7 +30,7 @@ We enhanced the CI/CD platform with additional integrations while maintaining th
    - GitHub Actions workflow validation with actionlint
 
 2. **Automated Workflows**:
-    - Automated scripts for remediation
+   - Automated scripts for remediation
    - Dependency update automation
    - Feature implementation from GitHub issues
 

@@ -29,7 +29,7 @@ We extended the security strategy to create a comprehensive, multi-layered appro
    - CWE classification for all issues
 
 2. **Automated Security Remediation**:
-    - Automated scripts for fixing security issues
+   - Automated scripts for fixing security issues
    - Prioritization by severity (BLOCKER, CRITICAL, HIGH)
    - Bulk operations for common vulnerabilities
    - Integration with PR workflow
@@ -75,7 +75,7 @@ All challenges from ADR-0009, plus:
 Extends mitigations from ADR-0009:
 
 - **Smart Prioritization**: Focus on high-severity issues
-    - **Automated Triage**: Automated scripts for bulk operations
+  - **Automated Triage**: Automated scripts for bulk operations
 - **Clear Thresholds**: Configurable severity levels
 - **Regular Reviews**: Periodic assessment of tool effectiveness
 

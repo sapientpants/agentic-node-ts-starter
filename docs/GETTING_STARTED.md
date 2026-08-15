@@ -257,7 +257,7 @@ If all checks pass, your project is ready for development!
 1. **Write your first feature**: Start with a test, then implement
 2. **Set up your IDE**: Configure VS Code or your preferred editor
 3. **Review documentation**:
-    - [AGENTS.md](../AGENTS.md) - AI-assisted development with opencode and local models
+   - [AGENTS.md](../AGENTS.md) - AI-assisted development with opencode and local models
    - [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) - Common issues and solutions
    - [PROCESS.md](./PROCESS.md) - Development workflow
    - [OBSERVABILITY.md](./OBSERVABILITY.md) - Logging and monitoring
@@ -322,7 +322,7 @@ npx prisma init
 2. **Update project metadata**:
    - Edit `package.json` with your project name and description
    - Update README.md with your project information
-    - Configure AGENTS.md for your specific needs
+   - Configure AGENTS.md for your specific needs
 
 3. **Start developing**:
 

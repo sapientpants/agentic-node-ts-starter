@@ -435,7 +435,7 @@ If your issue isn't covered here:
 1. **Check existing issues**: [GitHub Issues](https://github.com/sapientpants/agentic-node-ts-starter/issues)
 2. **Review documentation**:
    - [GETTING_STARTED.md](./GETTING_STARTED.md)
-    - [AGENTS.md](../AGENTS.md)
+   - [AGENTS.md](../AGENTS.md)
    - [PROCESS.md](./PROCESS.md)
 3. **Ask for help**: Create a new issue with:
    - Error message
