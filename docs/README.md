@@ -37,7 +37,7 @@ Welcome to the **Agentic Node + TypeScript Starter** documentation! This templat
 ### Common Tasks
 
 - [Run Tests](./DEVELOPMENT.md#testing) - `pnpm test`
-- [Check Code Quality](./DEVELOPMENT.md#quick-quality-checks) - `pnpm verify`
+- [Check Code Quality](./DEVELOPMENT.md#quick-quality-checks) - `pnpm precommit`
 - [Start Development](./DEVELOPMENT.md#starting-development) - `pnpm dev`
 - [Create a Release](./DEVELOPMENT.md#releases) - `pnpm changeset`
 
@@ -62,7 +62,7 @@ This starter template follows these principles:
 
 - **Batteries Included** - Everything you need to start building immediately
 - **Type Safety First** - Strict TypeScript with runtime validation
-- **Test Everything** - Unit tests, property-based tests, 80% coverage minimum
+- **Test Everything** - Unit tests, property-based tests, 90% coverage (84% branches) minimum
 - **Automate Quality** - Pre-commit hooks, CI/CD, automated releases
 - **Security by Default** - Dependency scanning, SBOM generation, attestations
 

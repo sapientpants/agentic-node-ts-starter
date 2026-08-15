@@ -32,19 +32,19 @@ A **batteries-included** TypeScript starter template with comprehensive testing,
 
 ## 🤔 What is Agentic Development?
 
-**"Agentic" in this context refers to AI-assisted development workflow**, not AI agent runtime. This template is designed to work seamlessly with AI development tools like [Claude Code](https://claude.ai/code) to enhance your productivity through:
+**"Agentic" in this context refers to AI-assisted development workflow**, not AI agent runtime. This template is designed to work seamlessly with AI development tools to enhance your productivity through:
 
 - 🤖 **AI-powered code generation** - Let AI assistants help write boilerplate and tests
 - 🔄 **Automated refactoring** - AI tools can safely refactor with comprehensive test coverage
 - 📝 **Documentation assistance** - AI can help maintain docs in sync with code
 - 🎯 **Issue-to-implementation workflows** - Custom commands for AI-driven development
 
-> **Important:** This is a template repository for starting new projects. No AI agents or chatbots are included - the "agentic" aspect comes from using AI development tools (like Claude) to assist you in building your application faster and with higher quality.
+> **Important:** This is a template repository for starting new projects. No AI agents or chatbots are included - the "agentic" aspect comes from using AI development tools to assist you in building your application faster and with higher quality.
 
 ## 🛠️ Tech Stack
 
-**Core:** Node.js 24+ • TypeScript ^5.9.2 (strict) • pnpm 10.15  
-**Testing:** Vitest • fast-check (property testing) • 80% coverage minimum  
+**Core:** Node.js 24 • TypeScript ^5.9.3 (strict, NodeNext ES modules) • pnpm 10.22.0 (pinned via mise)  
+**Testing:** Vitest + V8 coverage • fast-check property testing • lines/functions/statements ≥90%, branches ≥80%  
 **Quality:** ESLint 9 • Prettier • Husky • Commitlint  
 **Security:** CodeQL • OSV Scanner • SBOM • SLSA attestations  
 **CI/CD:** GitHub Actions • Changesets • Automated releases
@@ -67,17 +67,15 @@ A **batteries-included** TypeScript starter template with comprehensive testing,
 git clone https://github.com/sapientpants/agentic-node-ts-starter.git my-project
 cd my-project
 
-# Install dependencies (requires Node.js 24+ and pnpm 10.15)
+# Install dependencies (requires Node.js 24 and pnpm 10.22.0 - use mise if available)
 pnpm install
 
-# Set up configuration (required)
-cp .env.example .env
-# Edit .env with your configuration
-# See docs/CONFIG.md for required environment variables
+# No .env file needed for the template defaults; add variables via src/config.ts + .env.example
+cp .env.example .env   # optional: customize values (all keys have safe defaults)
 
 # Verify everything works
 pnpm test
-pnpm verify  # Full quality check
+pnpm precommit  # Full quality check, same as CI (several minutes)
 
 # Start developing
 pnpm dev     # TypeScript watch mode
@@ -92,7 +90,7 @@ pnpm dev     # TypeScript watch mode
 # Development
 pnpm dev          # TypeScript watch mode
 pnpm build        # Build to dist/
-pnpm verify       # Run all quality checks
+pnpm precommit    # Run all quality checks
 
 # Testing (80% coverage required)
 pnpm test         # Run tests
@@ -222,9 +220,9 @@ The `pnpm precommit` command runs checks in optimized order for fast feedback:
 
 **Mutation testing** is excluded from pre-commit due to performance - run it periodically (weekly/monthly).
 
-## 🤖 Claude Code Integration
+## 🤖 AI Tool Integration
 
-This project includes special configurations for [Claude Code](https://claude.ai/code):
+This project includes special configurations for AI development tools:
 
 ### Custom Commands
 
@@ -237,15 +235,12 @@ This project includes special configurations for [Claude Code](https://claude.ai
 - Prevents bypassing verification with `--no-verify` flag
 - Ensures all commits pass quality checks
 
-See [CLAUDE.md](./CLAUDE.md) for detailed Claude Code guidance.
+See [AGENTS.md](./AGENTS.md) for project conventions and quality gates.
 
 ## 📁 Project Structure
 
 ```
 .
-├── .claude/           # Claude Code configurations
-│   ├── commands/      # Custom slash commands
-│   └── hooks/         # Git hook scripts
 ├── .github/           # GitHub Actions workflows
 ├── docs/              # Documentation
 ├── src/               # Source code
@@ -287,7 +282,6 @@ See [CLAUDE.md](./CLAUDE.md) for detailed Claude Code guidance.
 - 🚀 **GitHub Actions** CI/CD pipeline
 - 🚀 **Changesets** for versioning
 - 🚀 **Automated releases** with changelog
-- 🚀 **Claude Code** integration
 
 ## ⚙️ Required Setup
 

@@ -253,14 +253,14 @@ describe('Time-dependent code', () => {
 
 ## Coverage Requirements
 
-> **⚠️ IMPORTANT**: This template enforces **80% minimum coverage** for all metrics. Tests will fail if coverage drops below this threshold.
+> **⚠️ IMPORTANT**: This template enforces **90% minimum coverage** for lines/functions/statements and **84% for branches**. Tests will fail if coverage drops below these thresholds.
 
-### Coverage Metrics (All require 80% minimum)
+### Coverage Metrics
 
-- **Lines**: 80% of code lines must be executed
-- **Branches**: 80% of conditional branches must be tested
-- **Functions**: 80% of functions must be called
-- **Statements**: 80% of statements must be executed
+- **Lines**: 90% of code lines must be executed
+- **Branches**: 84% of conditional branches must be tested
+- **Functions**: 90% of functions must be called
+- **Statements**: 90% of statements must be executed
 
 ### Running Tests Locally
 
@@ -270,12 +270,12 @@ pnpm test:watch     # Watch mode - re-runs tests on file changes
 pnpm test           # Run tests once
 
 # Coverage commands
-pnpm test:coverage  # Run tests with coverage report (enforces 80% threshold)
+pnpm test:coverage  # Run tests with coverage report (enforces 90%/84% thresholds)
 pnpm coverage:report # Generate detailed HTML report
 pnpm coverage:open  # Open HTML report in browser
 
 # Quick verification
-pnpm verify         # Run all checks including tests
+pnpm precommit     # Run all checks including tests (full gate)
 ```
 
 ### Understanding Coverage Output
@@ -290,20 +290,20 @@ $ pnpm test:coverage
  ------------|---------|----------|---------|---------|-------------------
  File        | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s
  ------------|---------|----------|---------|---------|-------------------
- All files   |   85.42 |    82.35 |   88.46 |   85.42 |
+  All files   |   91.20 |    86.40 |   92.30 |   91.20 |
   config.ts  |   95.65 |    88.89 |     100 |   95.65 | 45-47
   index.ts   |   66.67 |       75 |      50 |   66.67 | 15,22-24
  ------------|---------|----------|---------|---------|-------------------
 
- ✅ Coverage threshold met (80% minimum required)
+ ✅ Coverage threshold met (90% lines/functions/statements, 84% branches required)
 ```
 
-If coverage is below 80%, you'll see:
+If coverage is below threshold, you'll see:
 
 ```bash
  ❌ Coverage threshold not met:
- - Branches: 75% (minimum 80%)
- - Functions: 78% (minimum 80%)
+- Branches: 81% (minimum 84%)
+- Functions: 88% (minimum 90%)
 ```
 
 ### Coverage Configuration
@@ -315,10 +315,10 @@ coverage: {
   provider: 'v8',
   reporter: ['text', 'json', 'html'],
   thresholds: {
-    lines: 80,
-    branches: 80,
-    functions: 80,
-    statements: 80,
+    lines: 90,
+    branches: 84,
+    functions: 90,
+    statements: 90,
   },
 }
 ```
@@ -402,7 +402,7 @@ pnpm test:coverage
 pnpm quick-check
 
 # Full verification
-pnpm verify
+pnpm precommit
 ```
 
 ## Best Practices

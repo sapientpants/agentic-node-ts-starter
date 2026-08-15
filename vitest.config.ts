@@ -22,7 +22,6 @@ export default defineConfig({
         'docs/**',
         '.github/**',
         '.changeset/**',
-        '.claude/**',
         'node_modules/**',
         'src/dev/**', // Development utilities - no coverage required
         '**/*.example.ts', // Example files - not part of production code

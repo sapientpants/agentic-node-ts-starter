@@ -59,8 +59,8 @@ jobs:
 
       - name: Tests with coverage
         # Run test suite with coverage
-        # Coverage enforces 80% minimum threshold for all metrics
-        # FAILS IF: Tests fail or coverage below 80% (when coverage enabled)
+        # Coverage enforces 90% lines/functions/statements, 80% branches threshold
+        # FAILS IF: Tests fail or coverage below 90%/80% (when coverage enabled)
         # To debug: Check test output and coverage/index.html
         run: pnpm test:coverage
 

@@ -167,4 +167,4 @@ Add as `RELEASE_TOKEN` secret.
 2. **Configure `RELEASE_TOKEN`** for automatic publishing
 3. **Keep secrets secure** and rotate regularly
 4. **Monitor workflow runs** for failures
-5. **Use `pnpm verify`** before pushing code
+5. **Use `pnpm precommit`** before pushing code

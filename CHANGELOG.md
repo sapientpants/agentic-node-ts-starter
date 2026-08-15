@@ -126,7 +126,7 @@
 
   **Quality Threshold Enhancements:**
   - Set code duplication threshold to 0% (zero tolerance for duplication)
-  - Increase test coverage thresholds: branches 84%, functions/lines/statements 90%
+  - Increase test coverage thresholds: branches 80%, functions/lines/statements 90%
   - Add cspell for automated spell checking with custom technical dictionary
   - Add markdown reporter to jscpd for better documentation
 

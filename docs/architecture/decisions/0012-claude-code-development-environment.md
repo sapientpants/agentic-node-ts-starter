@@ -4,7 +4,7 @@ Date: 2025-08-30
 
 ## Status
 
-Accepted
+Superseded by ADR-0017 (AI-Assisted Development Environment)
 
 ## Context
 

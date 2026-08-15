@@ -83,7 +83,7 @@ log.error({ err: error, context }, 'Operation failed');
 Before committing, you can manually run all checks:
 
 ```bash
-pnpm verify  # Runs all checks: audit, typecheck, lint, format, test
+pnpm precommit  # Runs all checks: audit, typecheck, lint, format, test, coverage
 ```
 
 Note: The pre-commit hook will automatically run all these checks when you commit.
@@ -344,14 +344,14 @@ This is required for the automated release workflow to create version PRs.
 - Add tests for new features
 - Update documentation
 - Use changesets for tracking changes
-- Run `pnpm verify` before pushing
+- Run `pnpm precommit` before pushing
 
 ## 🤝 Getting Help
 
 - Check existing issues and PRs
 - Read the documentation
 - Ask questions in issues
-- Review CLAUDE.md for AI-assisted development
+- Review AGENTS.md for project conventions
 
 ## 📄 License
 
