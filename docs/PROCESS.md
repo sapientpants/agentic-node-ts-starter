@@ -7,7 +7,7 @@
 
 ## 1) Specify (SPEC-first)
 
-- Use `/spec-feature` Claude command to create a GitHub issue with Gherkin specification
+- Use `/spec-feature` command to create a GitHub issue with Gherkin specification
 - Define clear scope, non-goals, risks, and acceptance criteria (Given/When/Then)
 - Prefer **executable specs** via tests
 

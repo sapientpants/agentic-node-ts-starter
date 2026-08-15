@@ -64,7 +64,7 @@ We chose **Vitest** as our primary test framework with **fast-check** for proper
 ### Mitigation
 
 - **Documentation**: Clear examples of both unit and property-based testing patterns
-- **Templates**: Test templates and patterns documented in CLAUDE.md
+- **Templates**: Test templates and patterns documented in AGENTS.md
 - **Gradual Adoption**: Property-based tests introduced incrementally
 - **Flexibility**: Coverage can be adjusted per-file for special cases
 - **Training**: Team guidance on effective property-based testing strategies

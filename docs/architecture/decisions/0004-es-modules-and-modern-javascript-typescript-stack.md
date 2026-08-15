@@ -64,7 +64,7 @@ We chose **ES Modules (ESM)** with modern TypeScript configuration:
 
 ### Mitigation
 
-- **Documentation**: Comprehensive guide in CLAUDE.md for ESM patterns
+- **Documentation**: Comprehensive guide in AGENTS.md for ESM patterns
 - **Tooling**: ESLint rules help catch common ESM mistakes
 - **Examples**: Clear examples of import/export patterns throughout codebase
 - **CI/CD**: Automated validation ensures proper ESM usage

@@ -20,7 +20,7 @@ Welcome to the **Agentic Node + TypeScript Starter** documentation! This templat
 
 - **[CHECKLISTS.md](./CHECKLISTS.md)** - Quick reference checklists
 - **[OBSERVABILITY.md](./OBSERVABILITY.md)** - Logging and monitoring setup
-- **[../CLAUDE.md](../CLAUDE.md)** - AI-assisted development with Claude
+- **[../AGENTS.md](../AGENTS.md)** - AI-assisted development with opencode and local models
 
 ### Architecture Decisions
 

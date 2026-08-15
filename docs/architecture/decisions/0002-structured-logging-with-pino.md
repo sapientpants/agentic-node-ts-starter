@@ -63,7 +63,7 @@ We chose Pino as our logging library because:
 
 ### Mitigation
 
-- Comprehensive documentation and examples provided in README.md and CLAUDE.md
+- Comprehensive documentation and examples provided in README.md and AGENTS.md
 - TypeScript types ensure proper usage
 - Gradual migration approach supported (console.log still works)
 

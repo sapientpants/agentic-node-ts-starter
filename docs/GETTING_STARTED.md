@@ -2,7 +2,7 @@
 
 Welcome to the Agentic Node + TypeScript Starter! This guide will walk you through transforming this template into your own project in under 10 minutes.
 
-> **What does "Agentic" mean?** This template is designed for AI-assisted development workflows. It includes configurations and commands specifically tailored for working with AI development tools like Claude Code. The template itself is not an AI agent - it's a foundation for building your own applications with the help of AI assistants. The comprehensive testing, documentation, and quality automation make it safe and efficient for AI tools to help you generate, refactor, and maintain code.
+> **What does "Agentic" mean?** This template is designed for AI-assisted development workflows. It includes configurations and commands specifically tailored for working with AI development tools like opencode and local models. The template itself is not an AI agent - it's a foundation for building your own applications with the help of AI assistants. The comprehensive testing, documentation, and quality automation make it safe and efficient for AI tools to help you generate, refactor, and maintain code.
 
 ## Quick Setup Checklist
 
@@ -257,7 +257,7 @@ If all checks pass, your project is ready for development!
 1. **Write your first feature**: Start with a test, then implement
 2. **Set up your IDE**: Configure VS Code or your preferred editor
 3. **Review documentation**:
-   - [CLAUDE.md](../CLAUDE.md) - AI-assisted development with Claude
+    - [AGENTS.md](../AGENTS.md) - AI-assisted development with opencode and local models
    - [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) - Common issues and solutions
    - [PROCESS.md](./PROCESS.md) - Development workflow
    - [OBSERVABILITY.md](./OBSERVABILITY.md) - Logging and monitoring
@@ -322,7 +322,7 @@ npx prisma init
 2. **Update project metadata**:
    - Edit `package.json` with your project name and description
    - Update README.md with your project information
-   - Configure CLAUDE.md for your specific needs
+    - Configure AGENTS.md for your specific needs
 
 3. **Start developing**:
 
@@ -363,18 +363,18 @@ npx prisma init
 - `src/` - Replace with your code
 - `tests/` - Replace with your tests
 - `README.md` - Your project description
-- `CLAUDE.md` - Your AI instructions
+- `AGENTS.md` - Your AI instructions
 
 **Optional to Remove**:
 
-- `.claude/` directory (if not using Claude Code)
+- `.github/hooks/` directory (if not using AI-assisted development)
 - ADR records (if you prefer different documentation)
 
 ## Time-Saving Tips
 
 - **Keep the pre-commit hooks** to maintain code quality
 - **Use changesets** for version management from the start
-- **Review CLAUDE.md** to leverage AI-assisted development effectively
+- **Review AGENTS.md** to leverage AI-assisted development effectively
 - **Check existing patterns** in the template before adding new ones
 - **Use the documentation** - [docs/](../docs/) has examples for everything
 

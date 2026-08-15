@@ -30,7 +30,7 @@ We enhanced the CI/CD platform with additional integrations while maintaining th
    - GitHub Actions workflow validation with actionlint
 
 2. **Automated Workflows**:
-   - Claude Code commands for automated remediation
+    - Automated scripts for remediation
    - Dependency update automation
    - Feature implementation from GitHub issues
 
@@ -76,4 +76,5 @@ Extends mitigations from ADR-0008:
 
 - [ADR-0008: Original CI/CD Platform](./0008-ci-cd-platform-github-actions.md)
 - [ADR-0010: Extended Linting Strategy](./0010-extended-linting-strategy.md)
-- [ADR-0012: Claude Code Development Environment](./0012-claude-code-development-environment.md)
+- [ADR-0012: Claude Code Development Environment (Superseded)](./0012-claude-code-development-environment.md)
+- [ADR-0017: AI-Assisted Development Environment](./0017-ai-assisted-development-environment.md)

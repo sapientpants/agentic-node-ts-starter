@@ -225,7 +225,7 @@ The project uses Husky to enforce quality checks before each commit. The `precom
 
 #### Important: No Bypass Allowed
 
-> **🔒 Security Feature**: This project includes a Claude Code hook that **blocks the `--no-verify` flag**. You cannot bypass pre-commit checks with `git commit --no-verify`. This ensures all commits meet quality standards.
+> **🔒 Security Feature**: This project includes a git hook that **blocks the `--no-verify` flag**. You cannot bypass pre-commit checks with `git commit --no-verify`. This ensures all commits meet quality standards.
 
 If you encounter issues:
 
