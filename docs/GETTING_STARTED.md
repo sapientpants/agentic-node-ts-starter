@@ -71,16 +71,17 @@ pnpm install
 - Node.js >= 24.0.0
 - pnpm 10.22.0 (exact version)
 
-### 3. Set Up Configuration (Required)
+### 3. Set Up Configuration (Optional)
 
-Configuration is mandatory. The application will not start without valid configuration:
+All configuration values have defaults — the application will start without a `.env` file.
+
+To override defaults, copy the example and edit:
 
 ```bash
-# Copy the example configuration
+# Copy the example configuration (optional)
 cp .env.example .env
 
-# Edit .env with your configuration
-# Most defaults will work for development
+# Edit .env with your values, or leave as-is to use defaults
 ```
 
 ### 4. Update Project Metadata
@@ -176,7 +177,7 @@ Describe how to use your project.
 \`\`\`bash
 pnpm build       # Build the project
 pnpm test        # Run tests
-pnpm verify      # Run all checks
+pnpm precommit   # Run all checks (full gate)
 \`\`\`
 
 ## License
@@ -227,12 +228,12 @@ After customization, run through this checklist to ensure everything is properly
 
 ```bash
 # 1. Verify all quality checks pass
-pnpm verify
-# This runs: audit, typecheck, lint, format check, and tests
+pnpm precommit
+# This runs: audit, typecheck, lint, format check, tests, coverage (90% lines/functions/statements, 80% branches)
 
-# 2. Check test coverage meets requirements (80% minimum)
+# 2. Check test coverage meets requirements
 pnpm test:coverage
-# Should show coverage >= 80% for all metrics
+# Should show coverage >= 90% for lines/functions/statements, >= 80% for branches
 
 # 3. Ensure TypeScript builds successfully
 pnpm build
@@ -342,7 +343,7 @@ npx prisma init
 
    ```bash
    # Run all quality checks
-   pnpm verify
+   pnpm precommit
 
    # Create a changeset
    pnpm changeset

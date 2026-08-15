@@ -19,7 +19,7 @@ pnpm test:watch # Test watch mode
 pnpm quick-check  # typecheck + lint + test
 
 # Full verification (like CI)
-pnpm verify       # All quality gates including audit + format
+pnpm precommit   # All quality gates including audit + format + coverage
 ```
 
 ### 🧪 Testing
@@ -31,14 +31,14 @@ pnpm test:watch
 # Single run
 pnpm test
 
-# With coverage (80% minimum threshold enforced)
+# With coverage (90% lines/functions/statements, 80% branches enforced)
 pnpm test:coverage
 
 # Coverage in browser
 pnpm coverage:open
 ```
 
-> **📊 Coverage Requirements**: This project enforces **80% minimum coverage** for lines, branches, functions, and statements. The CI pipeline will fail if coverage drops below this threshold.
+> **📊 Coverage Requirements**: This project enforces **90% minimum coverage** for lines, functions, and statements, and **80% for branches**. The CI pipeline will fail if coverage drops below these thresholds.
 
 ### 🏗️ Building
 
@@ -61,11 +61,11 @@ Run `pnpm help` to see all available scripts, or check these key commands:
 | `pnpm dev`           | TypeScript watch mode             | `tsc --watch`                            |
 | `pnpm test`          | Run tests once                    | `vitest run`                             |
 | `pnpm test:watch`    | Test watch mode                   | `vitest`                                 |
-| `pnpm test:coverage` | Tests with coverage report        | `vitest run --coverage` (80% threshold)  |
+| `pnpm test:coverage` | Tests with coverage report        | `vitest run --coverage` (90%/80% thresholds)  |
 | `pnpm typecheck`     | Type check only                   | `tsc --noEmit`                           |
 | `pnpm lint`          | Check linting                     | `eslint .`                               |
 | `pnpm format`        | Check formatting                  | `prettier --check .`                     |
-| `pnpm verify`        | Full verification (CI equivalent) | audit + typecheck + lint + format + test |
+| `pnpm precommit`     | Full verification (CI equivalent) | audit + typecheck + lint + format + test + coverage |
 | `pnpm quick-check`   | Fast quality check                | typecheck + lint + test                  |
 | `pnpm ci:local`      | Simulate full CI locally          | Complete CI pipeline simulation          |
 | `pnpm doctor`        | Check environment health          | Node/pnpm version check                  |
@@ -204,7 +204,7 @@ pnpm ci:local
 pnpm ci:local:fast
 
 # Quick commands
-pnpm verify       # Full verification
+pnpm precommit   # Full verification
 pnpm quick-check  # Fast quality check
 ```
 
@@ -237,7 +237,7 @@ pnpm format:fix
 pnpm lint:fix
 
 # Run full verification to debug
-pnpm verify
+pnpm precommit
 ```
 
 ## Troubleshooting
