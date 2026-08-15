@@ -37,7 +37,7 @@ jobs:
 
   # Core validation: audit, typecheck, lint, format, tests
   # upload-coverage: true generates coverage reports for visibility
-  # FAILS IF: Any check fails or coverage drops below 80%
+  # FAILS IF: Any check fails or coverage drops below 90% lines/functions/statements / 80% branches
   validate:
     uses: ./.github/workflows/reusable-validate.yml
     with:
@@ -82,7 +82,7 @@ jobs:
         # This single check can be used as a required status check
         # FAILS IF: Any validation job failed
         # Common failures:
-        #   - validate: Tests fail, coverage below 80%, lint errors, workflow errors, missing changesets, code quality issues
+        #   - validate: Tests fail, coverage below 90%/80%, lint errors, workflow errors, missing changesets, code quality issues
         #   - security: Security vulnerabilities, vulnerable dependencies, audit failures
         #   - docker: Container vulnerabilities or build failures (when enabled)
         run: |

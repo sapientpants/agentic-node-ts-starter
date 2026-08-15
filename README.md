@@ -43,8 +43,8 @@ A **batteries-included** TypeScript starter template with comprehensive testing,
 
 ## 🛠️ Tech Stack
 
-**Core:** Node.js 24+ • TypeScript ^5.9.2 (strict) • pnpm 10.15  
-**Testing:** Vitest • fast-check (property testing) • 80% coverage minimum  
+**Core:** Node.js 24 • TypeScript ^5.9.3 (strict, NodeNext ES modules) • pnpm 10.22.0 (pinned via mise)  
+**Testing:** Vitest + V8 coverage • fast-check property testing • lines/functions/statements ≥90%, branches ≥80%  
 **Quality:** ESLint 9 • Prettier • Husky • Commitlint  
 **Security:** CodeQL • OSV Scanner • SBOM • SLSA attestations  
 **CI/CD:** GitHub Actions • Changesets • Automated releases
@@ -67,17 +67,15 @@ A **batteries-included** TypeScript starter template with comprehensive testing,
 git clone https://github.com/sapientpants/agentic-node-ts-starter.git my-project
 cd my-project
 
-# Install dependencies (requires Node.js 24+ and pnpm 10.15)
+# Install dependencies (requires Node.js 24 and pnpm 10.22.0 - use mise if available)
 pnpm install
 
-# Set up configuration (required)
-cp .env.example .env
-# Edit .env with your configuration
-# See docs/CONFIG.md for required environment variables
+# No .env file needed for the template defaults; add variables via src/config.ts + .env.example
+cp .env.example .env   # optional: customize values (all keys have safe defaults)
 
 # Verify everything works
 pnpm test
-pnpm verify  # Full quality check
+pnpm precommit  # Full quality check, same as CI (several minutes)
 
 # Start developing
 pnpm dev     # TypeScript watch mode
@@ -92,7 +90,7 @@ pnpm dev     # TypeScript watch mode
 # Development
 pnpm dev          # TypeScript watch mode
 pnpm build        # Build to dist/
-pnpm verify       # Run all quality checks
+pnpm precommit    # Run all quality checks
 
 # Testing (80% coverage required)
 pnpm test         # Run tests
@@ -237,7 +235,7 @@ This project includes special configurations for [Claude Code](https://claude.ai
 - Prevents bypassing verification with `--no-verify` flag
 - Ensures all commits pass quality checks
 
-See [CLAUDE.md](./CLAUDE.md) for detailed Claude Code guidance.
+See [AGENTS.md](./AGENTS.md) for project conventions and quality gates.
 
 ## 📁 Project Structure
 

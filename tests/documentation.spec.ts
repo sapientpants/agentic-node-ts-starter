@@ -17,7 +17,6 @@ describe('Documentation', () => {
   describe('Required Documentation Files', () => {
     const requiredDocs = [
       'README.md',
-      'CLAUDE.md',
       'docs/GETTING_STARTED.md',
       'docs/TROUBLESHOOTING.md',
       'docs/PROCESS.md',
@@ -64,7 +63,7 @@ describe('Documentation', () => {
 
   describe('Code Examples in Documentation', () => {
     it('should have valid TypeScript syntax in code blocks', () => {
-      const docsToCheck = ['docs/GETTING_STARTED.md', 'CLAUDE.md'];
+      const docsToCheck = ['docs/GETTING_STARTED.md'];
 
       docsToCheck.forEach((docFile) => {
         const docPath = join(projectRoot, docFile);
@@ -110,12 +109,7 @@ describe('Documentation', () => {
       };
       const availableScripts = Object.keys(packageJson.scripts);
 
-      const docsToCheck = [
-        'README.md',
-        'docs/GETTING_STARTED.md',
-        'docs/TROUBLESHOOTING.md',
-        'CLAUDE.md',
-      ];
+      const docsToCheck = ['README.md', 'docs/GETTING_STARTED.md', 'docs/TROUBLESHOOTING.md'];
 
       docsToCheck.forEach((docFile) => {
         const docPath = join(projectRoot, docFile);

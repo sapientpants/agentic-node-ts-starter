@@ -47,14 +47,14 @@ fnm use 22
 
 ```bash
 # Install exact version required
-npm install -g pnpm@10.15.0
+npm install -g pnpm@10.22.0
 
 # Or use Corepack (Node 16.13+)
 corepack enable
-corepack prepare pnpm@10.15.0 --activate
+corepack prepare pnpm@10.22.0 --activate
 
 # Verify version
-pnpm --version  # Should show 10.15.0
+pnpm --version  # Should show 10.22.0
 ```
 
 ### mise Not Found
@@ -165,7 +165,7 @@ echo "declare module 'module-name';" > src/types/module-name.d.ts
 
 ### Coverage Threshold Failures
 
-**Problem**: Tests pass but coverage check fails with "Coverage for X (79%) does not meet threshold (80%)"
+**Problem**: Tests pass but coverage check fails with "Coverage for X (83%) does not meet threshold (84%)"
 
 **Solution**:
 
@@ -448,7 +448,7 @@ If your issue isn't covered here:
 When something's not working, try these in order:
 
 1. ✅ Check Node version: `node --version` (must be >= 22)
-2. ✅ Check pnpm version: `pnpm --version` (must be 10.15.0)
+2. ✅ Check pnpm version: `pnpm --version` (must be 10.22.0)
 3. ✅ Clear and reinstall: `rm -rf node_modules && pnpm install`
 4. ✅ Run all checks: `pnpm precommit`
 5. ✅ Check for changesets: `pnpm changeset:status`
