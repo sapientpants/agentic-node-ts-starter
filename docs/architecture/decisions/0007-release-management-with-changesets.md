@@ -69,7 +69,7 @@ We chose **Changesets** for release management because:
 
 ### Mitigation
 
-- **Documentation**: Clear workflow documentation in CLAUDE.md
+- **Documentation**: Clear workflow documentation in AGENTS.md
 - **Validation**: CI prevents merging without proper changesets
 - **Tooling**: Simple commands (`pnpm changeset`) reduce friction
 - **Templates**: Changeset templates guide developers

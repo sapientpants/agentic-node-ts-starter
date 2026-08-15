@@ -29,7 +29,7 @@ We extended the security strategy to create a comprehensive, multi-layered appro
    - CWE classification for all issues
 
 2. **Automated Security Remediation**:
-   - Claude commands for fixing security issues
+   - Automated scripts for fixing security issues
    - Prioritization by severity (BLOCKER, CRITICAL, HIGH)
    - Bulk operations for common vulnerabilities
    - Integration with PR workflow
@@ -75,11 +75,12 @@ All challenges from ADR-0009, plus:
 Extends mitigations from ADR-0009:
 
 - **Smart Prioritization**: Focus on high-severity issues
-- **Automated Triage**: Claude commands for bulk operations
+  - **Automated Triage**: Automated scripts for bulk operations
 - **Clear Thresholds**: Configurable severity levels
 - **Regular Reviews**: Periodic assessment of tool effectiveness
 
 ## References
 
 - [ADR-0009: Original Security Scanning Strategy](./0009-container-and-security-scanning-strategy.md)
-- [ADR-0013: Claude Code Development Environment](./0013-claude-code-development-environment.md)
+- [ADR-0012: Claude Code Development Environment (Superseded)](./0012-claude-code-development-environment.md)
+- [ADR-0017: AI-Assisted Development Environment](./0017-ai-assisted-development-environment.md)

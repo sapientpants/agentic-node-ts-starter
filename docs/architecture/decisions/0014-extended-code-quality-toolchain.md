@@ -47,7 +47,7 @@ The extended toolchain maintains the original foundation while adding:
 - **Unified Pre-commit Hooks**: All linters run via lint-staged
 - **Parallel CI/CD Execution**: Linters run concurrently for performance
 - **Automatic Fixing**: Most issues can be auto-fixed with `:fix` commands
-- **Automated Remediation**: Claude commands for fixing common issues
+- **Automated Remediation**: Automated scripts for fixing common issues
 
 ## Consequences
 

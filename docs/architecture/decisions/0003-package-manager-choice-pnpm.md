@@ -61,7 +61,7 @@ We chose **pnpm** as our package manager because:
 
 ### Mitigation
 
-- Documentation provided in CLAUDE.md with common commands and troubleshooting
+- Documentation provided in AGENTS.md with common commands and troubleshooting
 - Most tools work seamlessly with pnpm's node_modules structure
 - Fallback scripts in package.json work with any package manager
 - Team training on pnpm-specific features and best practices

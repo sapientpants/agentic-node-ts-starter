@@ -206,7 +206,7 @@ export default [
   },
   // Script files - allow console.log for CLI output
   {
-    files: ['scripts/**/*.js', '.github/scripts/**/*.js', '.claude/hooks/**/*.ts'],
+    files: ['scripts/**/*.js', '.github/scripts/**/*.js'],
     rules: {
       'no-console': 'off', // Console output is appropriate for CLI scripts
     },

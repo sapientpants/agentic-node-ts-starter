@@ -11,7 +11,7 @@ This guide helps you resolve common issues when using the Agentic Node + TypeScr
 - [CI/CD Failures](#cicd-failures)
 - [Git and Commit Issues](#git-and-commit-issues)
 - [Container and Security Scanning](#container-and-security-scanning)
-- [Claude AI Integration](#claude-ai-integration)
+- [AI-Assisted Development](#ai-assisted-development)
 
 ## Version and Environment Issues
 
@@ -364,38 +364,38 @@ pnpm scan:container
 echo "CVE-2024-XXXXX # False positive: reason" >> .trivyignore
 ```
 
-## Claude AI Integration
+## AI-Assisted Development
 
-### Claude Commands Not Working
+### AI Commands Not Working
 
-**Problem**: `/spec-feature` or other Claude commands not recognized.
+**Problem**: Custom AI commands not recognized.
 
 **Solution**:
 
-1. Ensure you're using claude.ai/code
-2. Commands are in `.claude/commands/` directory
-3. Restart Claude Code session if needed
+1. Ensure you're using opencode or your chosen AI development tool
+2. Commands are in `.github/scripts/` directory
+3. Restart your AI tool session if needed
 4. Check command file has `.md` extension
 
 ### Changeset Guidance Issues
 
-**Problem**: Unsure when to add changesets with Claude AI assistance.
+**Problem**: Unsure when to add changesets with AI assistance.
 
 **Solution**:
 
 - **Add changeset** for: bug fixes, features, breaking changes
 - **Use --empty** for: tests, CI changes, documentation, refactoring
-- Claude commands should remind you about changesets
+- AI commands should remind you about changesets
 - Check `pnpm changeset:status` to see pending changes
 
 ### AI Getting Import Paths Wrong
 
-**Problem**: Claude AI suggests imports without `.js` extensions.
+**Problem**: AI suggests imports without `.js` extensions.
 
 **Solution**:
 
-- Remind Claude about ES modules requirement
-- Point to CLAUDE.md for correct patterns
+- Remind the AI about ES modules requirement
+- Point to AGENTS.md for correct patterns
 - Always review generated imports for `.js` extensions
 
 ## Common Error Messages
@@ -435,7 +435,7 @@ If your issue isn't covered here:
 1. **Check existing issues**: [GitHub Issues](https://github.com/sapientpants/agentic-node-ts-starter/issues)
 2. **Review documentation**:
    - [GETTING_STARTED.md](./GETTING_STARTED.md)
-   - [CLAUDE.md](../CLAUDE.md)
+   - [AGENTS.md](../AGENTS.md)
    - [PROCESS.md](./PROCESS.md)
 3. **Ask for help**: Create a new issue with:
    - Error message
