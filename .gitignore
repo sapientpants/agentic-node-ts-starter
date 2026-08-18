@@ -9,11 +9,6 @@ tmp/
 # Code quality reports
 reports/
 
-# Documentation
-docs/
-temp/
-etc/
-
 # Log files
 logs/
 test-logs/

@@ -224,11 +224,13 @@ The `pnpm precommit` command runs checks in optimized order for fast feedback:
 
 This project includes special configurations for AI development tools:
 
-### Custom Commands
+### Custom Commands (OpenCode)
 
-- `/analyze-and-fix-github-issue` - Complete workflow for fixing GitHub issues
-- `/release` - Automated release process
-- `/update-dependencies` - Update dependencies with PR workflow
+- `/spec-feature` - Create a Gherkin feature specification as a GitHub issue
+- `/implement-github-issue` - Full issue-to-PR workflow: branch, code, tests, changeset, PR
+- `/update-dependencies` - Curated dependency updates with PR workflow
+
+The commands live in [.opencode/commands/](./.opencode/commands/) and the project config in [.opencode/opencode.json](./.opencode/opencode.json), which injects this repo's docs as agent instructions and denies force-pushes and `--no-verify` bypasses.
 
 ### Git Hooks
 

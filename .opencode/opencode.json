@@ -1,0 +1,11 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": ["docs/PATTERNS.md", "docs/TESTING.md", "docs/PROCESS.md", "docs/CHECKLISTS.md"],
+  "permission": {
+    "bash": {
+      "git push --force*": "deny",
+      "git push --force-with-lease*": "allow",
+      "git *--no-verify*": "deny"
+    }
+  }
+}

@@ -2,7 +2,7 @@
 
 ## 0) Prepare
 
-- Node 22 LTS via **mise** (`mise.toml`), package manager **pnpm 10**, strict TypeScript, ESLint (flat), Prettier, Vitest, fast-check, Zod.
+- Node 24 via **mise** (`mise.toml`), package manager **pnpm 10.22.0** (pinned), strict TypeScript, ESLint (flat), Prettier, Vitest, fast-check, Zod.
 - Turn on branch protection + required status checks in GitHub. Enforce PRs, linear history, required reviews (self-review allowed but deliberate).
 
 ## 1) Specify (SPEC-first)
@@ -18,12 +18,12 @@
 
 ## 3) Generate with agent
 
-- Author a task prompt in `prompts/tasks/*.md` referencing SPEC and constraints. Keep tool rights minimal.
+- Author a task prompt referencing the SPEC and constraints; keep tool rights minimal.
 - Use the agent to produce the smallest viable diff plus tests. Prefer **in-repo** prompt files (versioned).
 
 ## 4) Verify automatically
 
-- Run: typecheck → lint → unit + property tests → contract validation (Zod/OpenAPI) → OSV scan → SBOM generation.
+- Run: typecheck → lint → unit + property tests → env contract validation (Zod) → audit/OSV scan → SBOM generation.
 - CI enforces gates; artifacts include coverage report, SBOM, and SLSA provenance.
 
 ## 5) Review

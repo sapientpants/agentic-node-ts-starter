@@ -56,19 +56,19 @@ pnpm build:watch
 
 Run `pnpm help` to see all available scripts, or check these key commands:
 
-| Command              | Description                       | What it runs                             |
-| -------------------- | --------------------------------- | ---------------------------------------- |
-| `pnpm dev`           | TypeScript watch mode             | `tsc --watch`                            |
-| `pnpm test`          | Run tests once                    | `vitest run`                             |
-| `pnpm test:watch`    | Test watch mode                   | `vitest`                                 |
-| `pnpm test:coverage` | Tests with coverage report        | `vitest run --coverage` (90%/80% thresholds)  |
-| `pnpm typecheck`     | Type check only                   | `tsc --noEmit`                           |
-| `pnpm lint`          | Check linting                     | `eslint .`                               |
-| `pnpm format`        | Check formatting                  | `prettier --check .`                     |
+| Command              | Description                       | What it runs                                        |
+| -------------------- | --------------------------------- | --------------------------------------------------- |
+| `pnpm dev`           | TypeScript watch mode             | `tsc --watch`                                       |
+| `pnpm test`          | Run tests once                    | `vitest run`                                        |
+| `pnpm test:watch`    | Test watch mode                   | `vitest`                                            |
+| `pnpm test:coverage` | Tests with coverage report        | `vitest run --coverage` (90%/80% thresholds)        |
+| `pnpm typecheck`     | Type check only                   | `tsc --noEmit`                                      |
+| `pnpm lint`          | Check linting                     | `eslint .`                                          |
+| `pnpm format`        | Check formatting                  | `prettier --check .`                                |
 | `pnpm precommit`     | Full verification (CI equivalent) | audit + typecheck + lint + format + test + coverage |
-| `pnpm quick-check`   | Fast quality check                | typecheck + lint + test                  |
-| `pnpm ci:local`      | Simulate full CI locally          | Complete CI pipeline simulation          |
-| `pnpm doctor`        | Check environment health          | Node/pnpm version check                  |
+| `pnpm quick-check`   | Fast quality check                | typecheck + lint + test                             |
+| `pnpm ci:local`      | Simulate full CI locally          | Complete CI pipeline simulation                     |
+| `pnpm doctor`        | Check environment health          | Node/pnpm version check                             |
 
 ## IDE Setup
 
