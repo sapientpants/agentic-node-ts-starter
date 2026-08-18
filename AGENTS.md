@@ -12,6 +12,7 @@ Compact guidance for AI agents working in this repository.
 - `pnpm precommit` — the real local gate: audit → format → linters → typecheck → deps checks → dead code → `test:coverage`. Runs before every commit via husky; expect it to take several minutes.
 - Faster iteration loop: `pnpm quick-check` (typecheck + lint + tests, no coverage).
 - Auto-fixes: `pnpm format:fix`, `pnpm lint:fix`. `pnpm format` only checks.
+- Agentic workflows (OpenCode, see `.opencode/`): `/spec-feature <feature>`, `/implement-github-issue <issue-number>`, `/update-dependencies` — process in `docs/PROCESS.md`.
 
 ## Quality gates (enforced in CI and precommit; docs sometimes lag — trust the config files)
 
