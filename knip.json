@@ -1,5 +1,5 @@
 {
-  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "$schema": "https://unpkg.com/knip@6/schema.json",
   "entry": ["src/index.ts", "tests/**/*.spec.ts"],
   "project": ["src/**/*.ts", "tests/**/*.ts"],
   "ignore": ["src/**/*.example.ts", "tests/**/*.template.ts"],
@@ -8,9 +8,8 @@
     "pino-syslog",
     "pino-pretty",
     "@fast-check/vitest",
-    "vite",
     "validate-branch-name"
   ],
-  "ignoreBinaries": ["open", "dot"],
+  "ignoreBinaries": ["dot"],
   "ignoreExportsUsedInFile": true
 }

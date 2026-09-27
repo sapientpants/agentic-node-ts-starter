@@ -47,14 +47,14 @@ fnm use 22
 
 ```bash
 # Install exact version required
-npm install -g pnpm@10.22.0
+npm install -g pnpm@11.27.1
 
 # Or use Corepack (Node 16.13+)
 corepack enable
-corepack prepare pnpm@10.22.0 --activate
+corepack prepare pnpm@11.27.1 --activate
 
 # Verify version
-pnpm --version  # Should show 10.22.0
+pnpm --version  # Should show 11.27.1
 ```
 
 ### mise Not Found
@@ -448,7 +448,7 @@ If your issue isn't covered here:
 When something's not working, try these in order:
 
 1. ✅ Check Node version: `node --version` (must be >= 22)
-2. ✅ Check pnpm version: `pnpm --version` (must be 10.22.0)
+2. ✅ Check pnpm version: `pnpm --version` (must be 11.27.1)
 3. ✅ Clear and reinstall: `rm -rf node_modules && pnpm install`
 4. ✅ Run all checks: `pnpm precommit`
 5. ✅ Check for changesets: `pnpm changeset:status`

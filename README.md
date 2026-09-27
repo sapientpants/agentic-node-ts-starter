@@ -23,7 +23,7 @@
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Node Version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fsapientpants%2Fagentic-node-ts-starter%2Fmain%2Fquality-metrics.json&query=%24.nodeVersion&label=Node.js&color=339933&logo=node.js)](https://nodejs.org)
-[![Package Manager](https://img.shields.io/badge/pnpm-10.22.0-orange.svg?logo=pnpm)](https://pnpm.io)
+[![Package Manager](https://img.shields.io/badge/pnpm-11.27.1-orange.svg?logo=pnpm)](https://pnpm.io)
 [![Version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fsapientpants%2Fagentic-node-ts-starter%2Fmain%2Fquality-metrics.json&query=%24.version&label=Version)](https://github.com/sapientpants/agentic-node-ts-starter/releases)
 
 A **batteries-included** TypeScript starter template with comprehensive testing, code quality automation, and security scanning. Built for modern Node.js development with AI-assisted (agentic) coding workflow.
@@ -43,7 +43,7 @@ A **batteries-included** TypeScript starter template with comprehensive testing,
 
 ## 🛠️ Tech Stack
 
-**Core:** Node.js 24 • TypeScript ^5.9.3 (strict, NodeNext ES modules) • pnpm 10.22.0 (pinned via mise)  
+**Core:** Node.js 24 • TypeScript ^6.0.3 (strict, NodeNext ES modules) • pnpm 11.27.1 (pinned via mise)  
 **Testing:** Vitest + V8 coverage • fast-check property testing • lines/functions/statements ≥90%, branches ≥80%  
 **Quality:** ESLint 9 • Prettier • Husky • Commitlint  
 **Security:** CodeQL • OSV Scanner • SBOM • SLSA attestations  
@@ -67,7 +67,7 @@ A **batteries-included** TypeScript starter template with comprehensive testing,
 git clone https://github.com/sapientpants/agentic-node-ts-starter.git my-project
 cd my-project
 
-# Install dependencies (requires Node.js 24 and pnpm 10.22.0 - use mise if available)
+# Install dependencies (requires Node.js 24 and pnpm 11.27.1 - use mise if available)
 pnpm install
 
 # No .env file needed for the template defaults; add variables via src/config.ts + .env.example

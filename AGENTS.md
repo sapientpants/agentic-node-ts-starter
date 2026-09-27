@@ -4,7 +4,7 @@ Compact guidance for AI agents working in this repository.
 
 ## Setup
 
-- Node 24 and pnpm 10.22.0 are pinned by `mise.toml`; use mise shims if versions differ.
+- Node 24 and pnpm 11.27.1 are pinned by `mise.toml`; use mise shims if versions differ.
 - Starter template: `src/index.ts` and files named `*.example.ts` are placeholder code to replace, not real features. `src/config.ts` and `src/logger.ts` are the load-bearing infrastructure — keep them intact when customizing.
 
 ## Commands (high signal)

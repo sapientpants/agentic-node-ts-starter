@@ -288,10 +288,7 @@ export function assert(condition: boolean, message: string): asserts condition {
  * @returns {T | undefined} The function result in development, undefined in production
  */
 export function devOnly<T>(fn: () => T): T | undefined {
-  if (process.env.NODE_ENV === 'development') {
-    return fn();
-  }
-  return undefined;
+  return process.env.NODE_ENV === 'development' ? fn() : undefined;
 }
 
 /**
