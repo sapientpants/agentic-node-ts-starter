@@ -1,6 +1,10 @@
-# pnpm settings. As of pnpm 11 the "pnpm" field in package.json is ignored,
-# so the security overrides live here instead.
+# pnpm settings. As of pnpm 11 the "pnpm" field in package.json is ignored and
+# .npmrc is only consulted for registry settings, so pnpm's own settings live
+# here instead. .npmrc keeps its copies for anyone running plain npm.
 # See https://pnpm.io/settings
+engineStrict: true
+saveExact: true
+
 overrides:
   tar: '>=7.5.19'
   tmp: '>=0.2.4'
