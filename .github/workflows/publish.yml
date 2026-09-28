@@ -25,7 +25,7 @@ concurrency:
 
 # Global environment variables for consistency
 env:
-  PNPM_VERSION: 10.22.0 # Pinned: Must match packageManager in package.json
+  PNPM_VERSION: 11.27.1 # Pinned: Must match packageManager in package.json
   NODE_VERSION: 24 # Pinned: Must match engines.node in package.json
 
 # SECURITY: Minimal required permissions

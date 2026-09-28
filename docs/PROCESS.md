@@ -2,7 +2,7 @@
 
 ## 0) Prepare
 
-- Node 24 via **mise** (`mise.toml`), package manager **pnpm 10.22.0** (pinned), strict TypeScript, ESLint (flat), Prettier, Vitest, fast-check, Zod.
+- Node 24 via **mise** (`mise.toml`), package manager **pnpm 11.27.1** (pinned), strict TypeScript, ESLint (flat), Prettier, Vitest, fast-check, Zod.
 - Turn on branch protection + required status checks in GitHub. Enforce PRs, linear history, required reviews (self-review allowed but deliberate).
 
 ## 1) Specify (SPEC-first)

@@ -1,0 +1,29 @@
+# pnpm settings. As of pnpm 11 the "pnpm" field in package.json is ignored and
+# .npmrc is only consulted for registry settings, so pnpm's own settings live
+# here instead. .npmrc keeps its copies for anyone running plain npm.
+# See https://pnpm.io/settings
+engineStrict: true
+saveExact: true
+
+overrides:
+  tar: '>=7.5.19'
+  tmp: '>=0.2.4'
+  minimatch@<3.1.3: '>=3.1.3'
+  minimatch@>=7.0.0 <7.4.8: '>=7.4.8'
+  minimatch@>=9.0.0 <9.0.7: '>=9.0.7'
+  flatted: '>=3.4.0'
+  rollup: '>=4.59.0'
+  lodash@>=4.0.0 <=4.17.22: '>=4.18.0'
+  picomatch@<4.0.4: '>=4.0.4'
+  uuid@<11.1.1: '>=11.1.1'
+  undici@<7.29.0: '>=7.29.0'
+  qs@<6.16.0: '>=6.16.0'
+  fast-uri@<3.1.6: '>=3.1.6'
+  js-yaml@<3.15.2: '>=3.15.2'
+  js-yaml@>=4.0.0 <4.3.2: '>=4.3.2'
+
+# unrs-resolver (via eslint-import-resolver-typescript) ships prebuilt binaries and
+# works without running its install script, which pnpm has always skipped here.
+# pnpm 11 turns a skipped build script into an error, so the choice is now explicit.
+allowBuilds:
+  unrs-resolver: false

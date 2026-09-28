@@ -312,7 +312,7 @@ export function getConfig<K extends keyof Config>(key: K): Config[K] {
  * ```
  */
 export function hasConfig<K extends keyof Config>(key: K): boolean {
-  // eslint-disable-next-line security/detect-object-injection, sonarjs/different-types-comparison -- key is type-safe; comparison needed for optional properties
+  // eslint-disable-next-line security/detect-object-injection -- key is type-safe
   return config[key] !== undefined;
 }
 
