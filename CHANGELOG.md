@@ -1,5 +1,11 @@
 # agentic-node-ts-starter
 
+## 0.26.7
+
+### Patch Changes
+
+- [#185](https://github.com/sapientpants/agentic-node-ts-starter/pull/185) [`b14ec69`](https://github.com/sapientpants/agentic-node-ts-starter/commit/b14ec6952591e92588c87faee0ce6f9764a7e59e) - chore(deps-dev): bump knip from 6.38.0 to 6.43.0
+
 ## 0.26.6
 
 ### Patch Changes
