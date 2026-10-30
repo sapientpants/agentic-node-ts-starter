@@ -1,5 +1,14 @@
 # agentic-node-ts-starter
 
+## 0.27.3
+
+### Patch Changes
+
+- [#203](https://github.com/sapientpants/agentic-node-ts-starter/pull/203) [`e3f1404`](https://github.com/sapientpants/agentic-node-ts-starter/commit/e3f14048cccfa1ac66190e2e711352e2357c20a0) - Migrate the `@timed` and `@trace` debug decorators to the standard (TC39) decorator
+  signature so they type-check without `experimentalDecorators`, and add tests that apply
+  them with real decorator syntax. Vitest now transpiles files containing decorators with
+  the TypeScript compiler, since Vite's oxc transformer does not lower standard decorators.
+
 ## 0.27.2
 
 ### Patch Changes
