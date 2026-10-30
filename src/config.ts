@@ -117,67 +117,40 @@ const ConfigSchema = z.object({
 export type Config = z.infer<typeof ConfigSchema>;
 
 /**
- * List of sensitive keys that should be masked in error messages
+ * List of sensitive keys whose values must never appear in error messages
  */
 const SENSITIVE_KEYS = ['PASSWORD', 'TOKEN', 'SECRET', 'KEY'];
 
 /**
- * Convert value to string safely
+ * Convert a received value to a string for display in error messages.
+ * Environment variables are always strings; other types are only reachable
+ * when the schema is used programmatically.
  * @param {unknown} value - The value to convert to a string
  * @returns {string} String representation of the value
  */
-// eslint-disable-next-line complexity -- Switch exhaustiveness requires all typeof cases
 function valueToString(value: unknown): string {
-  // Handle null/undefined
-  if (value == null) {
-    return String(value);
-  }
-
-  // Handle string early
   if (typeof value === 'string') {
     return value;
   }
-
-  const valueType = typeof value;
-
-  // Use switch to handle remaining types
-  switch (valueType) {
-    case 'string':
-      return value as string;
-    case 'number':
-      return `${value as number}`;
-    case 'boolean':
-      return `${value as boolean}`;
-    case 'bigint':
-      return (value as bigint).toString();
-    case 'symbol':
-      return (value as symbol).toString();
-    case 'object':
-      return JSON.stringify(value);
-    case 'function':
-      return `[Function: ${(value as { name?: string }).name || 'anonymous'}]`;
-    case 'undefined':
-      return 'undefined';
-    default:
-      return '[Unknown]';
-  }
+  return typeof value === 'object' && value !== null ? JSON.stringify(value) : String(value);
 }
 
+/**
+ * Convert a received value to a display string, fully redacting it when the
+ * variable name indicates a secret.
+ * @param {string} key - The environment variable name
+ * @param {unknown} value - The received value
+ * @returns {string} Display string, '***' for sensitive values
+ */
 function maskSensitiveValue(key: string, value: unknown): string {
-  const keyUpper = key.toUpperCase();
-  const isSensitive = SENSITIVE_KEYS.some((sensitive) => keyUpper.includes(sensitive));
-
-  if (!isSensitive || value === undefined || value === null) {
+  if (value === undefined || value === null) {
     return valueToString(value);
   }
 
-  const strValue = valueToString(value);
-  if (strValue.length <= 4) {
-    return '***';
-  }
+  const keyUpper = key.toUpperCase();
+  const isSensitive = SENSITIVE_KEYS.some((sensitive) => keyUpper.includes(sensitive));
 
-  // Show first 2 and last 2 characters
-  return `${strValue.slice(0, 2)}***${strValue.slice(-2)}`;
+  return isSensitive ? '***' : valueToString(value);
 }
 
 /**
@@ -227,10 +200,10 @@ function formatZodError(error: z.ZodError): string {
 
   for (const err of error.issues) {
     const path = err.path.join('.');
-    const value = maskSensitiveValue(path, err.code === 'invalid_type' ? undefined : err.input);
-    const receivedValue = formatReceivedValue(value);
+    // `input` is only populated when parsing with `reportInput: true` (see loadConfig)
+    const receivedValue = formatReceivedValue(maskSensitiveValue(path, err.input));
 
-    if (err.code === 'invalid_type' && 'received' in err && err.received === 'undefined') {
+    if (err.code === 'invalid_type' && err.input === undefined) {
       groupedErrors.missing.push(`  • ${path}: Required but not provided`);
     } else if (err.code === 'invalid_type' || err.code === 'invalid_value') {
       groupedErrors.invalid.push(`  • ${path}: ${err.message}${receivedValue}`);
@@ -248,7 +221,9 @@ function formatZodError(error: z.ZodError): string {
  */
 function loadConfig(): Config {
   try {
-    const parsed = ConfigSchema.parse(process.env);
+    // reportInput makes Zod attach the offending value to each issue so
+    // formatZodError can show it (masked for secrets)
+    const parsed = ConfigSchema.parse(process.env, { reportInput: true });
 
     // Apply LOG_LEVEL default based on validated NODE_ENV if not set
     if (!parsed.LOG_LEVEL) {
