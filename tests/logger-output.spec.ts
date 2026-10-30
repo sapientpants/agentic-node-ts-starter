@@ -574,18 +574,23 @@ describe('Logger Output Configuration', () => {
   });
 
   describe('Error Handling', () => {
-    it('should handle invalid LOG_OUTPUT gracefully', async () => {
-      // Invalid LOG_OUTPUT values will default to stdout
+    it('should fall back to stdout and report it when LOG_OUTPUT is unknown', async () => {
       process.env.LOG_OUTPUT = 'invalid-mode';
       process.env.NODE_ENV = 'development';
+      const stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
 
       const loggerModule = await import('../src/logger.js');
       logger = loggerModule.logger;
       getLoggerOutputMode = loggerModule.getLoggerOutputMode;
 
-      // Should default to the invalid value (will be treated as stdout)
-      expect(getLoggerOutputMode()).toBe('invalid-mode');
+      // The effective mode is reported, not the requested one
+      expect(getLoggerOutputMode()).toBe('stdout');
       expect(logger).toBeDefined();
+
+      const allOutput = stdoutSpy.mock.calls.map((call) => String(call[0])).join('');
+      expect(allOutput).toContain('Unknown log output mode');
+      expect(allOutput).toContain('Falling back to stdout');
+      stdoutSpy.mockRestore();
     });
 
     it('should handle missing file path for file output', async () => {
@@ -671,8 +676,8 @@ describe('Logger Output Configuration', () => {
       logger = loggerModule.logger;
       getLoggerOutputMode = loggerModule.getLoggerOutputMode;
 
-      // Should fall back to stdout due to invalid path
-      expect(getLoggerOutputMode()).toBe('file'); // Config shows file, but internally uses stdout
+      // Falls back to stdout due to invalid path and reports the effective mode
+      expect(getLoggerOutputMode()).toBe('stdout');
       expect(logger).toBeDefined();
     });
 
@@ -685,8 +690,8 @@ describe('Logger Output Configuration', () => {
       logger = loggerModule.logger;
       getLoggerOutputMode = loggerModule.getLoggerOutputMode;
 
-      // Should fall back to stdout due to invalid syslog config
-      expect(getLoggerOutputMode()).toBe('syslog'); // Config shows syslog, but internally uses stdout
+      // Falls back to stdout due to invalid syslog config and reports the effective mode
+      expect(getLoggerOutputMode()).toBe('stdout');
       expect(logger).toBeDefined();
     });
   });

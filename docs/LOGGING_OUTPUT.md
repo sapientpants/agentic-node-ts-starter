@@ -284,6 +284,22 @@ console.log('Current output:', getLoggerOutputMode()); // 'stderr'
 switchLogOutput('file');
 ```
 
+How switching behaves:
+
+- The switch applies to the exported `logger` and to every child logger derived from
+  it (via `createChildLogger` or `withContext`), including children created before the
+  switch.
+- The previous destination's transport (file, syslog, pretty-printer) is closed once
+  the new one is active, so repeated switches do not leak worker threads or file handles.
+- `switchLogOutput` throws if the mode is unknown or its configuration is invalid (for
+  example a `LOG_FILE_PATH` that fails validation or an invalid syslog host). The
+  current destination stays active in that case.
+- `getLoggerOutputMode()` always reports the destination that is actually in use. If
+  `LOG_OUTPUT` is unknown or fails validation at startup, the logger falls back to
+  stdout, logs the reason, and `getLoggerOutputMode()` returns `'stdout'`.
+- Under `NODE_ENV=test` no transport worker is started: `file` and `syslog` are
+  recorded as the mode but output stays silent.
+
 ### Using with Different Architectures
 
 Here's an example of a service that switches output based on context:
