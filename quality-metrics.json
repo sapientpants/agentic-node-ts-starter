@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
-  "generatedAt": "2026-10-30T10:13:06.126Z",
-  "version": "0.26.5",
+  "generatedAt": "2026-10-30T10:21:09.144Z",
+  "version": "0.26.6",
   "nodeVersion": ">=24.0.0",
   "coverage": {
     "lines": 93.93,
