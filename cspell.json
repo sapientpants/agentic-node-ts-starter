@@ -63,6 +63,7 @@
     "sonarjs",
     "Stmts",
     "stryker",
+    "transpiles",
     "triaging",
     "trivyignore",
     "typecheck",

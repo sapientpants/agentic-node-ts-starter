@@ -179,6 +179,12 @@ devConsole.table(arrayData);
 devConsole.time('operation', () => expensiveOperation());
 ```
 
+`@timed` and `@trace` are standard (TC39) method decorators, so no `experimentalDecorators`
+flag is needed. Vite's default transformer (oxc) does not yet lower standard decorators, so
+`vitest.config.ts` registers a small plugin that transpiles files containing `@decorator` syntax
+with the TypeScript compiler. If you remove the debug utilities and do not use decorators
+elsewhere, you can drop that plugin.
+
 ### Memory Monitoring
 
 ```typescript

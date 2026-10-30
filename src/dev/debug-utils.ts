@@ -4,7 +4,7 @@
  * Only available in development mode.
  */
 
-/* eslint-disable no-console, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return */
+/* eslint-disable no-console, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return */
 
 import { createChildLogger } from '../logger.js';
 import { performance } from 'node:perf_hooks';
@@ -50,35 +50,66 @@ export class PerformanceTimer {
 }
 
 /**
- * Decorator for timing function execution
- * @param {object} target - The class prototype
- * @param {string} propertyName - The property name
- * @param {PropertyDescriptor} descriptor - The property descriptor
- * @returns {PropertyDescriptor} Modified property descriptor
+ * A class method that can be wrapped by a standard (TC39) method decorator.
  */
-export function timed(target: any, propertyName: string, descriptor: PropertyDescriptor) {
-  if (process.env.NODE_ENV !== 'development') {
-    return descriptor;
-  }
+type DecoratedMethod<This, Args extends any[], Return> = (this: This, ...args: Args) => Return;
 
-  const method = descriptor.value;
-
-  // Validate that we're decorating a method
-  if (typeof method !== 'function') {
+/**
+ * Ensure a decorator is applied to a method and return its name.
+ * @param {string} decoratorName - The decorator name used in error messages
+ * @param {DecoratorContext} context - The decorator context
+ * @returns {string} The decorated method name
+ */
+function requireMethodContext(
+  decoratorName: string,
+  context: Pick<DecoratorContext, 'kind' | 'name'>,
+): string {
+  const name = String(context.name);
+  if (context.kind !== 'method') {
     throw new Error(
-      `@timed decorator can only be applied to methods, but ${propertyName} is not a function`,
+      `@${decoratorName} decorator can only be applied to methods, but ${name} is not a method`,
     );
   }
+  return name;
+}
 
-  descriptor.value = function (...args: any[]) {
-    const timer = new PerformanceTimer(`${target.constructor.name}.${propertyName}`);
+/**
+ * Resolve the owner name for a decorated method at call time.
+ * @param {unknown} self - The `this` value of the call
+ * @param {boolean} isStatic - Whether the method is static
+ * @returns {string} The class name, or 'anonymous' if it cannot be determined
+ */
+function getOwnerName(self: unknown, isStatic: boolean): string {
+  const owner = isStatic ? self : (self as { constructor?: unknown } | null)?.constructor;
+  const name = typeof owner === 'function' ? owner.name : undefined;
+  return name !== undefined && name !== '' ? name : 'anonymous';
+}
+
+/**
+ * Decorator for timing method execution (standard TC39 decorator)
+ * @param {DecoratedMethod} value - The decorated method
+ * @param {ClassMethodDecoratorContext} context - The decorator context
+ * @returns {DecoratedMethod} The original method, or a timed wrapper in development
+ */
+export function timed<This, Args extends any[], Return>(
+  value: DecoratedMethod<This, Args, Return>,
+  context: ClassMethodDecoratorContext<This, DecoratedMethod<This, Args, Return>>,
+): DecoratedMethod<This, Args, Return> {
+  const methodName = requireMethodContext('timed', context);
+
+  if (process.env.NODE_ENV !== 'development') {
+    return value;
+  }
+
+  return function (this: This, ...args: Args): Return {
+    const timer = new PerformanceTimer(`${getOwnerName(this, context.static)}.${methodName}`);
     try {
-      const result = method.apply(this, args);
+      const result = value.apply(this, args);
 
       // Handle async functions
       if (result instanceof Promise) {
         // eslint-disable-next-line promise/prefer-await-to-then -- Using finally for performance measurement
-        return result.finally(() => timer.end());
+        return result.finally(() => timer.end()) as Return;
       }
 
       timer.end();
@@ -88,8 +119,6 @@ export function timed(target: any, propertyName: string, descriptor: PropertyDes
       throw error;
     }
   };
-
-  return descriptor;
 }
 
 /**
@@ -225,35 +254,31 @@ const handleAsyncResult = (functionName: string, promise: Promise<any>): Promise
 };
 
 /**
- * Function call tracer for debugging
- * @param {object} target - The class prototype
- * @param {string} propertyName - The property name
- * @param {PropertyDescriptor} descriptor - The property descriptor
- * @returns {PropertyDescriptor} Modified property descriptor
+ * Function call tracer for debugging (standard TC39 decorator)
+ * @param {DecoratedMethod} value - The decorated method
+ * @param {ClassMethodDecoratorContext} context - The decorator context
+ * @returns {DecoratedMethod} The original method, or a traced wrapper in development
  */
-export function trace(target: any, propertyName: string, descriptor: PropertyDescriptor) {
+export function trace<This, Args extends any[], Return>(
+  value: DecoratedMethod<This, Args, Return>,
+  context: ClassMethodDecoratorContext<This, DecoratedMethod<This, Args, Return>>,
+): DecoratedMethod<This, Args, Return> {
+  const methodName = requireMethodContext('trace', context);
+
   if (process.env.NODE_ENV !== 'development') {
-    return descriptor;
+    return value;
   }
 
-  const method = descriptor.value;
-
-  if (typeof method !== 'function') {
-    throw new Error(
-      `@trace decorator can only be applied to methods, but ${propertyName} is not a function`,
-    );
-  }
-
-  descriptor.value = function (...args: any[]) {
-    const functionName = `${target.constructor.name}.${propertyName}`;
+  return function (this: This, ...args: Args): Return {
+    const functionName = `${getOwnerName(this, context.static)}.${methodName}`;
 
     logFunctionEntry(functionName, args);
 
     try {
-      const result = method.apply(this, args);
+      const result = value.apply(this, args);
 
       if (result instanceof Promise) {
-        return handleAsyncResult(functionName, result);
+        return handleAsyncResult(functionName, result) as Return;
       }
 
       logFunctionSuccess(functionName, result);
@@ -263,8 +288,6 @@ export function trace(target: any, propertyName: string, descriptor: PropertyDes
       throw error;
     }
   };
-
-  return descriptor;
 }
 
 /**
@@ -354,4 +377,4 @@ export const devConsole = {
   },
 };
 
-/* eslint-enable no-console, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return */
+/* eslint-enable no-console, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return */

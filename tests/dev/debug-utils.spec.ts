@@ -58,76 +58,97 @@ describe('Debug Utils', () => {
 
   describe('@timed decorator', () => {
     it('should time synchronous methods in development', () => {
-      // Test by calling the decorator directly
-      const descriptor = {
-        value: vi.fn((x: number) => x * 2),
-      };
-      const target = { constructor: { name: 'TestClass' } };
+      class Calculator {
+        @timed
+        double(x: number): number {
+          return x * 2;
+        }
+      }
 
-      timed(target, 'syncMethod', descriptor);
-      const result = descriptor.value(5);
-      expect(result).toBe(10);
+      expect(new Calculator().double(5)).toBe(10);
     });
 
     it('should time asynchronous methods in development', async () => {
-      const descriptor = {
-        value: vi.fn(async (x: number) => {
+      class Calculator {
+        @timed
+        async double(x: number): Promise<number> {
           await new Promise((resolve) => setTimeout(resolve, 1));
           return x * 2;
-        }),
-      };
-      const target = { constructor: { name: 'TestClass' } };
+        }
+      }
 
-      timed(target, 'asyncMethod', descriptor);
-      const result = await descriptor.value(5);
-      expect(result).toBe(10);
+      await expect(new Calculator().double(5)).resolves.toBe(10);
+    });
+
+    it('should preserve `this` and support static methods', () => {
+      class Counter {
+        static instances = 0;
+        private count = 0;
+
+        @timed
+        increment(): number {
+          this.count += 1;
+          return this.count;
+        }
+
+        @timed
+        static create(): Counter {
+          Counter.instances += 1;
+          return new Counter();
+        }
+      }
+
+      const counter = Counter.create();
+      counter.increment();
+      expect(counter.increment()).toBe(2);
+      expect(Counter.instances).toBe(1);
     });
 
     it('should handle errors in timed methods', () => {
-      const descriptor = {
-        value: vi.fn(() => {
+      class Failing {
+        @timed
+        fail(): never {
           throw new Error('Test error');
-        }),
-      };
-      const target = { constructor: { name: 'TestClass' } };
+        }
+      }
 
-      timed(target, 'errorMethod', descriptor);
-      expect(() => descriptor.value()).toThrow('Test error');
+      expect(() => new Failing().fail()).toThrow('Test error');
     });
 
     it('should handle errors in async timed methods', async () => {
-      const descriptor = {
-        value: vi.fn(async () => {
+      class Failing {
+        @timed
+        async fail(): Promise<never> {
           await new Promise((resolve) => setTimeout(resolve, 1));
           throw new Error('Async test error');
-        }),
-      };
-      const target = { constructor: { name: 'TestClass' } };
+        }
+      }
 
-      timed(target, 'asyncErrorMethod', descriptor);
-      await expect(descriptor.value()).rejects.toThrow('Async test error');
+      await expect(new Failing().fail()).rejects.toThrow('Async test error');
     });
 
-    it('should not time methods in production', () => {
+    it('should return the original method in production', () => {
       process.env.NODE_ENV = 'production';
 
-      const descriptor = {
-        value: vi.fn((x: number) => x * 2),
+      const original = function (this: unknown, x: number): number {
+        return x * 2;
       };
-      const target = { constructor: { name: 'TestClass' } };
+      const context = {
+        kind: 'method',
+        name: 'double',
+        static: false,
+      } as ClassMethodDecoratorContext;
 
-      const result = timed(target, 'syncMethod', descriptor);
-      expect(result).toBe(descriptor);
+      expect(timed(original, context)).toBe(original);
     });
 
-    it('should throw error when applied to non-function', () => {
-      const descriptor = {
-        value: 'not a function',
-      };
-      const target = { constructor: { name: 'TestClass' } };
+    it('should throw error when applied to a non-method', () => {
+      const context = {
+        kind: 'field',
+        name: 'notAMethod',
+      } as unknown as ClassMethodDecoratorContext;
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-      expect(() => timed(target, 'notAMethod', descriptor as any)).toThrow(
+      expect(() => timed(() => undefined, context)).toThrow(
         '@timed decorator can only be applied to methods',
       );
     });
@@ -135,75 +156,80 @@ describe('Debug Utils', () => {
 
   describe('@trace decorator', () => {
     it('should trace synchronous method calls in development', () => {
-      const descriptor = {
-        value: vi.fn((a: number, b: number) => a + b),
-      };
-      const target = { constructor: { name: 'TestClass' } };
+      class MathService {
+        @trace
+        add(a: number, b: number): number {
+          return a + b;
+        }
+      }
 
-      trace(target, 'add', descriptor);
-      const result = descriptor.value(2, 3);
-      expect(result).toBe(5);
+      expect(new MathService().add(2, 3)).toBe(5);
     });
 
     it('should trace successful async method calls', async () => {
-      const descriptor = {
-        value: vi.fn(async (id: number) => {
+      class DataService {
+        @trace
+        async fetchData(): Promise<string> {
           await new Promise((resolve) => setTimeout(resolve, 1));
-          return `data-${id}`;
-        }),
-      };
-      const target = { constructor: { name: 'TestClass' } };
+          return 'data';
+        }
+      }
 
-      trace(target, 'fetchData', descriptor);
-      const result = await descriptor.value(123);
-      expect(result).toBe('data-123');
+      await expect(new DataService().fetchData()).resolves.toBe('data');
     });
 
     it('should trace failed async method calls', async () => {
-      const descriptor = {
-        value: vi.fn(async () => {
+      class DataService {
+        @trace
+        async failingMethod(): Promise<never> {
           await new Promise((resolve) => setTimeout(resolve, 1));
-          throw new Error('Async failure');
-        }),
-      };
-      const target = { constructor: { name: 'TestClass' } };
+          throw new Error('Async error');
+        }
+      }
 
-      trace(target, 'failingMethod', descriptor);
-      await expect(descriptor.value()).rejects.toThrow('Async failure');
+      await expect(new DataService().failingMethod()).rejects.toThrow('Async error');
     });
 
     it('should trace errors in synchronous methods', () => {
-      const descriptor = {
-        value: vi.fn(() => {
+      class Failing {
+        @trace
+        errorMethod(): never {
           throw new Error('Sync error');
-        }),
-      };
-      const target = { constructor: { name: 'TestClass' } };
+        }
+      }
 
-      trace(target, 'errorMethod', descriptor);
-      expect(() => descriptor.value()).toThrow('Sync error');
+      expect(() => new Failing().errorMethod()).toThrow('Sync error');
     });
 
-    it('should not trace in production mode', () => {
+    it('should trace static methods using the class name', () => {
+      class Registry {
+        @trace
+        static describe(): string {
+          return 'registry';
+        }
+      }
+
+      expect(Registry.describe()).toBe('registry');
+    });
+
+    it('should return the original method in production', () => {
       process.env.NODE_ENV = 'production';
 
-      const descriptor = {
-        value: vi.fn((a: number, b: number) => a + b),
+      const original = function (this: unknown, a: number, b: number): number {
+        return a + b;
       };
-      const target = { constructor: { name: 'TestClass' } };
+      const context = { kind: 'method', name: 'add', static: false } as ClassMethodDecoratorContext;
 
-      const result = trace(target, 'add', descriptor);
-      expect(result).toBe(descriptor);
+      expect(trace(original, context)).toBe(original);
     });
 
-    it('should throw error when applied to non-function', () => {
-      const descriptor = {
-        value: 'not a function',
-      };
-      const target = { constructor: { name: 'TestClass' } };
+    it('should throw error when applied to a non-method', () => {
+      const context = {
+        kind: 'getter',
+        name: 'notAMethod',
+      } as unknown as ClassMethodDecoratorContext;
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-      expect(() => trace(target, 'notAMethod', descriptor as any)).toThrow(
+      expect(() => trace(() => undefined, context)).toThrow(
         '@trace decorator can only be applied to methods',
       );
     });
