@@ -13,6 +13,8 @@ import {
   validateSyslogHost,
   validateSyslogPort,
   validateFileMode,
+  parseSizeToBytes,
+  toPinoRollSize,
 } from './logger-validation.js';
 
 /**
@@ -70,34 +72,6 @@ const getEffectiveLogOutput = (): string => {
 };
 
 /**
- * Parse size string (e.g., "10M", "1G") to bytes
- * @param {string | undefined} size - The size string to parse
- * @returns {number | undefined} The size in bytes, or undefined if invalid
- */
-const parseSizeToBytes = (size: string | undefined): number | undefined => {
-  if (!size) return undefined;
-
-  // eslint-disable-next-line security/detect-unsafe-regex -- Simple size parsing regex, no exponential backtracking
-  const regex = /^(\d+(?:\.\d+)?)\s*([KMGT]?)B?$/i;
-  const match = regex.exec(size);
-  if (!match?.[1]) return undefined;
-
-  const value = Number.parseFloat(match[1]);
-  const unit = match[2]?.toUpperCase() || '';
-
-  const multipliers: Record<string, number> = {
-    '': 1,
-    K: 1024,
-    M: 1024 * 1024,
-    G: 1024 * 1024 * 1024,
-    T: 1024 * 1024 * 1024 * 1024,
-  };
-
-  // eslint-disable-next-line security/detect-object-injection -- unit comes from regex match, constrained to [KMGT] or empty string
-  return Math.floor(value * (multipliers[unit] || 1));
-};
-
-/**
  * Resolve the validated log file mode from LOG_FILE_PERMISSIONS
  * @returns {number} The numeric file mode to apply to log files
  */
@@ -129,16 +103,24 @@ const toDirectoryMode = (fileMode: number): number => {
  * @returns {{ target: string, options: object }} File transport configuration object
  */
 const getFileTransportConfig = (fileMode: number) => {
-  const maxSize = parseSizeToBytes(getEnvConfig().LOG_FILE_MAX_SIZE);
+  const rawMaxSize = getEnvConfig().LOG_FILE_MAX_SIZE;
+  const maxSize = parseSizeToBytes(rawMaxSize);
 
-  if (maxSize) {
-    // For rotation, use pino-roll transport if size limits are specified
+  if (rawMaxSize !== undefined && rawMaxSize !== '' && maxSize === undefined) {
+    process.stderr.write(
+      `Invalid LOG_FILE_MAX_SIZE "${rawMaxSize}" (expected e.g. 10M, 100KB, 1.5G), disabling log rotation\n`,
+    );
+  }
+
+  if (maxSize !== undefined) {
+    // For rotation, use pino-roll transport if size limits are specified.
+    // pino-roll only understands single-letter units, so pass the normalized byte count.
     const maxFiles = getEnvConfig().LOG_FILE_MAX_FILES;
     return {
       target: 'pino-roll',
       options: {
         file: getEnvConfig().LOG_FILE_PATH || DEFAULT_LOG_FILE_PATH,
-        size: getEnvConfig().LOG_FILE_MAX_SIZE || '10M',
+        size: toPinoRollSize(maxSize),
         mode: fileMode,
         ...(maxFiles !== undefined ? { limit: { count: maxFiles } } : {}),
       },

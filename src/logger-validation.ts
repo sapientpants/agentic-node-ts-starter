@@ -166,3 +166,45 @@ export function validateFileMode(mode: number | string | undefined): number {
 
   return numericMode;
 }
+
+const SIZE_MULTIPLIERS: Record<string, number> = {
+  '': 1,
+  K: 1024,
+  M: 1024 * 1024,
+  G: 1024 * 1024 * 1024,
+  T: 1024 * 1024 * 1024 * 1024,
+};
+
+/**
+ * Parses a human-readable size string (e.g., "10M", "1.5GB", "100 KB") to bytes.
+ * Accepts an optional K/M/G/T unit (case-insensitive), an optional trailing "B",
+ * and whitespace between the number and the unit.
+ * @param {string | undefined} size - The size string to parse
+ * @returns {number | undefined} The size in whole bytes, or undefined if the string is empty or invalid
+ */
+export function parseSizeToBytes(size: string | undefined): number | undefined {
+  if (size === undefined || size.trim() === '') return undefined;
+
+  // eslint-disable-next-line security/detect-unsafe-regex -- Simple size parsing regex, no exponential backtracking
+  const regex = /^(\d+(?:\.\d+)?)\s*([KMGT]?)B?$/i;
+  const match = regex.exec(size.trim());
+  if (!match?.[1]) return undefined;
+
+  const value = Number.parseFloat(match[1]);
+  const unit = (match[2] ?? '').toUpperCase();
+
+  // eslint-disable-next-line security/detect-object-injection -- unit comes from regex match, constrained to [KMGT] or empty string
+  const bytes = Math.floor(value * (SIZE_MULTIPLIERS[unit] ?? 1));
+  return bytes > 0 ? bytes : undefined;
+}
+
+/**
+ * Converts a byte count into the size format understood by pino-roll.
+ * pino-roll only accepts `<number><unit>` with a single-letter unit (`b`, `k`, `m`, `g`),
+ * so richer formats such as "10MB" or "1.5 G" must be normalized before being passed on.
+ * @param {number} bytes - The size in bytes
+ * @returns {string} A pino-roll compatible size string (e.g., "10485760b")
+ */
+export function toPinoRollSize(bytes: number): string {
+  return `${Math.floor(bytes)}b`;
+}

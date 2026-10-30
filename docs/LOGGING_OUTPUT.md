@@ -138,18 +138,24 @@ console.log(JSON.stringify(data)); // Goes to stdout
 # .env
 LOG_OUTPUT=file
 LOG_FILE_PATH=./logs/app.log    # Path to log file
-LOG_FILE_MAX_SIZE=10M            # Max size before rotation (K, M, G suffixes)
+LOG_FILE_MAX_SIZE=10M            # Max size before rotation (K, M, G, T suffixes, optional B)
 LOG_FILE_MAX_FILES=5             # Number of rotated files to keep
 LOG_FILE_PERMISSIONS=640         # Unix file permissions (octal)
 ```
 
 #### Rotation Settings Explained
 
-| Setting                | Default | Examples            | Description                          |
-| ---------------------- | ------- | ------------------- | ------------------------------------ |
-| `LOG_FILE_MAX_SIZE`    | `10M`   | `100K`, `50M`, `1G` | Size threshold for rotation          |
-| `LOG_FILE_MAX_FILES`   | `5`     | `10`, `30`          | Number of old files to retain        |
-| `LOG_FILE_PERMISSIONS` | `640`   | `600`, `644`        | File permissions (owner-group-other) |
+| Setting                | Default | Examples                      | Description                          |
+| ---------------------- | ------- | ----------------------------- | ------------------------------------ |
+| `LOG_FILE_MAX_SIZE`    | `10M`   | `100K`, `50MB`, `1.5G`, `2TB` | Size threshold for rotation          |
+| `LOG_FILE_MAX_FILES`   | `5`     | `10`, `30`                    | Number of old files to retain        |
+| `LOG_FILE_PERMISSIONS` | `640`   | `600`, `644`                  | File permissions (owner-group-other) |
+
+`LOG_FILE_MAX_SIZE` accepts `<number>[K|M|G|T][B]`: the unit is case-insensitive, a
+trailing `B` and whitespace before the unit are optional, and decimals are allowed
+(`10M`, `10MB`, `100 KB`, `1.5g`). The value is converted to a byte count before it is
+passed to pino-roll, which only understands single-letter units. An invalid value
+disables rotation and prints a warning to stderr.
 
 #### Security Features
 
@@ -637,7 +643,7 @@ All configuration inputs undergo validation:
 // These are all validated and sanitized:
 - LOG_OUTPUT: Must be one of: stdout, stderr, file, syslog, null
 - LOG_FILE_PATH: Path validation, no traversal
-- LOG_FILE_MAX_SIZE: Valid size format (10K, 5M, 1G)
+- LOG_FILE_MAX_SIZE: Valid size format (10K, 5MB, 1.5G), normalized to bytes for pino-roll
 - LOG_SYSLOG_HOST: Valid hostname or IP
 - LOG_SYSLOG_PORT: Integer 1-65535
 - LOG_FILE_PERMISSIONS: Valid octal format
