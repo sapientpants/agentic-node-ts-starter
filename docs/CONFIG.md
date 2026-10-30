@@ -252,8 +252,7 @@ The configuration system automatically masks sensitive values in error messages 
 #### How It Works
 
 - **Detection**: Any variable name containing `PASSWORD`, `TOKEN`, `SECRET`, or `KEY` is considered sensitive
-- **Masking**: Shows only first 2 and last 2 characters for values longer than 4 characters
-- **Short values**: Completely masked as `***`
+- **Masking**: The received value is replaced entirely with `***`; no part of a secret is ever printed
 
 #### Example: Sensitive Values in Errors
 
@@ -261,13 +260,13 @@ The configuration system automatically masks sensitive values in error messages 
 ❌ Invalid environment configuration:
 
 Invalid format:
-  • API_TOKEN: String must contain at least 32 character(s) (received: "sk***yz")
-  • DATABASE_PASSWORD: Invalid format (received: "pa***rd")
-  • SECRET_KEY: Must match pattern (received: "se***89")
+  • API_TOKEN: String must contain at least 32 character(s) (received: "***")
+  • DATABASE_PASSWORD: Invalid format (received: "***")
+  • SECRET_KEY: Must match pattern (received: "***")
   • AUTH_SECRET: Required but not provided
 
 Other errors:
-  • ENCRYPTION_KEY: String must be exactly 64 characters (received: "ke***01")
+  • ENCRYPTION_KEY: String must be exactly 64 characters (received: "***")
 
 💡 Tip: Check .env.example for valid configuration examples
 ```

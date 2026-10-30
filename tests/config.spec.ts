@@ -155,28 +155,29 @@ describe('Configuration', () => {
       const { __testExports } = await import('../src/config.js');
       const { formatZodError } = __testExports;
 
-      // Create a mock Zod error for a missing required field
+      // Zod 4 invalid_type issues carry `input`, not `received`
       const mockError = {
         issues: [
           {
             code: 'invalid_type' as const,
+            expected: 'string',
             path: ['REQUIRED_FIELD'],
-            message: 'Required',
-            received: 'undefined' as const,
+            message: 'Invalid input: expected string, received undefined',
+            input: undefined,
           },
         ],
       } as unknown as z.ZodError;
 
       const formatted = formatZodError(mockError);
       expect(formatted).toContain('Missing required variables');
-      expect(formatted).toContain('REQUIRED_FIELD');
+      expect(formatted).toContain('REQUIRED_FIELD: Required but not provided');
+      expect(formatted).not.toContain('received:');
     });
 
     it('should format invalid format errors', async () => {
       const { __testExports } = await import('../src/config.js');
       const { formatZodError } = __testExports;
 
-      // Create a mock Zod error for invalid format
       const mockError = {
         issues: [
           {
@@ -190,7 +191,7 @@ describe('Configuration', () => {
 
       const formatted = formatZodError(mockError);
       expect(formatted).toContain('Invalid format');
-      expect(formatted).toContain('SOME_FIELD');
+      expect(formatted).toContain('SOME_FIELD: Expected string, received number (received: "123")');
     });
 
     it('should handle empty error list', async () => {
@@ -204,20 +205,89 @@ describe('Configuration', () => {
       const formatted = formatZodError(mockError);
       expect(formatted).toBe('Invalid configuration');
     });
+
+    it('should show received values for real schema errors when parsing with reportInput', async () => {
+      const { __testExports } = await import('../src/config.js');
+      const { ConfigSchema, formatZodError } = __testExports;
+
+      const result = ConfigSchema.safeParse(
+        { NODE_ENV: 'nope', TIMEOUT_MS: 'thirty', LOG_LEVEL: 'verbose' },
+        { reportInput: true },
+      );
+      expect(result.success).toBe(false);
+      if (result.success) return;
+
+      const formatted = formatZodError(result.error);
+      expect(formatted).toContain('NODE_ENV:');
+      expect(formatted).toContain('(received: "nope")');
+      expect(formatted).toContain('(received: "thirty")');
+      expect(formatted).toContain('(received: "verbose")');
+    });
+
+    it('should omit received values when parsing without reportInput', async () => {
+      const { __testExports } = await import('../src/config.js');
+      const { ConfigSchema, formatZodError } = __testExports;
+
+      const result = ConfigSchema.safeParse({ NODE_ENV: 'nope' });
+      expect(result.success).toBe(false);
+      if (result.success) return;
+
+      const formatted = formatZodError(result.error);
+      expect(formatted).toContain('NODE_ENV:');
+      expect(formatted).not.toContain('received:');
+    });
+
+    it('should not report wrong-type values as missing when parsing without reportInput', async () => {
+      const { __testExports } = await import('../src/config.js');
+      const { formatZodError } = __testExports;
+
+      const schema = z.object({ MISSING_FIELD: z.string(), WRONG_TYPE: z.string() });
+      const result = schema.safeParse({ WRONG_TYPE: 123 });
+      expect(result.success).toBe(false);
+      if (result.success) return;
+
+      const formatted = formatZodError(result.error);
+      expect(formatted).toContain('Invalid format:');
+      expect(formatted).toContain('WRONG_TYPE: Invalid input: expected string, received number');
+      expect(formatted).not.toContain('WRONG_TYPE: Required but not provided');
+      // Without reportInput the formatter cannot tell a missing key from undefined input
+      expect(formatted).not.toContain('MISSING_FIELD: Required but not provided');
+    });
+
+    it('should redact sensitive values for real schema errors', async () => {
+      const { __testExports } = await import('../src/config.js');
+      const { formatZodError } = __testExports;
+
+      const schema = z.object({ API_TOKEN: z.string().min(32), DB_PASSWORD: z.enum(['a']) });
+      const result = schema.safeParse(
+        { API_TOKEN: 'sk-super-secret-value', DB_PASSWORD: 'hunter2' },
+        { reportInput: true },
+      );
+      expect(result.success).toBe(false);
+      if (result.success) return;
+
+      const formatted = formatZodError(result.error);
+      expect(formatted).toContain('API_TOKEN:');
+      expect(formatted).toContain('DB_PASSWORD:');
+      expect(formatted).toContain('(received: "***")');
+      expect(formatted).not.toContain('sk-super-secret-value');
+      expect(formatted).not.toContain('hunter2');
+    });
   });
 
   describe('sensitive value masking', () => {
-    it('should mask sensitive values in error messages', async () => {
+    it('should fully redact sensitive values', async () => {
       const { __testExports } = await import('../src/config.js');
       const { maskSensitiveValue } = __testExports;
 
-      expect(maskSensitiveValue('PASSWORD', 'my-secret-password')).toBe('my***rd');
-      expect(maskSensitiveValue('TOKEN', 'sk-1234567890abcdef')).toBe('sk***ef');
+      expect(maskSensitiveValue('PASSWORD', 'my-secret-password')).toBe('***');
+      expect(maskSensitiveValue('TOKEN', 'sk-1234567890abcdef')).toBe('***');
       expect(maskSensitiveValue('SECRET', 'abc')).toBe('***');
+      expect(maskSensitiveValue('encryption_key', 'lowercase-key')).toBe('***');
       expect(maskSensitiveValue('NORMAL_VAR', 'visible')).toBe('visible');
     });
 
-    it('should handle undefined and null values', async () => {
+    it('should not redact undefined and null values', async () => {
       const { __testExports } = await import('../src/config.js');
       const { maskSensitiveValue } = __testExports;
 
@@ -225,56 +295,18 @@ describe('Configuration', () => {
       expect(maskSensitiveValue('SECRET', null)).toBe('null');
     });
 
-    it('should handle special JavaScript types', async () => {
+    it('should stringify non-string values', async () => {
       const { __testExports } = await import('../src/config.js');
       const { maskSensitiveValue } = __testExports;
 
-      // Test symbol (use non-sensitive key name)
-      const sym = Symbol('test');
-      expect(maskSensitiveValue('SOME_SYMBOL', sym)).toContain('Symbol(test)');
-
-      // Test bigint (use non-sensitive key name)
-      expect(maskSensitiveValue('ID', BigInt(12345))).toBe('12345');
-
-      // Test function (use non-sensitive key name)
-      const fn = function testFunc() {};
-      expect(maskSensitiveValue('CALLBACK', fn)).toContain('Function');
-
-      // Test object
-      expect(maskSensitiveValue('DATA', { key: 'value' })).toContain('key');
-    });
-
-    it('should handle number and boolean types in valueToString', async () => {
-      const { __testExports } = await import('../src/config.js');
-      const { maskSensitiveValue } = __testExports;
-
-      // Test number types (non-sensitive key to use valueToString directly)
       expect(maskSensitiveValue('COUNT', 42)).toBe('42');
       expect(maskSensitiveValue('RATIO', 3.14)).toBe('3.14');
-      expect(maskSensitiveValue('ZERO', 0)).toBe('0');
-
-      // Test boolean types (non-sensitive key to use valueToString directly)
       expect(maskSensitiveValue('ENABLED', true)).toBe('true');
-      expect(maskSensitiveValue('DISABLED', false)).toBe('false');
-    });
-
-    it('should handle all edge case types in valueToString', async () => {
-      const { __testExports } = await import('../src/config.js');
-      const { maskSensitiveValue } = __testExports;
-
-      // Test explicit undefined
-      expect(maskSensitiveValue('OPTIONAL', undefined)).toBe('undefined');
-
-      // Test string type (explicitly test the string case branch)
-      expect(maskSensitiveValue('TEXT', 'hello')).toBe('hello');
-      expect(maskSensitiveValue('NAME', 'world')).toBe('world');
-
-      // Test function without a name (uses variable name)
-      const anonFunc = () => {};
-      const result = maskSensitiveValue('HANDLER', anonFunc);
-      expect(result).toContain('[Function:');
-      // Arrow functions get named after their variable
-      expect(result).toMatch(/\[Function:\s*\w+\]/);
+      expect(maskSensitiveValue('ID', BigInt(12345))).toBe('12345');
+      expect(maskSensitiveValue('SOME_SYMBOL', Symbol('test'))).toBe('Symbol(test)');
+      expect(maskSensitiveValue('DATA', { key: 'value' })).toBe('{"key":"value"}');
+      expect(maskSensitiveValue('LIST', [1, 2])).toBe('[1,2]');
+      expect(maskSensitiveValue('CALLBACK', function testFunc() {})).toContain('testFunc');
     });
   });
 
