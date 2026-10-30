@@ -200,10 +200,12 @@ function formatZodError(error: z.ZodError): string {
 
   for (const err of error.issues) {
     const path = err.path.join('.');
-    // `input` is only populated when parsing with `reportInput: true` (see loadConfig)
+    // `input` is only present on issues when parsing with `reportInput: true` (see loadConfig).
+    // Check for the property explicitly so a wrong-type value parsed without reportInput
+    // is not misreported as a missing variable.
     const receivedValue = formatReceivedValue(maskSensitiveValue(path, err.input));
 
-    if (err.code === 'invalid_type' && err.input === undefined) {
+    if (err.code === 'invalid_type' && 'input' in err && err.input === undefined) {
       groupedErrors.missing.push(`  • ${path}: Required but not provided`);
     } else if (err.code === 'invalid_type' || err.code === 'invalid_value') {
       groupedErrors.invalid.push(`  • ${path}: ${err.message}${receivedValue}`);

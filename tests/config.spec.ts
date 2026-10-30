@@ -237,6 +237,23 @@ describe('Configuration', () => {
       expect(formatted).not.toContain('received:');
     });
 
+    it('should not report wrong-type values as missing when parsing without reportInput', async () => {
+      const { __testExports } = await import('../src/config.js');
+      const { formatZodError } = __testExports;
+
+      const schema = z.object({ MISSING_FIELD: z.string(), WRONG_TYPE: z.string() });
+      const result = schema.safeParse({ WRONG_TYPE: 123 });
+      expect(result.success).toBe(false);
+      if (result.success) return;
+
+      const formatted = formatZodError(result.error);
+      expect(formatted).toContain('Invalid format:');
+      expect(formatted).toContain('WRONG_TYPE: Invalid input: expected string, received number');
+      expect(formatted).not.toContain('WRONG_TYPE: Required but not provided');
+      // Without reportInput the formatter cannot tell a missing key from undefined input
+      expect(formatted).not.toContain('MISSING_FIELD: Required but not provided');
+    });
+
     it('should redact sensitive values for real schema errors', async () => {
       const { __testExports } = await import('../src/config.js');
       const { formatZodError } = __testExports;
