@@ -1,5 +1,13 @@
 # agentic-node-ts-starter
 
+## 0.27.4
+
+### Patch Changes
+
+- [#204](https://github.com/sapientpants/agentic-node-ts-starter/pull/204) [`49b7cf9`](https://github.com/sapientpants/agentic-node-ts-starter/commit/49b7cf97ea7b4d77519e806f14f6ab2fbafb1389) - fix: apply `LOG_FILE_PERMISSIONS` to log files and directories
+
+  The validated mode was previously discarded. It is now passed to the `pino/file` and `pino-roll` transports as the file mode, and the log directory is created with a matching mode (for example `640` → `750`, `600` → `700`). Existing directories keep their permissions.
+
 ## 0.27.3
 
 ### Patch Changes
