@@ -1,5 +1,11 @@
 # agentic-node-ts-starter
 
+## 0.27.1
+
+### Patch Changes
+
+- [#201](https://github.com/sapientpants/agentic-node-ts-starter/pull/201) [`4b30d5e`](https://github.com/sapientpants/agentic-node-ts-starter/commit/4b30d5ef49d722d5343f6900ae398820aec5d64e) - Generate the release SBOM with pnpm's built-in `sbom` command instead of cdxgen. pnpm 11 ships a built-in `sbom` subcommand that shadowed the package script and failed the release job with `ERR_PNPM_SBOM_NO_FORMAT`.
+
 ## 0.27.0
 
 ### Minor Changes
