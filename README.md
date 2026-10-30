@@ -106,7 +106,7 @@ pnpm typecheck    # Type check only
 
 # Releases
 pnpm changeset    # Create changeset
-pnpm sbom --sbom-format cyclonedx --out sbom.cdx.json  # Generate SBOM
+pnpm sbom --sbom-format cyclonedx --prod --out sbom.cdx.json  # Generate SBOM
 ```
 
 **Full command reference:** [docs/DEVELOPMENT.md](./docs/DEVELOPMENT.md)

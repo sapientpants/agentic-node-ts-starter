@@ -402,7 +402,7 @@ jobs:
         run: pnpm install --prod --frozen-lockfile --ignore-scripts
 
       - name: Generate SBOM
-        run: pnpm sbom --sbom-format cyclonedx --out sbom.cdx.json
+        run: pnpm sbom --sbom-format cyclonedx --prod --out sbom.cdx.json
 
       - name: Create release artifacts
         run: |
