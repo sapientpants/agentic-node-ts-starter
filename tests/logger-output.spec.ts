@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { mkdirSync, rmSync, existsSync, readFileSync } from 'fs';
+import { mkdirSync, rmSync, existsSync, readFileSync, statSync } from 'fs';
 import { join } from 'path';
 import { randomUUID } from 'crypto';
 import type { Logger } from '../src/logger.js';
@@ -250,6 +250,108 @@ describe('Logger Output Configuration', () => {
 
       // Check if nested directories were created
       expect(existsSync(nestedLogDir)).toBe(true);
+    });
+
+    it.skipIf(process.platform === 'win32')(
+      'should apply LOG_FILE_PERMISSIONS to the log directory and file',
+      async () => {
+        const nestedLogDir = join(testLogDir, 'restricted');
+        const nestedLogPath = join(nestedLogDir, 'test.log');
+        process.env.LOG_OUTPUT = 'file';
+        process.env.LOG_FILE_PATH = nestedLogPath;
+        process.env.LOG_FILE_PERMISSIONS = '600';
+        process.env.NODE_ENV = 'development';
+        delete process.env.LOG_FILE_MAX_SIZE;
+        delete process.env.LOG_FILE_MAX_FILES;
+
+        const loggerModule = await import('../src/logger.js');
+        logger = loggerModule.logger;
+        logger.info('Test file permissions');
+
+        // Directory is created synchronously with the derived mode (600 -> 700)
+        expect(existsSync(nestedLogDir)).toBe(true);
+        expect(statSync(nestedLogDir).mode & 0o777).toBe(0o700);
+
+        // Wait for the transport worker to create the file
+        let attempts = 0;
+        while (attempts < 40 && !existsSync(nestedLogPath)) {
+          await new Promise((resolve) => setTimeout(resolve, 50));
+          attempts++;
+        }
+        expect(existsSync(nestedLogPath)).toBe(true);
+        // open() applies the umask, so mask the expected mode the same way
+        const umask = process.umask();
+        expect(statSync(nestedLogPath).mode & 0o777).toBe(0o600 & ~umask);
+      },
+    );
+
+    it.skipIf(process.platform === 'win32')(
+      'should default to mode 640 and directory mode 750 when LOG_FILE_PERMISSIONS is unset',
+      async () => {
+        const nestedLogDir = join(testLogDir, 'defaults');
+        const nestedLogPath = join(nestedLogDir, 'test.log');
+        process.env.LOG_OUTPUT = 'file';
+        process.env.LOG_FILE_PATH = nestedLogPath;
+        delete process.env.LOG_FILE_PERMISSIONS;
+        process.env.NODE_ENV = 'development';
+        delete process.env.LOG_FILE_MAX_SIZE;
+        delete process.env.LOG_FILE_MAX_FILES;
+
+        const loggerModule = await import('../src/logger.js');
+        logger = loggerModule.logger;
+        logger.info('Test default permissions');
+
+        expect(statSync(nestedLogDir).mode & 0o777).toBe(0o750);
+
+        let attempts = 0;
+        while (attempts < 40 && !existsSync(nestedLogPath)) {
+          await new Promise((resolve) => setTimeout(resolve, 50));
+          attempts++;
+        }
+        const umask = process.umask();
+        expect(statSync(nestedLogPath).mode & 0o777).toBe(0o640 & ~umask);
+      },
+    );
+
+    it.skipIf(process.platform === 'win32')(
+      'should apply the derived directory mode to intermediate directories despite the umask',
+      async () => {
+        const intermediateDir = join(testLogDir, 'level1');
+        const nestedLogDir = join(intermediateDir, 'level2');
+        const nestedLogPath = join(nestedLogDir, 'test.log');
+        process.env.LOG_OUTPUT = 'file';
+        process.env.LOG_FILE_PATH = nestedLogPath;
+        // 644 -> directory mode 755; a umask of 027 would otherwise strip it down to 750
+        process.env.LOG_FILE_PERMISSIONS = '644';
+        process.env.NODE_ENV = 'development';
+        delete process.env.LOG_FILE_MAX_SIZE;
+        delete process.env.LOG_FILE_MAX_FILES;
+
+        const previousUmask = process.umask(0o027);
+        try {
+          const loggerModule = await import('../src/logger.js');
+          logger = loggerModule.logger;
+        } finally {
+          process.umask(previousUmask);
+        }
+
+        expect(statSync(intermediateDir).mode & 0o777).toBe(0o755);
+        expect(statSync(nestedLogDir).mode & 0o777).toBe(0o755);
+      },
+    );
+
+    it('should keep the permissions of an existing log directory', async () => {
+      // testLogDir already exists (created in beforeEach with default mode)
+      const before = statSync(testLogDir).mode & 0o777;
+      process.env.LOG_OUTPUT = 'file';
+      process.env.LOG_FILE_PATH = testLogFile;
+      process.env.LOG_FILE_PERMISSIONS = '600';
+      process.env.NODE_ENV = 'development';
+
+      const loggerModule = await import('../src/logger.js');
+      logger = loggerModule.logger;
+
+      expect(statSync(testLogDir).mode & 0o777).toBe(before);
     });
   });
 
