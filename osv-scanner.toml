@@ -1,2 +1,6 @@
 # OSV Scanner Configuration
 # Documentation: https://google.github.io/osv-scanner/configuration/
+
+[[IgnoredVulns]]
+id = "GHSA-vfj7-8cjw-p6xm"
+reason = "Withdrawn advisory (braces stack exhaustion). GitHub withdrew it as not practically exploitable and no fixed release exists; braces 3.0.3 is the latest version."
