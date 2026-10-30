@@ -1,5 +1,11 @@
 # agentic-node-ts-starter
 
+## 0.27.2
+
+### Patch Changes
+
+- [#202](https://github.com/sapientpants/agentic-node-ts-starter/pull/202) [`bc5255d`](https://github.com/sapientpants/agentic-node-ts-starter/commit/bc5255dc257bdd419b173abbed64ebc7126f12f5) - Exclude `*.example.ts` placeholder files from the production build so they no longer ship in `dist/` or the Docker image (closes #188).
+
 ## 0.27.1
 
 ### Patch Changes
