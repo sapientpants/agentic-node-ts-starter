@@ -1,5 +1,11 @@
 # agentic-node-ts-starter
 
+## 0.26.5
+
+### Patch Changes
+
+- [#182](https://github.com/sapientpants/agentic-node-ts-starter/pull/182) [`9ba9955`](https://github.com/sapientpants/agentic-node-ts-starter/commit/9ba9955ac3afae0af0be133099ecbc47555a28fb) - chore(deps-dev): bump cspell from 10.3.5 to 10.4.0
+
 ## 0.26.4
 
 ### Patch Changes
