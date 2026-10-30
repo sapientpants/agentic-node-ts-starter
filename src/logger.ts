@@ -6,7 +6,7 @@
  */
 
 import pino, { type Logger as PinoLogger, type LoggerOptions, type DestinationStream } from 'pino';
-import { mkdirSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import {
   validateLogPath,
@@ -98,10 +98,37 @@ const parseSizeToBytes = (size: string | undefined): number | undefined => {
 };
 
 /**
+ * Resolve the validated log file mode from LOG_FILE_PERMISSIONS
+ * @returns {number} The numeric file mode to apply to log files
+ */
+const getLogFileMode = (): number => validateFileMode(process.env.LOG_FILE_PERMISSIONS);
+
+/**
+ * Derive a directory mode from a file mode: every class that can read the
+ * file also needs execute (search) permission on the directory.
+ * @param {number} fileMode - The numeric log file mode
+ * @returns {number} The numeric log directory mode
+ */
+const toDirectoryMode = (fileMode: number): number => {
+  const OWNER_READ = 0o400;
+  const GROUP_READ = 0o040;
+  const OTHER_READ = 0o004;
+  const OWNER_EXEC = 0o100;
+  const GROUP_EXEC = 0o010;
+  const OTHER_EXEC = 0o001;
+  let dirMode = fileMode | OWNER_EXEC;
+  if ((fileMode & OWNER_READ) === 0) dirMode |= OWNER_READ;
+  if ((fileMode & GROUP_READ) !== 0) dirMode |= GROUP_EXEC;
+  if ((fileMode & OTHER_READ) !== 0) dirMode |= OTHER_EXEC;
+  return dirMode;
+};
+
+/**
  * Get file transport configuration
+ * @param {number} fileMode - The validated numeric file mode for log files
  * @returns {{ target: string, options: object }} File transport configuration object
  */
-const getFileTransportConfig = () => {
+const getFileTransportConfig = (fileMode: number) => {
   const maxSize = parseSizeToBytes(getEnvConfig().LOG_FILE_MAX_SIZE);
 
   if (maxSize) {
@@ -112,6 +139,7 @@ const getFileTransportConfig = () => {
       options: {
         file: getEnvConfig().LOG_FILE_PATH || DEFAULT_LOG_FILE_PATH,
         size: getEnvConfig().LOG_FILE_MAX_SIZE || '10M',
+        mode: fileMode,
         ...(maxFiles !== undefined ? { limit: { count: maxFiles } } : {}),
       },
     };
@@ -123,6 +151,7 @@ const getFileTransportConfig = () => {
     options: {
       destination: getEnvConfig().LOG_FILE_PATH || DEFAULT_LOG_FILE_PATH,
       mkdir: true,
+      mode: fileMode,
     },
   };
 };
@@ -235,11 +264,12 @@ const createFileConfig = (
     return isProduction ? productionConfig : baseConfig;
   }
 
-  if (!ensureLogDirectory(logPath)) {
+  const fileMode = getLogFileMode();
+  if (!ensureLogDirectory(logPath, fileMode)) {
     return isProduction ? productionConfig : baseConfig;
   }
 
-  const transportConfig = getFileTransportConfig();
+  const transportConfig = getFileTransportConfig(fileMode);
   return {
     ...(isProduction ? productionConfig : baseConfig),
     transport: transportConfig,
@@ -338,15 +368,25 @@ const logValidationError = (context: string, error: unknown): void => {
 };
 
 /**
- * Ensure log directory exists with proper permissions
+ * Ensure log directory exists with permissions derived from the log file mode.
+ * Existing files keep their current mode so that externally managed
+ * permissions are not silently overwritten.
  * @param {string} logPath - The log file path
+ * @param {number} fileMode - The validated numeric log file mode
  * @returns {boolean} True if directory was created or already exists, false on failure
  */
-const ensureLogDirectory = (logPath: string): boolean => {
-  validateFileMode(process.env.LOG_FILE_PERMISSIONS);
+const ensureLogDirectory = (logPath: string, fileMode: number): boolean => {
+  const logDir = dirname(logPath);
+  const dirMode = toDirectoryMode(fileMode);
   try {
-    // eslint-disable-next-line security/detect-non-literal-fs-filename -- logPath validated by pino-file transport
-    mkdirSync(dirname(logPath), { recursive: true, mode: 0o750 });
+    // eslint-disable-next-line security/detect-non-literal-fs-filename -- logPath validated by validateLogPath
+    if (!existsSync(logDir)) {
+      // eslint-disable-next-line security/detect-non-literal-fs-filename -- logPath validated by validateLogPath
+      mkdirSync(logDir, { recursive: true, mode: dirMode });
+      // mkdir applies the process umask; chmod enforces the configured mode exactly
+      // eslint-disable-next-line security/detect-non-literal-fs-filename -- logPath validated by validateLogPath
+      chmodSync(logDir, dirMode);
+    }
     return true;
   } catch (error) {
     fallbackLogger.error(

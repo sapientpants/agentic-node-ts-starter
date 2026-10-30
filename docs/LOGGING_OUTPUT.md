@@ -155,8 +155,11 @@ LOG_FILE_PERMISSIONS=640         # Unix file permissions (octal)
 
 - **Path Validation**: Prevents directory traversal attacks
 - **System Directory Protection**: Blocks writing to `/etc`, `/usr`, `/bin`, etc.
-- **Secure Defaults**: Files created with mode 640 (rw-r-----)
-- **Directory Creation**: Parent directories created with mode 750
+- **Secure Defaults**: Files created with mode 640 (rw-r-----) unless `LOG_FILE_PERMISSIONS` is set
+- **Directory Creation**: Parent directories are created with a mode derived from the file mode
+  (default 750); each class that can read the file also gets search permission on the directory
+- **Umask**: File modes are passed to `open()`, so the process umask still applies; directories are
+  `chmod`-ed to the derived mode after creation
 
 #### Production Example
 
@@ -599,7 +602,9 @@ LOG_FILE_PERMISSIONS=600  # rw------- (more restrictive)
 LOG_FILE_PERMISSIONS=644  # rw-r--r-- (less restrictive, avoid)
 
 # Directory creation
-# Directories are always created with mode 750 (rwxr-x---)
+# Directories are created with a mode derived from LOG_FILE_PERMISSIONS:
+#   640 -> 750 (rwxr-x---), 600 -> 700 (rwx------), 644 -> 755 (rwxr-xr-x)
+# Existing directories and files keep their current permissions.
 ```
 
 #### 3. Syslog Security
