@@ -1,5 +1,18 @@
 # agentic-node-ts-starter
 
+## 0.27.5
+
+### Patch Changes
+
+- [#205](https://github.com/sapientpants/agentic-node-ts-starter/pull/205) [`0debe14`](https://github.com/sapientpants/agentic-node-ts-starter/commit/0debe14674754a48418ffd448fb13b509225d1e8) - fix: show received values in configuration error messages
+
+  Zod 4 only populates `issue.input` when parsing with `reportInput: true`, so the
+  `(received: "...")` suffix never appeared and missing variables were misreported
+  as "Invalid format". Configuration is now parsed with `reportInput: true`, missing
+  variables are detected via `input === undefined`, and sensitive values
+  (PASSWORD/TOKEN/SECRET/KEY) are fully redacted as `***` instead of leaking their
+  first and last two characters.
+
 ## 0.27.4
 
 ### Patch Changes
