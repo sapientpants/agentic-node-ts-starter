@@ -1,5 +1,15 @@
 # agentic-node-ts-starter
 
+## 0.26.4
+
+### Patch Changes
+
+- [#186](https://github.com/sapientpants/agentic-node-ts-starter/pull/186) [`df99b20`](https://github.com/sapientpants/agentic-node-ts-starter/commit/df99b202b07a99623f34ae92303342c5646c0343) - fix: resolve all OSV scanner vulnerabilities in the dependency tree
+
+  - Bump direct dependencies: zod 4.6.7, vite 8.3.5, vitest / @vitest/ui / @vitest/coverage-v8 5.0.5
+  - Add pnpm overrides for brace-expansion, markdown-it, undici, body-parser, compression, smol-toml and katex
+  - Ignore the withdrawn braces stack-exhaustion advisory in osv-scanner.toml (no fixed release exists)
+
 ## 0.26.3
 
 ### Patch Changes
