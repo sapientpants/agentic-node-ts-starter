@@ -49,7 +49,8 @@ fnm use 22
 # Install exact version required
 npm install -g pnpm@11.27.1
 
-# Or use Corepack (Node 16.13+)
+# Or use Corepack (no longer bundled with Node 25+, so install it first)
+npm install -g corepack
 corepack enable
 corepack prepare pnpm@11.27.1 --activate
 
