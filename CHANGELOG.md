@@ -1,5 +1,16 @@
 # agentic-node-ts-starter
 
+## 0.26.6
+
+### Patch Changes
+
+- [#183](https://github.com/sapientpants/agentic-node-ts-starter/pull/183) [`a8fbc2f`](https://github.com/sapientpants/agentic-node-ts-starter/commit/a8fbc2fe6864622fd1cedc45239413e516d5c1a6) - chore(deps-dev): bump @types/node from 24.19.0 to 26.6.5
+
+  Enables `skipLibCheck` in tsconfig.json: @types/node 26 removed the deprecated
+  `worker_threads.TransferListItem` alias that pino's `thread-stream` typings still
+  reference (thread-stream issue 228), which broke `tsc` on declaration files
+  outside this project. Project sources and tests remain fully type-checked.
+
 ## 0.26.5
 
 ### Patch Changes
