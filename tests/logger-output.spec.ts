@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { mkdirSync, rmSync, existsSync, readFileSync, statSync } from 'fs';
+import { mkdirSync, rmSync, existsSync, readFileSync, readdirSync, statSync } from 'fs';
 import { join } from 'path';
 import { randomUUID } from 'crypto';
 import type { Logger } from '../src/logger.js';
@@ -204,6 +204,54 @@ describe('Logger Output Configuration', () => {
 
       // Configuration should be accepted without errors
       expect(logger).toBeDefined();
+    });
+
+    it('should write logs through pino-roll when LOG_FILE_MAX_SIZE uses a two-letter unit (10MB)', async () => {
+      process.env.LOG_OUTPUT = 'file';
+      process.env.LOG_FILE_PATH = testLogFile;
+      process.env.LOG_FILE_MAX_SIZE = '10MB';
+      process.env.NODE_ENV = 'development';
+
+      const loggerModule = await import('../src/logger.js');
+      logger = loggerModule.logger;
+
+      // pino-roll rejects "10MB" verbatim; the logger must normalize it to bytes
+      // before handing it to the transport, otherwise the worker thread crashes.
+      logger.info('Test message with 10MB rotation size');
+
+      // pino-roll appends a sequence number / date to the configured file name,
+      // so look for any file in the test directory containing our message.
+      let content = '';
+      for (let attempt = 0; attempt < 40 && !content; attempt++) {
+        const files = existsSync(testLogDir) ? readdirSync(testLogDir) : [];
+        for (const file of files) {
+          const fileContent = readFileSync(join(testLogDir, file), 'utf-8');
+          if (fileContent.includes('Test message with 10MB rotation size')) {
+            content = fileContent;
+            break;
+          }
+        }
+        if (!content) await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+
+      expect(content).toContain('Test message with 10MB rotation size');
+    });
+
+    it('should fall back to non-rotated file output when LOG_FILE_MAX_SIZE is invalid', async () => {
+      process.env.LOG_OUTPUT = 'file';
+      process.env.LOG_FILE_PATH = testLogFile;
+      process.env.LOG_FILE_MAX_SIZE = 'not-a-size';
+      process.env.NODE_ENV = 'development';
+      const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+
+      const loggerModule = await import('../src/logger.js');
+      logger = loggerModule.logger;
+
+      expect(stderrSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Invalid LOG_FILE_MAX_SIZE "not-a-size"'),
+      );
+      expect(logger).toBeDefined();
+      stderrSpy.mockRestore();
     });
 
     it('should respect LOG_FILE_MAX_FILES configuration', async () => {

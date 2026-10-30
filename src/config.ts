@@ -81,7 +81,7 @@ const ConfigSchema = z.object({
   LOG_FILE_MAX_SIZE: z
     .string()
     .optional()
-    .describe('Maximum size of log file before rotation (e.g., 10M, 1G)'),
+    .describe('Maximum size of log file before rotation (e.g., 10M, 100MB, 1.5G)'),
 
   LOG_FILE_MAX_FILES: z
     .union([z.string().regex(/^\d+$/).transform(Number), z.number()])

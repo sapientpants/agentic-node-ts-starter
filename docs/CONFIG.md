@@ -71,12 +71,12 @@ This table lists all available environment variables, their types, requirements,
 
 ### File Logging (when LOG_OUTPUT=file)
 
-| Variable               | Type     | Required | Default          | Description                                               |
-| ---------------------- | -------- | -------- | ---------------- | --------------------------------------------------------- |
-| `LOG_FILE_PATH`        | `string` | Optional | `./logs/app.log` | Path to log file                                          |
-| `LOG_FILE_MAX_SIZE`    | `string` | Optional | `10M`            | Max file size before rotation (e.g., `10M`, `100M`, `1G`) |
-| `LOG_FILE_MAX_FILES`   | `number` | Optional | `5`              | Number of rotated files to keep                           |
-| `LOG_FILE_PERMISSIONS` | `string` | Optional | `640`            | Octal file permissions (e.g., `600`, `644`, `640`)        |
+| Variable               | Type     | Required | Default          | Description                                                  |
+| ---------------------- | -------- | -------- | ---------------- | ------------------------------------------------------------ |
+| `LOG_FILE_PATH`        | `string` | Optional | `./logs/app.log` | Path to log file                                             |
+| `LOG_FILE_MAX_SIZE`    | `string` | Optional | `10M`            | Max file size before rotation (e.g., `10M`, `100MB`, `1.5G`) |
+| `LOG_FILE_MAX_FILES`   | `number` | Optional | `5`              | Number of rotated files to keep                              |
+| `LOG_FILE_PERMISSIONS` | `string` | Optional | `640`            | Octal file permissions (e.g., `600`, `644`, `640`)           |
 
 ### Syslog Configuration (when LOG_OUTPUT=syslog)
 

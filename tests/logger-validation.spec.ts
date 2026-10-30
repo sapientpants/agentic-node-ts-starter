@@ -8,6 +8,8 @@ import {
   validateSyslogHost,
   validateSyslogPort,
   validateFileMode,
+  parseSizeToBytes,
+  toPinoRollSize,
 } from '../src/logger-validation.js';
 
 describe('Logger Validation', () => {
@@ -237,6 +239,75 @@ describe('Logger Validation', () => {
       expect(() => validateSyslogPort(65535)).not.toThrow(); // Maximum valid port
       expect(() => validateSyslogPort(1023)).not.toThrow(); // Just below privileged
       expect(() => validateSyslogPort(1024)).not.toThrow(); // Just above privileged
+    });
+  });
+  describe('parseSizeToBytes', () => {
+    const KB = 1024;
+    const MB = 1024 * KB;
+    const GB = 1024 * MB;
+    const TB = 1024 * GB;
+
+    it('should parse plain byte counts', () => {
+      expect(parseSizeToBytes('1024')).toBe(1024);
+      expect(parseSizeToBytes('1024B')).toBe(1024);
+    });
+
+    it('should parse single-letter units', () => {
+      expect(parseSizeToBytes('10K')).toBe(10 * KB);
+      expect(parseSizeToBytes('10M')).toBe(10 * MB);
+      expect(parseSizeToBytes('1G')).toBe(GB);
+      expect(parseSizeToBytes('2T')).toBe(2 * TB);
+    });
+
+    it('should parse two-letter units such as 10MB', () => {
+      expect(parseSizeToBytes('10MB')).toBe(10 * MB);
+      expect(parseSizeToBytes('100KB')).toBe(100 * KB);
+      expect(parseSizeToBytes('1GB')).toBe(GB);
+    });
+
+    it('should be case-insensitive and tolerate whitespace', () => {
+      expect(parseSizeToBytes('10mb')).toBe(10 * MB);
+      expect(parseSizeToBytes('1.5 G')).toBe(Math.floor(1.5 * GB));
+      expect(parseSizeToBytes('100 KB')).toBe(100 * KB);
+      expect(parseSizeToBytes(' 10M ')).toBe(10 * MB);
+    });
+
+    it('should floor fractional byte results', () => {
+      expect(parseSizeToBytes('1.5K')).toBe(1536);
+      expect(parseSizeToBytes('0.5')).toBeUndefined();
+    });
+
+    it('should return undefined for empty or invalid input', () => {
+      expect(parseSizeToBytes(undefined)).toBeUndefined();
+      expect(parseSizeToBytes('')).toBeUndefined();
+      expect(parseSizeToBytes('   ')).toBeUndefined();
+      expect(parseSizeToBytes('0')).toBeUndefined();
+      expect(parseSizeToBytes('abc')).toBeUndefined();
+      expect(parseSizeToBytes('10X')).toBeUndefined();
+      expect(parseSizeToBytes('10MBB')).toBeUndefined();
+      expect(parseSizeToBytes('-10M')).toBeUndefined();
+      expect(parseSizeToBytes('10 M B')).toBeUndefined();
+    });
+  });
+
+  describe('toPinoRollSize', () => {
+    it('should produce a byte string pino-roll accepts', () => {
+      expect(toPinoRollSize(10 * 1024 * 1024)).toBe('10485760b');
+      expect(toPinoRollSize(1)).toBe('1b');
+    });
+
+    it('should floor non-integer byte counts', () => {
+      expect(toPinoRollSize(1536.7)).toBe('1536b');
+    });
+
+    it('should round-trip common LOG_FILE_MAX_SIZE values into the pino-roll format', () => {
+      // pino-roll's own parser only matches /^([\d.]+)(\w?)$/ with a b/k/m/g unit
+      const pinoRollFormat = /^\d+b$/;
+      for (const input of ['10M', '10MB', '1.5 G', '100 KB', '2T', '512']) {
+        const bytes = parseSizeToBytes(input);
+        expect(bytes).toBeDefined();
+        expect(toPinoRollSize(bytes as number)).toMatch(pinoRollFormat);
+      }
     });
   });
 });
