@@ -2,13 +2,13 @@
 FROM node:26-alpine AS builder
 
 # Install pnpm
-RUN corepack enable && corepack prepare pnpm@10.15.0 --activate
+RUN npm install -g pnpm@11.27.1
 
 # Set working directory
 WORKDIR /app
 
 # Copy package files
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 # Install dependencies
 RUN pnpm install --frozen-lockfile
@@ -23,7 +23,10 @@ RUN pnpm build
 FROM node:26-alpine
 
 # Install pnpm
-RUN corepack enable && corepack prepare pnpm@10.15.0 --activate
+RUN npm install -g pnpm@11.27.1
+
+# Run as production: dependency-free JSON logging, no dev tooling
+ENV NODE_ENV=production
 
 # Install dumb-init for proper signal handling
 RUN apk add --no-cache dumb-init
@@ -36,10 +39,10 @@ RUN addgroup -g 1001 -S nodejs && \
 WORKDIR /app
 
 # Copy package files
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 # Install production dependencies only
-RUN pnpm install --prod --frozen-lockfile && \
+RUN pnpm install --prod --frozen-lockfile --ignore-scripts && \
     pnpm store prune
 
 # Copy built application from builder
