@@ -368,8 +368,27 @@ const logValidationError = (context: string, error: unknown): void => {
 };
 
 /**
+ * Collect the directories on the way to `dir` that do not exist yet, ordered
+ * from the outermost missing ancestor down to `dir` itself.
+ * @param {string} dir - The directory whose missing ancestors to collect
+ * @returns {string[]} Directories that `mkdirSync(dir, { recursive: true })` would create
+ */
+const collectMissingDirectories = (dir: string): string[] => {
+  const missing: string[] = [];
+  let current = dir;
+  // eslint-disable-next-line security/detect-non-literal-fs-filename -- dir derived from validated log path
+  while (!existsSync(current)) {
+    missing.unshift(current);
+    const parent = dirname(current);
+    if (parent === current) break;
+    current = parent;
+  }
+  return missing;
+};
+
+/**
  * Ensure log directory exists with permissions derived from the log file mode.
- * Existing files keep their current mode so that externally managed
+ * Existing directories keep their current mode so that externally managed
  * permissions are not silently overwritten.
  * @param {string} logPath - The log file path
  * @param {number} fileMode - The validated numeric log file mode
@@ -379,13 +398,16 @@ const ensureLogDirectory = (logPath: string, fileMode: number): boolean => {
   const logDir = dirname(logPath);
   const dirMode = toDirectoryMode(fileMode);
   try {
-    // eslint-disable-next-line security/detect-non-literal-fs-filename -- logPath validated by validateLogPath
-    if (!existsSync(logDir)) {
+    const missingDirs = collectMissingDirectories(logDir);
+    if (missingDirs.length > 0) {
       // eslint-disable-next-line security/detect-non-literal-fs-filename -- logPath validated by validateLogPath
       mkdirSync(logDir, { recursive: true, mode: dirMode });
-      // mkdir applies the process umask; chmod enforces the configured mode exactly
-      // eslint-disable-next-line security/detect-non-literal-fs-filename -- logPath validated by validateLogPath
-      chmodSync(logDir, dirMode);
+      // mkdir applies the process umask to every directory it creates (including
+      // intermediate ones); chmod each of them so the configured mode holds exactly
+      for (const dir of missingDirs) {
+        // eslint-disable-next-line security/detect-non-literal-fs-filename -- dir derived from validated log path
+        chmodSync(dir, dirMode);
+      }
     }
     return true;
   } catch (error) {

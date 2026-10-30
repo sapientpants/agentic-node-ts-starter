@@ -158,8 +158,8 @@ LOG_FILE_PERMISSIONS=640         # Unix file permissions (octal)
 - **Secure Defaults**: Files created with mode 640 (rw-r-----) unless `LOG_FILE_PERMISSIONS` is set
 - **Directory Creation**: Parent directories are created with a mode derived from the file mode
   (default 750); each class that can read the file also gets search permission on the directory
-- **Umask**: File modes are passed to `open()`, so the process umask still applies; directories are
-  `chmod`-ed to the derived mode after creation
+- **Umask**: File modes are passed to `open()`, so the process umask still applies; every directory
+  created for the log path (including intermediate ones) is `chmod`-ed to the derived mode
 
 #### Production Example
 

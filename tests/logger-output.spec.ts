@@ -313,6 +313,33 @@ describe('Logger Output Configuration', () => {
       },
     );
 
+    it.skipIf(process.platform === 'win32')(
+      'should apply the derived directory mode to intermediate directories despite the umask',
+      async () => {
+        const intermediateDir = join(testLogDir, 'level1');
+        const nestedLogDir = join(intermediateDir, 'level2');
+        const nestedLogPath = join(nestedLogDir, 'test.log');
+        process.env.LOG_OUTPUT = 'file';
+        process.env.LOG_FILE_PATH = nestedLogPath;
+        // 644 -> directory mode 755; a umask of 027 would otherwise strip it down to 750
+        process.env.LOG_FILE_PERMISSIONS = '644';
+        process.env.NODE_ENV = 'development';
+        delete process.env.LOG_FILE_MAX_SIZE;
+        delete process.env.LOG_FILE_MAX_FILES;
+
+        const previousUmask = process.umask(0o027);
+        try {
+          const loggerModule = await import('../src/logger.js');
+          logger = loggerModule.logger;
+        } finally {
+          process.umask(previousUmask);
+        }
+
+        expect(statSync(intermediateDir).mode & 0o777).toBe(0o755);
+        expect(statSync(nestedLogDir).mode & 0o777).toBe(0o755);
+      },
+    );
+
     it('should keep the permissions of an existing log directory', async () => {
       // testLogDir already exists (created in beforeEach with default mode)
       const before = statSync(testLogDir).mode & 0o777;
