@@ -49,7 +49,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         --help|-h)
             echo "Usage: $0 [--fast] [--no-security]"
-            echo "  --fast        Skip slower checks (container scan, full coverage)"
+            echo "  --fast        Skip slower checks (container scan, full verify gate)"
             echo "  --no-security Skip security scans"
             exit 0
             ;;
@@ -73,23 +73,16 @@ pnpm install --frozen-lockfile
 # 2. Core validation (parallel in real CI)
 log "Running core validation checks..."
 
-echo "  → Audit check..."
+echo "  → Audit check (network)..."
 pnpm audit --audit-level critical
 
-echo "  → Type checking..."
-pnpm typecheck
-
-echo "  → Linting..."
-pnpm lint
-
-echo "  → Format checking..."
-pnpm format
-
-echo "  → Running tests..."
 if [ "$FAST_MODE" = true ]; then
-    pnpm test
+    echo "  → Quick check (typecheck + lint + tests, no coverage)..."
+    pnpm quick-check
+    pnpm format
 else
-    pnpm test:coverage
+    echo "  → Full gate (pnpm verify)..."
+    pnpm verify
 fi
 
 # 3. Build check

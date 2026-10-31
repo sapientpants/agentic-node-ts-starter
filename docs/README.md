@@ -37,7 +37,7 @@ Welcome to the **Agentic Node + TypeScript Starter** documentation! This templat
 ### Common Tasks
 
 - [Run Tests](./DEVELOPMENT.md#testing) - `pnpm test`
-- [Check Code Quality](./DEVELOPMENT.md#quick-quality-checks) - `pnpm precommit`
+- [Check Code Quality](./DEVELOPMENT.md#quick-quality-checks) - `pnpm verify`
 - [Start Development](./DEVELOPMENT.md#starting-development) - `pnpm dev`
 - [Create a Release](./DEVELOPMENT.md#releases) - `pnpm changeset`
 

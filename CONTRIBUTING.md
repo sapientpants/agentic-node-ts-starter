@@ -83,10 +83,10 @@ log.error({ err: error, context }, 'Operation failed');
 Before committing, you can manually run all checks:
 
 ```bash
-pnpm precommit  # Runs all checks: audit, typecheck, lint, format, test, coverage
+pnpm verify  # Runs the full CI gate: format, linters, typecheck, deps, dead code, tests + coverage
 ```
 
-Note: The pre-commit hook will automatically run all these checks when you commit.
+Note: The pre-commit hook only runs the fast checks (branch name, lint-staged). CI runs the full gate on your PR.
 
 Individual checks:
 
@@ -150,14 +150,13 @@ git commit -m "feat: add new validation for user input"
 
 Pre-commit hooks will automatically:
 
-- Run security audit
-- Type check your code
-- Run ESLint checks
-- Run Prettier format checks
-- Run all tests
+- Validate the branch name (`<type>/<description>`)
+- Format staged files with Prettier
+- Lint staged files with ESLint, markdownlint, yamllint, and cspell
 - Validate commit message format (via commit-msg hook)
 
-Note: The pre-commit hook runs `pnpm precommit` which executes ALL quality checks. This ensures code quality but may take longer than typical pre-commit hooks.
+The hook is fast and works offline. Type checking, tests, coverage, and the structural checks run in CI;
+run them locally with `pnpm verify` before pushing.
 
 ### 7. Push and Create a Pull Request
 
@@ -241,11 +240,8 @@ pnpm test
 # Run tests in watch mode
 pnpm test:watch
 
-# Run tests with coverage
+# Run tests with coverage (HTML report in coverage/index.html)
 pnpm test:coverage
-
-# Generate coverage report
-pnpm coverage:report
 ```
 
 ### Writing Tests
@@ -344,7 +340,7 @@ This is required for the automated release workflow to create version PRs.
 - Add tests for new features
 - Update documentation
 - Use changesets for tracking changes
-- Run `pnpm precommit` before pushing
+- Run `pnpm verify` before pushing
 
 ## 🤝 Getting Help
 

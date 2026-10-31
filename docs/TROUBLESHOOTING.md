@@ -172,7 +172,7 @@ echo "declare module 'module-name';" > src/types/module-name.d.ts
 
 ```bash
 # Run coverage report to see what's missing
-pnpm coverage:report
+pnpm test:coverage
 
 # Open detailed HTML report
 open coverage/index.html
@@ -268,7 +268,7 @@ pnpm format:fix
 pnpm lint:fix
 
 # Run all checks
-pnpm precommit
+pnpm verify
 
 # Emergency bypass (not recommended)
 git commit --no-verify -m "message"
@@ -451,7 +451,7 @@ When something's not working, try these in order:
 1. ✅ Check Node version: `node --version` (must be >= 22)
 2. ✅ Check pnpm version: `pnpm --version` (must be 11.27.1)
 3. ✅ Clear and reinstall: `rm -rf node_modules && pnpm install`
-4. ✅ Run all checks: `pnpm precommit`
+4. ✅ Run all checks: `pnpm verify`
 5. ✅ Check for changesets: `pnpm changeset:status`
 6. ✅ Update dependencies: `pnpm update`
 7. ✅ Restart your IDE/terminal

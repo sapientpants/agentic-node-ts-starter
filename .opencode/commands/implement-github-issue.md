@@ -63,7 +63,7 @@ Required test coverage:
 
 ```bash
 pnpm quick-check  # Fast loop: typecheck + lint + tests
-pnpm precommit    # Full gate: audit, linters, dead code, test:coverage (slow)
+pnpm verify       # Full gate: linters, deps, dead code, test:coverage (slow, offline)
 ```
 
 ### 8. Create Changeset
@@ -98,7 +98,7 @@ git commit -m "<type>: <description>
 Closes #<issue-number>"
 ```
 
-Pre-commit runs the full `pnpm precommit`; commit messages are validated by commitlint (conventional commits).
+The pre-commit hook runs `validate-branch-name` and `lint-staged` (fast, offline); the full `pnpm verify` gate runs in CI. Commit messages are validated by commitlint (conventional commits).
 
 ### 10. Create Pull Request
 
@@ -138,7 +138,7 @@ PRs run validate (audit, typecheck, lint, format, tests, coverage, changeset sta
 
 - Respond to review comments
 - Make requested changes
-- Re-verify with `pnpm precommit` before each push
+- Re-verify with `pnpm verify` before each push
 
 ### 13. Merge PR
 
@@ -161,7 +161,7 @@ Before completing:
 
 - [ ] All acceptance criteria met
 - [ ] Tests comprehensive (unit + property)
-- [ ] `pnpm precommit` passes
+- [ ] `pnpm verify` passes
 - [ ] Documentation updated
 - [ ] Changeset created and up to date
 - [ ] PR reviewed and approved

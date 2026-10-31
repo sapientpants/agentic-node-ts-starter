@@ -270,12 +270,11 @@ pnpm test:watch     # Watch mode - re-runs tests on file changes
 pnpm test           # Run tests once
 
 # Coverage commands
-pnpm test:coverage  # Run tests with coverage report (enforces 90%/84% thresholds)
-pnpm coverage:report # Generate detailed HTML report
+pnpm test:coverage  # Run tests with coverage report (enforces 90%/80% thresholds, writes coverage/index.html)
 pnpm coverage:open  # Open HTML report in browser
 
 # Quick verification
-pnpm precommit     # Run all checks including tests (full gate)
+pnpm verify     # Run all checks including tests (full gate)
 ```
 
 ### Understanding Coverage Output
@@ -402,7 +401,7 @@ pnpm test:coverage
 pnpm quick-check
 
 # Full verification
-pnpm precommit
+pnpm verify
 ```
 
 ## Best Practices

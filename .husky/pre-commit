@@ -1,3 +1,6 @@
 #!/usr/bin/env sh
 
-pnpm precommit
+# Fast, offline gate: branch naming plus linters/formatters on staged files only.
+# The full gate (pnpm verify) runs in CI and on demand.
+pnpm exec validate-branch-name
+pnpm exec lint-staged

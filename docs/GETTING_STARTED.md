@@ -177,7 +177,7 @@ Describe how to use your project.
 \`\`\`bash
 pnpm build       # Build the project
 pnpm test        # Run tests
-pnpm precommit   # Run all checks (full gate)
+pnpm verify   # Run all checks (full gate)
 \`\`\`
 
 ## License
@@ -228,8 +228,8 @@ After customization, run through this checklist to ensure everything is properly
 
 ```bash
 # 1. Verify all quality checks pass
-pnpm precommit
-# This runs: audit, typecheck, lint, format check, tests, coverage (90% lines/functions/statements, 80% branches)
+pnpm verify
+# This runs: format, linters, typecheck, dependency rules, duplication, dead code, tests, coverage (90% lines/functions/statements, 80% branches)
 
 # 2. Check test coverage meets requirements
 pnpm test:coverage
@@ -242,7 +242,7 @@ pnpm build
 # 4. Verify pre-commit hooks are installed
 git add .
 git commit -m "test commit" --dry-run
-# Should trigger pre-commit validation
+# Should trigger the pre-commit hook (branch name + lint-staged)
 
 # 5. Check that your environment is configured
  node -e "console.log('Node:', process.version)"
@@ -343,7 +343,7 @@ npx prisma init
 
    ```bash
    # Run all quality checks
-   pnpm precommit
+   pnpm verify
 
    # Create a changeset
    pnpm changeset

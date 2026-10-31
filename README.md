@@ -75,7 +75,7 @@ cp .env.example .env   # optional: customize values (all keys have safe defaults
 
 # Verify everything works
 pnpm test
-pnpm precommit  # Full quality check, same as CI (several minutes)
+pnpm verify  # Full quality check, same as CI (several minutes, offline)
 
 # Start developing
 pnpm dev     # TypeScript watch mode
@@ -90,7 +90,7 @@ pnpm dev     # TypeScript watch mode
 # Development
 pnpm dev          # TypeScript watch mode
 pnpm build        # Build to dist/
-pnpm precommit    # Run all quality checks
+pnpm verify       # Run all quality checks
 
 # Testing (80% coverage required)
 pnpm test         # Run tests
@@ -127,15 +127,15 @@ Comprehensive quality metrics tracked automatically on every CI run:
 
 ### Code Quality Metrics
 
-| Metric                      | Current | Threshold | Status  | Local Command        |
-| --------------------------- | ------- | --------- | ------- | -------------------- |
-| **Code Duplication**        | 0%      | <2%       | ✅ Pass | `pnpm duplication`   |
-| **Cyclomatic Complexity**   | Max 10  | ≤10       | ✅ Pass | `pnpm lint`          |
-| **Max Function Lines**      | Max 50  | ≤50       | ✅ Pass | `pnpm lint`          |
-| **Max Function Parameters** | Max 4   | ≤4        | ✅ Pass | `pnpm lint`          |
-| **Max Nesting Depth**       | Max 3   | ≤3        | ✅ Pass | `pnpm lint`          |
-| **Circular Dependencies**   | 0       | 0         | ✅ Pass | `pnpm deps:circular` |
-| **Dead Code**               | 0       | 0         | ✅ Pass | `pnpm dead-code`     |
+| Metric                      | Current | Threshold | Status  | Local Command      |
+| --------------------------- | ------- | --------- | ------- | ------------------ |
+| **Code Duplication**        | 0%      | <2%       | ✅ Pass | `pnpm duplication` |
+| **Cyclomatic Complexity**   | Max 10  | ≤10       | ✅ Pass | `pnpm lint`        |
+| **Max Function Lines**      | Max 50  | ≤50       | ✅ Pass | `pnpm lint`        |
+| **Max Function Parameters** | Max 4   | ≤4        | ✅ Pass | `pnpm lint`        |
+| **Max Nesting Depth**       | Max 3   | ≤3        | ✅ Pass | `pnpm lint`        |
+| **Circular Dependencies**   | 0       | 0         | ✅ Pass | `pnpm deps:cruise` |
+| **Dead Code**               | 0       | 0         | ✅ Pass | `pnpm dead-code`   |
 
 ### Security Metrics
 
@@ -161,7 +161,7 @@ Comprehensive quality metrics tracked automatically on every CI run:
 - **Mutation Testing:** Stryker Mutator (JavaScript/TypeScript)
 - **Duplication:** jscpd (Copy/Paste Detector)
 - **Complexity:** ESLint with complexity rules
-- **Circular Deps:** madge (dependency graph analyzer)
+- **Circular Deps:** dependency-cruiser (import graph rules)
 - **Dead Code:** Knip (unused exports, files, dependencies, types)
 - **Security:** pnpm audit, OSV Scanner, CodeQL, Trivy
 - **Type Safety:** TypeScript strict mode + type-aware ESLint rules
@@ -205,20 +205,26 @@ Test files (`tests/**/*.ts`) have relaxed limits:
 - Cyclomatic complexity: ≤15 (vs 10)
 - Max lines per function: ≤600 (vs 50) - allows large describe blocks with many test cases
 
-### Pre-commit Quality Gates
+### Quality Gates
 
-The `pnpm precommit` command runs checks in optimized order for fast feedback:
+The git pre-commit hook is fast and works offline. It validates the branch name and runs
+lint-staged, which formats, lints, and spell-checks only the files you are committing.
 
-1. **Security** (`pnpm audit`) - Blocks commits with critical vulnerabilities
-2. **Formatting** (`pnpm format`) - Fast, easy to fix
-3. **YAML/Markdown Linting** - Fast file validation
-4. **Workflow Validation** - Prevents broken GitHub Actions
-5. **Type Checking** (`pnpm typecheck`) - Required for type-aware lint rules
-6. **Linting** (`pnpm lint`) - Comprehensive quality checks
-7. **Structural Analysis** - Circular deps, duplication, dead code
-8. **Tests with Coverage** (`pnpm test:coverage`) - Slowest check runs last
+The full gate runs in CI on every pull request and push to main. Run it locally with
+`pnpm verify`, which executes checks in optimized order for fast feedback:
 
-**Mutation testing** is excluded from pre-commit due to performance - run it periodically (weekly/monthly).
+1. **Formatting** (`pnpm format`) - Fast, easy to fix
+2. **Spelling/YAML/Markdown Linting** - Fast file validation
+3. **Workflow Validation** (`pnpm lint:workflows`) - Prevents broken GitHub Actions
+4. **Type Checking** (`pnpm typecheck`) - Required for type-aware lint rules
+5. **Linting** (`pnpm lint`) - Comprehensive quality checks
+6. **Structural Analysis** - Dependency rules (circular imports), duplication, dead code
+7. **Tests with Coverage** (`pnpm test:coverage`) - Slowest check runs last
+
+`pnpm verify` needs no network. Checks that do (`pnpm audit`, OSV Scanner, CodeQL, Trivy) run in CI,
+and `pnpm ci:local` runs the audit plus `pnpm verify` and a build for a local mirror of CI.
+
+**Mutation testing** is excluded from both gates due to performance - run it periodically (weekly/monthly).
 
 ## 🤖 AI Tool Integration
 

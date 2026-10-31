@@ -41,7 +41,7 @@ pnpm install   # updates pnpm-lock.yaml
 
 ```bash
 pnpm ci:local:fast   # Fast local mirror of CI validation
-pnpm precommit       # Full gate: audit, linters, dead code, test:coverage
+pnpm verify          # Full gate: linters, deps, dead code, test:coverage (offline)
 ```
 
 - Coverage must hold: lines/functions/statements ≥90%, branches ≥80%
@@ -92,7 +92,7 @@ Dependency set with <N> outdated packages.
 
 ## Other information
 
-- Verified with pnpm ci:local + pnpm precommit
+- Verified with pnpm ci:local + pnpm verify
 - Coverage thresholds hold (≥90% lines/functions/statements, ≥80% branches)
 - pnpm audit --audit-level critical: clean
 - Changeset: <empty|patch|minor|major>" \

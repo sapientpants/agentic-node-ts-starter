@@ -44,7 +44,7 @@ We extended the code quality toolchain to cover all aspects of the project:
 
 The extended toolchain maintains the original foundation while adding:
 
-- **Unified Pre-commit Hooks**: All linters run via lint-staged
+- **Unified Pre-commit Hooks**: All linters run on staged files via lint-staged; the full gate runs in CI (ADR-0018)
 - **Parallel CI/CD Execution**: Linters run concurrently for performance
 - **Automatic Fixing**: Most issues can be auto-fixed with `:fix` commands
 - **Automated Remediation**: Automated scripts for fixing common issues

@@ -87,7 +87,7 @@ pnpm prepare
 
 # 5. Run initial verification
 log "Running initial verification..."
-if pnpm precommit; then
+if pnpm verify; then
     log "✅ All checks passed!"
 else
     warn "Some checks failed. Fix issues before committing."
@@ -110,7 +110,7 @@ echo
 info "Available commands:"
 echo "  pnpm dev           # Start development mode"
 echo "  pnpm test:watch    # Run tests in watch mode"
-echo "  pnpm precommit     # Run all quality checks"
+echo "  pnpm verify        # Run all quality checks"
 echo "  pnpm changeset     # Create a changeset for your changes"
 echo
 info "Documentation:"
