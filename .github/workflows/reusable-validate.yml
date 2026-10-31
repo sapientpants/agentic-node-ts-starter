@@ -1,6 +1,6 @@
 # =============================================================================
 # REUSABLE WORKFLOW: Code Validation Suite
-# PURPOSE: Run all quality checks (audit, typecheck, lint, format, test)
+# PURPOSE: Run the full quality gate (same checks as `pnpm verify`)
 # USAGE: Called by PR and main workflows for consistent validation
 # OUTPUTS: Coverage reports when requested
 # =============================================================================
@@ -122,6 +122,21 @@ jobs:
         # To fix: Run 'pnpm format:fix' to auto-format
         run: pnpm format
 
+      - name: Spell checking
+        # cspell over every tracked file type (identifiers, comments, docs)
+        # FAILS IF: Unknown word found
+        # To fix: Correct the typo or add the term to cspell.json
+        run: pnpm lint:spelling
+
+      - name: YAML linting
+        # FAILS IF: YAML syntax or style violations (workflows are covered by actionlint below)
+        run: pnpm lint:yaml
+
+      - name: Markdown linting
+        # FAILS IF: markdownlint rule violations
+        # To fix: Run 'pnpm lint:markdown:fix'
+        run: pnpm lint:markdown
+
       - name: Install actionlint
         # Install actionlint for workflow validation
         # Uses the official installer script from rhysd/actionlint
@@ -173,9 +188,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Check circular dependencies
-        run: pnpm deps:circular
-        continue-on-error: false
+      - name: Check dependency rules
+        # dependency-cruiser: no circular imports, no orphans, no dev deps in src, etc.
+        # To debug: Run 'pnpm deps:cruise' locally
+        run: pnpm deps:cruise
 
       - name: Check code duplication
         run: pnpm duplication
@@ -183,16 +199,12 @@ jobs:
       - name: Check dead code
         run: pnpm dead-code
 
-      - name: Generate full metrics report
-        if: always()
-        run: |
-          mkdir -p reports
-          pnpm deps:summary > reports/deps-summary.txt || true
-
       - name: Upload metrics reports
+        # jscpd writes its HTML/markdown report to reports/jscpd
         if: always()
         uses: actions/upload-artifact@v5
         with:
           name: code-quality-reports-${{ github.sha }}
           path: reports/
           retention-days: 7
+          if-no-files-found: ignore

@@ -19,7 +19,7 @@ pnpm test:watch # Test watch mode
 pnpm quick-check  # typecheck + lint + test
 
 # Full verification (like CI)
-pnpm precommit   # All quality gates including audit + format + coverage
+pnpm verify      # All quality gates (same as CI): linters, typecheck, deps, dead code, coverage
 ```
 
 ### 🧪 Testing
@@ -54,21 +54,20 @@ pnpm build:watch
 
 ### 📦 Available Scripts
 
-Run `pnpm help` to see all available scripts, or check these key commands:
+Run `pnpm run` to list every script with its command, or check these key commands:
 
-| Command              | Description                       | What it runs                                        |
-| -------------------- | --------------------------------- | --------------------------------------------------- |
-| `pnpm dev`           | TypeScript watch mode             | `tsc --watch`                                       |
-| `pnpm test`          | Run tests once                    | `vitest run`                                        |
-| `pnpm test:watch`    | Test watch mode                   | `vitest`                                            |
-| `pnpm test:coverage` | Tests with coverage report        | `vitest run --coverage` (90%/80% thresholds)        |
-| `pnpm typecheck`     | Type check only                   | `tsc --noEmit`                                      |
-| `pnpm lint`          | Check linting                     | `eslint .`                                          |
-| `pnpm format`        | Check formatting                  | `prettier --check .`                                |
-| `pnpm precommit`     | Full verification (CI equivalent) | audit + typecheck + lint + format + test + coverage |
-| `pnpm quick-check`   | Fast quality check                | typecheck + lint + test                             |
-| `pnpm ci:local`      | Simulate full CI locally          | Complete CI pipeline simulation                     |
-| `pnpm doctor`        | Check environment health          | Node/pnpm version check                             |
+| Command              | Description                       | What it runs                                               |
+| -------------------- | --------------------------------- | ---------------------------------------------------------- |
+| `pnpm dev`           | TypeScript watch mode             | `tsc --watch`                                              |
+| `pnpm test`          | Run tests once                    | `vitest run`                                               |
+| `pnpm test:watch`    | Test watch mode                   | `vitest`                                                   |
+| `pnpm test:coverage` | Tests with coverage report        | `vitest run --coverage` (90%/80% thresholds)               |
+| `pnpm typecheck`     | Type check only                   | `tsc --noEmit`                                             |
+| `pnpm lint`          | Check linting                     | `eslint .`                                                 |
+| `pnpm format`        | Check formatting                  | `prettier --check .`                                       |
+| `pnpm verify`        | Full verification (CI equivalent) | format + linters + typecheck + deps + dead code + coverage |
+| `pnpm quick-check`   | Fast quality check                | typecheck + lint + test                                    |
+| `pnpm ci:local`      | Simulate full CI locally          | audit + verify + build + security scans                    |
 
 ## IDE Setup
 
@@ -210,7 +209,7 @@ pnpm ci:local
 pnpm ci:local:fast
 
 # Quick commands
-pnpm precommit   # Full verification
+pnpm verify   # Full verification
 pnpm quick-check  # Fast quality check
 ```
 
@@ -218,20 +217,16 @@ pnpm quick-check  # Fast quality check
 
 #### What Runs on Every Commit
 
-The project uses Husky to enforce quality checks before each commit. The `precommit` script runs:
+The project uses Husky. The pre-commit hook is deliberately fast and works offline:
 
-1. **Security audit** (`pnpm audit --audit-level critical`) - Checks for critical vulnerabilities
-2. **Type check** (`pnpm typecheck`) - Ensures TypeScript types are correct
-3. **Linting** (`pnpm lint`) - ESLint checks
-4. **Workflow linting** (`pnpm lint:workflows`) - GitHub Actions validation
-5. **Markdown linting** (`pnpm lint:markdown`) - Documentation quality
-6. **YAML linting** (`pnpm lint:yaml`) - Configuration file validation
-7. **Format check** (`pnpm format`) - Prettier formatting verification
-8. **Tests** (`pnpm test`) - All test suites must pass
+1. **Branch name** (`validate-branch-name`) - Must match `<type>/<description>` (see `.validate-branch-namerc.json`)
+2. **lint-staged** - On staged files only: Prettier (`--write`), ESLint (`--fix`), markdownlint (`--fix`), yamllint, cspell
 
-#### Important: No Bypass Allowed
+The commit-msg hook runs commitlint (conventional commits).
 
-> **🔒 Security Feature**: This project includes a git hook that **blocks the `--no-verify` flag**. You cannot bypass pre-commit checks with `git commit --no-verify`. This ensures all commits meet quality standards.
+Everything else (type check, tests with coverage, dependency rules, duplication, dead code, workflow lint,
+`pnpm audit`) runs in CI on every PR. Run the same gate locally with `pnpm verify` (offline) or
+`pnpm ci:local` (adds the audit, a build, and security scans).
 
 If you encounter issues:
 
@@ -242,8 +237,8 @@ pnpm format:fix
 # Fix linting issues
 pnpm lint:fix
 
-# Run full verification to debug
-pnpm precommit
+# Run the full gate to debug
+pnpm verify
 ```
 
 ## Troubleshooting
@@ -279,9 +274,8 @@ node --max-old-space-size=4096 ./node_modules/.bin/vitest
 ### Getting Help
 
 1. **Check documentation**: All guides are in `docs/`
-2. **Run diagnostics**: `pnpm doctor`
-3. **View available commands**: Check package.json scripts or this documentation
-4. **Check CI logs**: Compare local vs CI behavior with `pnpm ci:local`
+2. **View available commands**: `pnpm run` lists every script
+3. **Check CI logs**: Compare local vs CI behavior with `pnpm ci:local`
 
 ## Environment Variables
 

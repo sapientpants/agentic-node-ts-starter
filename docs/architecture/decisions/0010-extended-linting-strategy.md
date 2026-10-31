@@ -62,9 +62,9 @@ We implemented a comprehensive linting strategy covering all major file types:
   - Runs in CI to prevent broken workflows
 
 - **Integration**:
-  - All linters run in pre-commit hooks via lint-staged
+  - All linters run on staged files in the pre-commit hook via lint-staged (see ADR-0018)
   - Parallel execution in CI/CD for performance
-  - Integrated into `pnpm precommit` command
+  - Integrated into the `pnpm verify` full gate
   - Clear error messages with fix suggestions
 
 ## Consequences

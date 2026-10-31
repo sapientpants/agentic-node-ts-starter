@@ -4,7 +4,7 @@ Date: 2025-08-28
 
 ## Status
 
-Superseded by [ADR-0015](./0015-extended-code-quality-toolchain.md)
+Superseded by [ADR-0014](./0014-extended-code-quality-toolchain.md)
 
 ## Context
 

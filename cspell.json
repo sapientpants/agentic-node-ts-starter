@@ -33,7 +33,6 @@
     "katex",
     "KMGT",
     "knip",
-    "madge",
     "markdownlint",
     "minimatch",
     "MTTR",
@@ -75,6 +74,8 @@
     "zricethezav"
   ],
   "ignorePaths": [
+    "**/.*",
+    "**/.*/**",
     "node_modules/**",
     "dist/**",
     "coverage/**",
