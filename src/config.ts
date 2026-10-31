@@ -158,6 +158,16 @@ function valueToString(value: unknown): string {
 }
 
 /**
+ * Whether a variable name indicates a secret whose value must never be shown
+ * @param {string} key - The environment variable name
+ * @returns {boolean} true if the name contains one of the sensitive markers
+ */
+function isSensitiveKey(key: string): boolean {
+  const keyUpper = key.toUpperCase();
+  return SENSITIVE_KEYS.some((sensitive) => keyUpper.includes(sensitive));
+}
+
+/**
  * Convert a received value to a display string, fully redacting it when the
  * variable name indicates a secret.
  * @param {string} key - The environment variable name
@@ -169,10 +179,33 @@ function maskSensitiveValue(key: string, value: unknown): string {
     return valueToString(value);
   }
 
-  const keyUpper = key.toUpperCase();
-  const isSensitive = SENSITIVE_KEYS.some((sensitive) => keyUpper.includes(sensitive));
+  return isSensitiveKey(key) ? '***' : valueToString(value);
+}
 
-  return isSensitive ? '***' : valueToString(value);
+/**
+ * Copy a Zod error with the raw input of every sensitive variable replaced by '***'.
+ * Issues carry the offending value because loadConfig parses with `reportInput`,
+ * and Node prints an uncaught error's `cause` (issues included) when the config
+ * singleton throws at import, so the cause must be as safe to print as the message.
+ * @param {z.ZodError} error - The original validation error
+ * @returns {z.ZodError} An equivalent error that no longer holds secret values
+ */
+function redactSensitiveInputs(error: z.ZodError): z.ZodError {
+  return new z.ZodError(error.issues.map(redactIssueInput));
+}
+
+/**
+ * Replace the raw input of a single issue by '***' when its variable is sensitive
+ * @param {z.core.$ZodIssue} issue - The validation issue
+ * @returns {z.core.$ZodIssue} The issue, redacted if needed
+ */
+function redactIssueInput(issue: z.core.$ZodIssue): z.core.$ZodIssue {
+  if (!('input' in issue) || !isSensitiveKey(issue.path.join('.'))) {
+    return issue;
+  }
+  // Some issue variants type `input` narrowly (e.g. a number for not_multiple_of);
+  // the placeholder deliberately replaces the value whatever its type was.
+  return { ...issue, input: '***' } as z.core.$ZodIssue;
 }
 
 /**
@@ -241,7 +274,8 @@ function formatZodError(error: z.ZodError): string {
 
 /**
  * Thrown by {@link loadConfig} when the environment fails validation.
- * The message lists every offending variable (secrets masked) and is safe to print.
+ * The message lists every offending variable (secrets masked) and is safe to
+ * print; so is the `cause`, a {@link z.ZodError} whose sensitive inputs are redacted.
  */
 export class ConfigError extends Error {
   constructor(zodError: z.ZodError) {
@@ -251,7 +285,7 @@ export class ConfigError extends Error {
         formatZodError(zodError),
         '💡 Tip: Check .env.example for valid configuration examples',
       ].join('\n\n'),
-      { cause: zodError },
+      { cause: redactSensitiveInputs(zodError) },
     );
     this.name = 'ConfigError';
   }

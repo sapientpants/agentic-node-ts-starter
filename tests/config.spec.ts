@@ -149,6 +149,30 @@ describe('Configuration', () => {
       expect(error.cause).toBeInstanceOf(z.ZodError);
     });
 
+    it('should redact sensitive values from the cause as well as the message', () => {
+      // Simulates a user-added secret variable; the shipped schema has none
+      const SecretSchema = z.object({ API_TOKEN: z.string().min(32) });
+      const result = SecretSchema.safeParse(
+        { API_TOKEN: 'too-short-value' },
+        { reportInput: true },
+      );
+      expect(result.success).toBe(false);
+      if (result.success) return;
+
+      const error = new ConfigError(result.error);
+
+      expect(error.message).toContain('API_TOKEN:');
+      expect(error.message).toContain('(received: "***")');
+      expect(error.message).not.toContain('too-short-value');
+
+      // Node prints an uncaught error's cause (issues included) when the config
+      // singleton throws at import, so the cause must not carry the raw value either
+      expect(error.cause).toBeInstanceOf(z.ZodError);
+      if (!(error.cause instanceof z.ZodError)) return;
+      expect(error.cause.issues[0]?.input).toBe('***');
+      expect(error.cause.message).not.toContain('too-short-value');
+    });
+
     it('should not call process.exit', () => {
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {
         throw new Error('process.exit called');
