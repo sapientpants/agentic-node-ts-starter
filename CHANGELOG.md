@@ -1,5 +1,11 @@
 # agentic-node-ts-starter
 
+## 0.29.1
+
+### Patch Changes
+
+- [#210](https://github.com/sapientpants/agentic-node-ts-starter/pull/210) [`68be334`](https://github.com/sapientpants/agentic-node-ts-starter/commit/68be334ab1192134e4583d0ad30bf5cc5d2bfc12) - Fix: `validateLogPath` no longer rejects legitimate paths (file names containing `..` such as `app..log`, relative paths such as `etc/app.log`, and directories that merely share a prefix with a system directory such as `/etcetera`). Restricted directories are now matched on the resolved absolute path as whole directories, Windows system directories are checked on win32, and all validation warnings go through the fallback logger instead of raw `process.stderr.write`.
+
 ## 0.29.0
 
 ### Minor Changes
