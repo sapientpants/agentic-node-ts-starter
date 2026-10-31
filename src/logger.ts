@@ -3,11 +3,18 @@
  * This file is part of the template infrastructure and can be kept and customized.
  *
  * Supports multiple output destinations for flexible logging configuration.
+ *
+ * The logger is driven entirely by the validated {@link Config}: it never reads
+ * `process.env` itself. {@link createLogger} builds an independent logger from a
+ * configuration object; the module-level exports (`logger`, `switchLogOutput`,
+ * `getLoggerOutputMode`, `createChildLogger`) are thin wrappers around a default
+ * instance created from the application configuration.
  */
 
 import pino, { type Logger as PinoLogger, type LoggerOptions, type DestinationStream } from 'pino';
 import { chmodSync, existsSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
+import { config, type Config } from './config.js';
 import {
   validateLogPath,
   validateSyslogHost,
@@ -21,53 +28,57 @@ import {
  * Constants for logger configuration
  */
 const DEFAULT_LOG_FILE_PATH = './logs/app.log';
+const DEFAULT_SYSLOG_HOST = 'localhost';
+const DEFAULT_SYSLOG_PORT = 514;
 const FALLBACK_TO_STDOUT_MESSAGE = 'Falling back to stdout';
 
 /**
  * Fallback logger for initialization errors
- * Used when the main logger configuration fails
+ * Used when the main logger configuration fails. It writes through
+ * `process.stdout.write` looked up at call time, so output is never lost to a
+ * stream that was replaced (e.g. by a test spy) after this module was loaded.
  */
-const fallbackLogger = pino({
-  level: 'warn',
-  timestamp: pino.stdTimeFunctions.isoTime,
-});
+const fallbackLogger = pino(
+  { level: 'warn', timestamp: pino.stdTimeFunctions.isoTime },
+  {
+    write: (chunk: string): void => {
+      process.stdout.write(chunk);
+    },
+  },
+);
 
 /**
- * Get environment configuration safely
- * This avoids circular dependency with config module
- * @returns {Record<string, string | number | undefined>} Environment configuration object
+ * The subset of the validated configuration that drives the logger
  */
-const getEnvConfig = () => ({
-  NODE_ENV: process.env.NODE_ENV || 'development',
-  LOG_LEVEL: process.env.LOG_LEVEL,
-  LOG_OUTPUT: process.env.LOG_OUTPUT,
-  LOG_FILE_PATH: process.env.LOG_FILE_PATH,
-  LOG_FILE_MAX_SIZE: process.env.LOG_FILE_MAX_SIZE,
-  LOG_FILE_MAX_FILES: process.env.LOG_FILE_MAX_FILES
-    ? Number.parseInt(process.env.LOG_FILE_MAX_FILES, 10)
-    : undefined,
-  LOG_SYSLOG_HOST: process.env.LOG_SYSLOG_HOST,
-  LOG_SYSLOG_PORT: process.env.LOG_SYSLOG_PORT
-    ? Number.parseInt(process.env.LOG_SYSLOG_PORT, 10)
-    : undefined,
-  LOG_SYSLOG_PROTOCOL: process.env.LOG_SYSLOG_PROTOCOL as 'udp' | 'tcp' | undefined,
-  APP_NAME: process.env.APP_NAME || 'agentic-node-ts-starter',
-});
+export type LoggerConfig = Pick<
+  Config,
+  | 'NODE_ENV'
+  | 'APP_NAME'
+  | 'LOG_LEVEL'
+  | 'LOG_OUTPUT'
+  | 'LOG_FILE_PATH'
+  | 'LOG_FILE_MAX_SIZE'
+  | 'LOG_FILE_MAX_FILES'
+  | 'LOG_FILE_PERMISSIONS'
+  | 'LOG_SYSLOG_HOST'
+  | 'LOG_SYSLOG_PORT'
+  | 'LOG_SYSLOG_PROTOCOL'
+>;
 
 /**
- * Supported log output modes
+ * Supported log output modes (kept in sync with the LOG_OUTPUT schema)
  */
-const OUTPUT_MODES = ['stdout', 'stderr', 'file', 'syslog', 'null'] as const;
+const OUTPUT_MODES = [
+  'stdout',
+  'stderr',
+  'file',
+  'syslog',
+  'null',
+] as const satisfies readonly Config['LOG_OUTPUT'][];
 type LogOutputMode = (typeof OUTPUT_MODES)[number];
 
 const isOutputMode = (mode: string): mode is LogOutputMode =>
   (OUTPUT_MODES as readonly string[]).includes(mode);
-
-/**
- * Determine the configured logging output destination
- * @returns {string} The log output mode requested via LOG_OUTPUT (defaults to stdout)
- */
-const getConfiguredLogOutput = (): string => getEnvConfig().LOG_OUTPUT || 'stdout';
 
 /**
  * Format an unknown error for log output
@@ -78,10 +89,12 @@ const describeError = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
 
 /**
- * Resolve the validated log file mode from LOG_FILE_PERMISSIONS
- * @returns {number} The numeric file mode to apply to log files
+ * Resolve the log file path, falling back to the default when unset or empty
+ * @param {LoggerConfig} loggerConfig - The logger configuration
+ * @returns {string} The log file path
  */
-const getLogFileMode = (): number => validateFileMode(process.env.LOG_FILE_PERMISSIONS);
+const getLogFilePath = (loggerConfig: LoggerConfig): string =>
+  loggerConfig.LOG_FILE_PATH || DEFAULT_LOG_FILE_PATH;
 
 /**
  * Derive a directory mode from a file mode: every class that can read the
@@ -105,11 +118,12 @@ const toDirectoryMode = (fileMode: number): number => {
 
 /**
  * Get file transport configuration
+ * @param {LoggerConfig} loggerConfig - The logger configuration
  * @param {number} fileMode - The validated numeric file mode for log files
  * @returns {{ target: string, options: object }} File transport configuration object
  */
-const getFileTransportConfig = (fileMode: number) => {
-  const rawMaxSize = getEnvConfig().LOG_FILE_MAX_SIZE;
+const getFileTransportConfig = (loggerConfig: LoggerConfig, fileMode: number) => {
+  const rawMaxSize = loggerConfig.LOG_FILE_MAX_SIZE;
   const maxSize = parseSizeToBytes(rawMaxSize);
 
   if (rawMaxSize !== undefined && rawMaxSize !== '' && maxSize === undefined) {
@@ -121,11 +135,11 @@ const getFileTransportConfig = (fileMode: number) => {
   if (maxSize !== undefined) {
     // For rotation, use pino-roll transport if size limits are specified.
     // pino-roll only understands single-letter units, so pass the normalized byte count.
-    const maxFiles = getEnvConfig().LOG_FILE_MAX_FILES;
+    const maxFiles = loggerConfig.LOG_FILE_MAX_FILES;
     return {
       target: 'pino-roll',
       options: {
-        file: getEnvConfig().LOG_FILE_PATH || DEFAULT_LOG_FILE_PATH,
+        file: getLogFilePath(loggerConfig),
         size: toPinoRollSize(maxSize),
         mode: fileMode,
         ...(maxFiles !== undefined ? { limit: { count: maxFiles } } : {}),
@@ -137,7 +151,7 @@ const getFileTransportConfig = (fileMode: number) => {
   return {
     target: 'pino/file',
     options: {
-      destination: getEnvConfig().LOG_FILE_PATH || DEFAULT_LOG_FILE_PATH,
+      destination: getLogFilePath(loggerConfig),
       mkdir: true,
       mode: fileMode,
     },
@@ -146,16 +160,17 @@ const getFileTransportConfig = (fileMode: number) => {
 
 /**
  * Get syslog transport configuration
+ * @param {LoggerConfig} loggerConfig - The logger configuration
  * @returns {{ target: string, options: object }} Syslog transport configuration object
  */
-const getSyslogTransportConfig = () => {
+const getSyslogTransportConfig = (loggerConfig: LoggerConfig) => {
   return {
     target: 'pino-syslog',
     options: {
-      host: getEnvConfig().LOG_SYSLOG_HOST || 'localhost',
-      port: getEnvConfig().LOG_SYSLOG_PORT || 514,
-      protocol: getEnvConfig().LOG_SYSLOG_PROTOCOL || 'udp',
-      app: getEnvConfig().APP_NAME,
+      host: loggerConfig.LOG_SYSLOG_HOST || DEFAULT_SYSLOG_HOST,
+      port: loggerConfig.LOG_SYSLOG_PORT ?? DEFAULT_SYSLOG_PORT,
+      protocol: loggerConfig.LOG_SYSLOG_PROTOCOL ?? 'udp',
+      app: loggerConfig.APP_NAME,
     },
   };
 };
@@ -188,17 +203,15 @@ interface EnvFlags {
 }
 
 /**
- * Read the environment flags from NODE_ENV
+ * Derive the environment flags from the configured NODE_ENV
+ * @param {LoggerConfig} loggerConfig - The logger configuration
  * @returns {EnvFlags} Environment flags object
  */
-const getEnvFlags = (): EnvFlags => {
-  const { NODE_ENV } = getEnvConfig();
-  return {
-    isProduction: NODE_ENV === 'production',
-    isDevelopment: NODE_ENV === 'development',
-    isTest: NODE_ENV === 'test',
-  };
-};
+const getEnvFlags = (loggerConfig: LoggerConfig): EnvFlags => ({
+  isProduction: loggerConfig.NODE_ENV === 'production',
+  isDevelopment: loggerConfig.NODE_ENV === 'development',
+  isTest: loggerConfig.NODE_ENV === 'test',
+});
 
 /**
  * Configuration for a pino transport worker
@@ -225,46 +238,54 @@ interface LogOutput {
 }
 
 /**
- * The destination all log lines are currently written to.
- * Assigned once at startup (see below) and replaced by {@link switchLogOutput}.
+ * Mutable per-logger state: the destination all log lines are currently written
+ * to (replaced by `switchLogOutput`) and the level to restore when leaving the
+ * null output.
  */
-let activeOutput: LogOutput;
+interface OutputState {
+  active: LogOutput;
+  levelBeforeNull: string | null;
+}
 
 /**
- * The stream handed to the root pino instance. It forwards every line to the
- * active output, so the root logger and all of its children (whenever they were
- * created) follow a runtime switch without being re-created.
+ * Create the stream handed to a root pino instance. It forwards every line to
+ * the active output, so the root logger and all of its children (whenever they
+ * were created) follow a runtime switch without being re-created.
+ * @param {OutputState} state - The state holding the active output
+ * @returns {OutputStream} The delegating stream
  */
-const delegatingStream: OutputStream = {
+const createDelegatingStream = (state: OutputState): OutputStream => ({
   write: (chunk: string): void => {
-    activeOutput.stream.write(chunk);
+    state.active.stream.write(chunk);
   },
   flush: (callback): void => {
-    const { stream } = activeOutput;
+    const { stream } = state.active;
     if (typeof stream.flush === 'function') {
       stream.flush(callback);
     } else {
       callback();
     }
   },
-};
+});
 
 /**
- * Timestamp function that matches the active output: pino-syslog needs epoch
- * milliseconds, every other destination gets ISO strings.
- * @returns {string} The pino timestamp fragment
+ * Create a timestamp function that matches the active output: pino-syslog needs
+ * epoch milliseconds, every other destination gets ISO strings.
+ * @param {OutputState} state - The state holding the active output
+ * @returns {() => string} The pino timestamp function
  */
-const timestamp = (): string =>
-  activeOutput.mode === 'syslog'
+const createTimestamp = (state: OutputState) => (): string =>
+  state.active.mode === 'syslog'
     ? pino.stdTimeFunctions.epochTime()
     : pino.stdTimeFunctions.isoTime();
 
 /**
  * Create base logger configuration
  * @param {string} logLevel - The logging level
+ * @param {() => string} timestamp - The pino timestamp function
  * @returns {LoggerOptions} Base logger configuration object
  */
-const createBaseConfig = (logLevel: string): LoggerOptions => ({
+const createBaseConfig = (logLevel: string, timestamp: () => string): LoggerOptions => ({
   level: logLevel,
   timestamp,
   redact: {
@@ -293,28 +314,17 @@ const createProductionConfig = (baseConfig: LoggerOptions): LoggerOptions => ({
 });
 
 /**
- * Create test environment configuration
- * @param {LoggerOptions} baseConfig - The base configuration to extend
- * @returns {LoggerOptions} Test logger configuration object
- */
-const createTestConfig = (baseConfig: LoggerOptions): LoggerOptions => ({
-  ...baseConfig,
-  level: process.env.LOG_LEVEL || 'silent',
-});
-
-/**
  * Logger configuration based on environment. Output destinations are not part
- * of the configuration; they are managed through {@link LogOutput}.
- * @param {EnvFlags} env - Environment flags object
+ * of the configuration; they are managed through {@link LogOutput}. The log
+ * level comes straight from the validated configuration, which already applies
+ * the per-environment default (info in production, silent in test, debug otherwise).
+ * @param {LoggerConfig} loggerConfig - The logger configuration
+ * @param {() => string} timestamp - The pino timestamp function
  * @returns {LoggerOptions} Logger configuration object
  */
-const getLoggerConfig = (env: EnvFlags): LoggerOptions => {
-  const { LOG_LEVEL } = getEnvConfig();
-  const logLevel = LOG_LEVEL || (env.isProduction ? 'info' : 'debug');
-  const baseConfig = createBaseConfig(logLevel);
-
-  if (env.isTest) return createTestConfig(baseConfig);
-  return env.isProduction ? createProductionConfig(baseConfig) : baseConfig;
+const getLoggerOptions = (loggerConfig: LoggerConfig, timestamp: () => string): LoggerOptions => {
+  const baseConfig = createBaseConfig(loggerConfig.LOG_LEVEL, timestamp);
+  return getEnvFlags(loggerConfig).isProduction ? createProductionConfig(baseConfig) : baseConfig;
 };
 
 /**
@@ -436,35 +446,36 @@ const openStdoutOutput = (env: EnvFlags): LogOutput => {
 
 /**
  * Open the file output after validating the configured path
+ * @param {LoggerConfig} loggerConfig - The logger configuration
  * @returns {LogOutput} The opened output
  * @throws {Error} If the log path is invalid or its directory cannot be created
  */
-const openFileOutput = (): LogOutput => {
-  const logPath = getEnvConfig().LOG_FILE_PATH || DEFAULT_LOG_FILE_PATH;
+const openFileOutput = (loggerConfig: LoggerConfig): LogOutput => {
+  const logPath = getLogFilePath(loggerConfig);
   try {
     validateLogPath(logPath);
   } catch (error) {
     throw new Error(`Invalid log file path: ${describeError(error)}`, { cause: error });
   }
-  const fileMode = getLogFileMode();
+  const fileMode = validateFileMode(loggerConfig.LOG_FILE_PERMISSIONS);
   ensureLogDirectory(logPath, fileMode);
-  return openTransport('file', getFileTransportConfig(fileMode));
+  return openTransport('file', getFileTransportConfig(loggerConfig, fileMode));
 };
 
 /**
  * Open the syslog output after validating the configured host and port
+ * @param {LoggerConfig} loggerConfig - The logger configuration
  * @returns {LogOutput} The opened output
  * @throws {Error} If the syslog configuration is invalid
  */
-const openSyslogOutput = (): LogOutput => {
-  const { LOG_SYSLOG_HOST, LOG_SYSLOG_PORT } = getEnvConfig();
+const openSyslogOutput = (loggerConfig: LoggerConfig): LogOutput => {
   try {
-    validateSyslogHost(LOG_SYSLOG_HOST || 'localhost');
-    validateSyslogPort(LOG_SYSLOG_PORT);
+    validateSyslogHost(loggerConfig.LOG_SYSLOG_HOST || DEFAULT_SYSLOG_HOST);
+    validateSyslogPort(loggerConfig.LOG_SYSLOG_PORT);
   } catch (error) {
     throw new Error(`Invalid syslog configuration: ${describeError(error)}`, { cause: error });
   }
-  return openTransport('syslog', getSyslogTransportConfig());
+  return openTransport('syslog', getSyslogTransportConfig(loggerConfig));
 };
 
 /**
@@ -482,16 +493,17 @@ const NULL_OUTPUT: LogOutput = {
  * Under NODE_ENV=test no transport worker is started: file and syslog report
  * their mode but write to the (silenced) process stdout.
  * @param {string} requestedMode - The output mode to open
- * @param {EnvFlags} env - Environment flags object
+ * @param {LoggerConfig} loggerConfig - The logger configuration
  * @returns {LogOutput} The opened output
  * @throws {Error} If the mode is unknown or its configuration is invalid
  */
-const openOutput = (requestedMode: string, env: EnvFlags): LogOutput => {
+const openOutput = (requestedMode: string, loggerConfig: LoggerConfig): LogOutput => {
   if (!isOutputMode(requestedMode)) {
     throw new Error(
       `Unknown log output mode "${requestedMode}" (expected one of: ${OUTPUT_MODES.join(', ')})`,
     );
   }
+  const env = getEnvFlags(loggerConfig);
   switch (requestedMode) {
     case 'null':
       return NULL_OUTPUT;
@@ -500,29 +512,30 @@ const openOutput = (requestedMode: string, env: EnvFlags): LogOutput => {
     case 'stdout':
       return openStdoutOutput(env);
     case 'file':
-      return env.isTest ? openProcessStream(1, 'file') : openFileOutput();
+      return env.isTest ? openProcessStream(1, 'file') : openFileOutput(loggerConfig);
     case 'syslog':
-      return env.isTest ? openProcessStream(1, 'syslog') : openSyslogOutput();
+      return env.isTest ? openProcessStream(1, 'syslog') : openSyslogOutput(loggerConfig);
   }
 };
 
 /**
- * Open the output configured via LOG_OUTPUT, falling back to stdout when the
- * configuration is invalid so that startup never fails because of logging.
- * @param {EnvFlags} env - Environment flags object
+ * Open the output configured via LOG_OUTPUT, falling back to stdout when its
+ * configuration is invalid (e.g. a log file path that fails validation or an
+ * invalid syslog host) so that startup never fails because of logging.
+ * @param {LoggerConfig} loggerConfig - The logger configuration
  * @returns {LogOutput} The opened output
  */
-const openInitialOutput = (env: EnvFlags): LogOutput => {
-  const configured = getConfiguredLogOutput();
+const openInitialOutput = (loggerConfig: LoggerConfig): LogOutput => {
+  const configured: string = loggerConfig.LOG_OUTPUT;
   try {
-    return openOutput(configured, env);
+    return openOutput(configured, loggerConfig);
   } catch (error) {
     fallbackLogger.error(
       { context: 'log output', requested: configured, error: describeError(error) },
       'Invalid log output configuration',
     );
     fallbackLogger.error(FALLBACK_TO_STDOUT_MESSAGE);
-    return openStdoutOutput(env);
+    return openStdoutOutput(getEnvFlags(loggerConfig));
   }
 };
 
@@ -549,41 +562,114 @@ const wrapLoggerWithContext = (baseLogger: PinoLogger): Logger => {
   return logger;
 };
 
-const startupEnv = getEnvFlags();
-activeOutput = openInitialOutput(startupEnv);
+/**
+ * The null output also silences the logger so that log arguments are not even
+ * serialized; leaving it restores the previous level.
+ * @param {OutputState} state - The state holding the level to restore
+ * @param {Logger} logger - The root logger whose level to adjust
+ * @param {LogOutputMode | null} previousMode - The mode being left (null at startup)
+ * @param {LogOutputMode} nextMode - The mode being entered
+ */
+const applyOutputLevel = (
+  state: OutputState,
+  logger: Logger,
+  previousMode: LogOutputMode | null,
+  nextMode: LogOutputMode,
+): void => {
+  if (nextMode === 'null') {
+    state.levelBeforeNull = logger.level;
+    logger.level = 'silent';
+    return;
+  }
+  if (previousMode === 'null' && state.levelBeforeNull !== null) {
+    logger.level = state.levelBeforeNull;
+    state.levelBeforeNull = null;
+  }
+};
+
+/**
+ * Build the output-switching function for one logger instance
+ * @param {OutputState} state - The state holding the active output
+ * @param {Logger} logger - The root logger of the instance
+ * @param {LoggerConfig} loggerConfig - The logger configuration
+ * @returns {(outputMode: string) => void} The switch function
+ */
+const createSwitchLogOutput =
+  (state: OutputState, logger: Logger, loggerConfig: LoggerConfig) =>
+  (outputMode: string): void => {
+    if (state.active.mode === outputMode) {
+      logger.debug(`Logger already using ${outputMode} output`);
+      return;
+    }
+
+    const previous = state.active;
+    // Throws on an unknown mode or invalid configuration; the previous output stays active
+    const next = openOutput(outputMode, loggerConfig);
+
+    state.active = next;
+    applyOutputLevel(state, logger, previous.mode, next.mode);
+    previous.close();
+
+    logger.info(
+      { previousMode: previous.mode, newMode: next.mode },
+      `Logger output switched to ${next.mode}`,
+    );
+  };
+
+/**
+ * A logger together with the functions that control its output destination
+ */
+export interface LoggerInstance {
+  /** The root logger */
+  logger: Logger;
+  /** Switch the output destination at runtime (see {@link switchLogOutput}) */
+  switchLogOutput: (outputMode: string) => void;
+  /** The destination log lines are currently written to (see {@link getLoggerOutputMode}) */
+  getLoggerOutputMode: () => string;
+  /** Create a child logger with a module name and optional context */
+  createChildLogger: (name: string, context?: LogContext) => Logger;
+}
+
+/**
+ * Create an independent logger from a validated configuration.
+ *
+ * Opens the configured output (falling back to stdout if its configuration is
+ * invalid) and returns the root logger with its own `switchLogOutput` and
+ * `getLoggerOutputMode`. Nothing is logged on creation.
+ * @param {LoggerConfig} loggerConfig - The validated configuration (or a subset of it)
+ * @returns {LoggerInstance} The logger and its output controls
+ * @example
+ * ```typescript
+ * const { logger, switchLogOutput } = createLogger(
+ *   loadConfig({ NODE_ENV: 'production', LOG_OUTPUT: 'stderr' }),
+ * );
+ * ```
+ */
+export const createLogger = (loggerConfig: LoggerConfig): LoggerInstance => {
+  const state: OutputState = { active: openInitialOutput(loggerConfig), levelBeforeNull: null };
+  const logger = wrapLoggerWithContext(
+    pino(getLoggerOptions(loggerConfig, createTimestamp(state)), createDelegatingStream(state)),
+  );
+  applyOutputLevel(state, logger, null, state.active.mode);
+
+  return {
+    logger,
+    switchLogOutput: createSwitchLogOutput(state, logger, loggerConfig),
+    getLoggerOutputMode: () => state.active.mode,
+    createChildLogger: (name, context = {}) => logger.withContext({ module: name, ...context }),
+  };
+};
+
+/**
+ * Default logger instance, created from the application configuration
+ */
+const defaultInstance = createLogger(config);
 
 /**
  * Default logger instance
  * Use this throughout the application for consistent logging
  */
-export const logger: Logger = wrapLoggerWithContext(
-  pino(getLoggerConfig(startupEnv), delegatingStream),
-);
-
-/**
- * Level to restore when leaving the null output
- */
-let levelBeforeNull: string | null = null;
-
-/**
- * The null output also silences the logger so that log arguments are not even
- * serialized; leaving it restores the previous level.
- * @param {LogOutputMode | null} previousMode - The mode being left (null at startup)
- * @param {LogOutputMode} nextMode - The mode being entered
- */
-const applyOutputLevel = (previousMode: LogOutputMode | null, nextMode: LogOutputMode): void => {
-  if (nextMode === 'null') {
-    levelBeforeNull = logger.level;
-    logger.level = 'silent';
-    return;
-  }
-  if (previousMode === 'null' && levelBeforeNull !== null) {
-    logger.level = levelBeforeNull;
-    levelBeforeNull = null;
-  }
-};
-
-applyOutputLevel(null, activeOutput.mode);
+export const logger: Logger = defaultInstance.logger;
 
 /**
  * Switch logger output to a different destination at runtime.
@@ -620,25 +706,7 @@ applyOutputLevel(null, activeOutput.mode);
  * logger.info('Back to console output');
  * ```
  */
-export const switchLogOutput = (outputMode: string): void => {
-  if (activeOutput.mode === outputMode) {
-    logger.debug(`Logger already using ${outputMode} output`);
-    return;
-  }
-
-  const previous = activeOutput;
-  // Throws on an unknown mode or invalid configuration; the previous output stays active
-  const next = openOutput(outputMode, getEnvFlags());
-
-  activeOutput = next;
-  applyOutputLevel(previous.mode, next.mode);
-  previous.close();
-
-  logger.info(
-    { previousMode: previous.mode, newMode: next.mode },
-    `Logger output switched to ${next.mode}`,
-  );
-};
+export const switchLogOutput: (outputMode: string) => void = defaultInstance.switchLogOutput;
 
 /**
  * Get the current logger output mode.
@@ -662,11 +730,12 @@ export const switchLogOutput = (outputMode: string): void => {
  *   console.log('Logs are being written to file');
  * }
  * ```
- * This is the effective mode: if LOG_OUTPUT was unknown or its configuration failed
- * validation at startup, the logger fell back to stdout and this returns `'stdout'`.
- * After a successful {@link switchLogOutput} it returns the mode that was switched to.
+ * This is the effective mode: if the configured LOG_OUTPUT failed validation at
+ * startup (invalid file path or syslog host), the logger fell back to stdout and
+ * this returns `'stdout'`. After a successful {@link switchLogOutput} it returns
+ * the mode that was switched to.
  */
-export const getLoggerOutputMode = (): string => activeOutput.mode;
+export const getLoggerOutputMode: () => string = defaultInstance.getLoggerOutputMode;
 
 /**
  * Create a child logger with specific context
@@ -675,9 +744,8 @@ export const getLoggerOutputMode = (): string => activeOutput.mode;
  * @param {LogContext} context - Additional context to include
  * @returns {Logger} Child logger instance
  */
-export const createChildLogger = (name: string, context: LogContext = {}): Logger => {
-  return logger.withContext({ module: name, ...context });
-};
+export const createChildLogger: (name: string, context?: LogContext) => Logger =
+  defaultInstance.createChildLogger;
 
 /**
  * OpenTelemetry integration helper
@@ -713,15 +781,3 @@ export const withTraceContext = (log: Logger, traceId?: string, spanId?: string)
 
 // Export Pino types for use in application
 export type { LoggerOptions } from 'pino';
-// Log startup information
-if (getEnvConfig().NODE_ENV !== 'test') {
-  logger.info(
-    {
-      node_env: getEnvConfig().NODE_ENV,
-      log_level: logger.level,
-      pid: process.pid,
-      log_output: getLoggerOutputMode(),
-    },
-    'Logger initialized',
-  );
-}

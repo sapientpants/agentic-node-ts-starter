@@ -8,17 +8,18 @@
  *
  * The application will NOT start without valid configuration.
  *
+ * This module has no runtime dependencies on the rest of the application: it
+ * only parses and validates. Logging the loaded configuration is the job of the
+ * entry point (see `src/index.ts`).
+ *
  * To extend with your own variables:
- * 1. Add new fields to ConfigSchema below
+ * 1. Add new fields to EnvSchema below
  * 2. TypeScript will automatically provide types
  * 3. Add corresponding entries to .env.example
  * ============================================================================
  */
 
 import { z } from 'zod';
-import { createChildLogger } from './logger.js';
-
-const logger = createChildLogger('config');
 
 /**
  * Custom Zod transformer for boolean environment variables
@@ -33,10 +34,10 @@ const BooleanSchema = z
   .describe('Boolean value (true/false, 1/0, yes/no)');
 
 /**
- * Environment configuration schema
+ * Raw environment schema
  * Add your application-specific environment variables here
  */
-const ConfigSchema = z.object({
+const EnvSchema = z.object({
   // Node environment
   NODE_ENV: z
     .enum(['development', 'production', 'test', 'staging'])
@@ -50,7 +51,7 @@ const ConfigSchema = z.object({
     .default('agentic-node-ts-starter')
     .describe('Application name for logging and metrics'),
 
-  // Logging configuration
+  // Logging configuration (defaults to info in production, silent in test, debug otherwise)
   LOG_LEVEL: z
     .enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal', 'silent'])
     .optional()
@@ -72,7 +73,7 @@ const ConfigSchema = z.object({
   // Logging Configuration
   LOG_OUTPUT: z
     .enum(['stdout', 'stderr', 'file', 'syslog', 'null'])
-    .optional()
+    .default('stdout')
     .describe('Logger output destination (stdout, stderr, file, syslog, null)'),
 
   // File logging configuration (when LOG_OUTPUT=file)
@@ -111,6 +112,27 @@ const ConfigSchema = z.object({
     .describe('Timeout in milliseconds for file write tests in CI'),
 });
 
+type Env = z.infer<typeof EnvSchema>;
+
+/**
+ * Resolve the LOG_LEVEL default from the environment
+ * @param {Env['NODE_ENV']} nodeEnv - The validated NODE_ENV value
+ * @returns {NonNullable<Env['LOG_LEVEL']>} The default log level for that environment
+ */
+function defaultLogLevel(nodeEnv: Env['NODE_ENV']): NonNullable<Env['LOG_LEVEL']> {
+  if (nodeEnv === 'production') return 'info';
+  return nodeEnv === 'test' ? 'silent' : 'debug';
+}
+
+/**
+ * Environment configuration schema: the raw schema plus defaults that depend
+ * on other variables
+ */
+const ConfigSchema = EnvSchema.transform((env) => ({
+  ...env,
+  LOG_LEVEL: env.LOG_LEVEL ?? defaultLogLevel(env.NODE_ENV),
+}));
+
 /**
  * Inferred TypeScript type from the schema
  */
@@ -136,6 +158,16 @@ function valueToString(value: unknown): string {
 }
 
 /**
+ * Whether a variable name indicates a secret whose value must never be shown
+ * @param {string} key - The environment variable name
+ * @returns {boolean} true if the name contains one of the sensitive markers
+ */
+function isSensitiveKey(key: string): boolean {
+  const keyUpper = key.toUpperCase();
+  return SENSITIVE_KEYS.some((sensitive) => keyUpper.includes(sensitive));
+}
+
+/**
  * Convert a received value to a display string, fully redacting it when the
  * variable name indicates a secret.
  * @param {string} key - The environment variable name
@@ -147,10 +179,33 @@ function maskSensitiveValue(key: string, value: unknown): string {
     return valueToString(value);
   }
 
-  const keyUpper = key.toUpperCase();
-  const isSensitive = SENSITIVE_KEYS.some((sensitive) => keyUpper.includes(sensitive));
+  return isSensitiveKey(key) ? '***' : valueToString(value);
+}
 
-  return isSensitive ? '***' : valueToString(value);
+/**
+ * Copy a Zod error with the raw input of every sensitive variable replaced by '***'.
+ * Issues carry the offending value because loadConfig parses with `reportInput`,
+ * and Node prints an uncaught error's `cause` (issues included) when the config
+ * singleton throws at import, so the cause must be as safe to print as the message.
+ * @param {z.ZodError} error - The original validation error
+ * @returns {z.ZodError} An equivalent error that no longer holds secret values
+ */
+function redactSensitiveInputs(error: z.ZodError): z.ZodError {
+  return new z.ZodError(error.issues.map(redactIssueInput));
+}
+
+/**
+ * Replace the raw input of a single issue by '***' when its variable is sensitive
+ * @param {z.core.$ZodIssue} issue - The validation issue
+ * @returns {z.core.$ZodIssue} The issue, redacted if needed
+ */
+function redactIssueInput(issue: z.core.$ZodIssue): z.core.$ZodIssue {
+  if (!('input' in issue) || !isSensitiveKey(issue.path.join('.'))) {
+    return issue;
+  }
+  // Some issue variants type `input` narrowly (e.g. a number for not_multiple_of);
+  // the placeholder deliberately replaces the value whatever its type was.
+  return { ...issue, input: '***' } as z.core.$ZodIssue;
 }
 
 /**
@@ -218,49 +273,53 @@ function formatZodError(error: z.ZodError): string {
 }
 
 /**
- * Load and validate environment configuration
- * @returns {Config} Validated configuration object
+ * Thrown by {@link loadConfig} when the environment fails validation.
+ * The message lists every offending variable (secrets masked) and is safe to
+ * print; so is the `cause`, a {@link z.ZodError} whose sensitive inputs are redacted.
  */
-function loadConfig(): Config {
-  try {
-    // reportInput makes Zod attach the offending value to each issue so
-    // formatZodError can show it (masked for secrets)
-    const parsed = ConfigSchema.parse(process.env, { reportInput: true });
-
-    // Apply LOG_LEVEL default based on validated NODE_ENV if not set
-    if (!parsed.LOG_LEVEL) {
-      parsed.LOG_LEVEL = parsed.NODE_ENV === 'production' ? 'info' : 'debug';
-    }
-
-    // Log successful configuration load in non-test environments
-    if (parsed.NODE_ENV !== 'test') {
-      logger.info(
-        {
-          environment: parsed.NODE_ENV,
-          app: parsed.APP_NAME,
-        },
-        'Configuration loaded successfully',
-      );
-    }
-
-    return parsed;
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      process.stderr.write('\n❌ Invalid environment configuration:\n\n');
-      process.stderr.write(formatZodError(error));
-      process.stderr.write('\n\n💡 Tip: Check .env.example for valid configuration examples\n\n');
-      // eslint-disable-next-line n/no-process-exit -- Fatal config error at startup requires process.exit
-      process.exit(1);
-    }
-    throw error;
+export class ConfigError extends Error {
+  constructor(zodError: z.ZodError) {
+    super(
+      [
+        '❌ Invalid environment configuration:',
+        formatZodError(zodError),
+        '💡 Tip: Check .env.example for valid configuration examples',
+      ].join('\n\n'),
+      { cause: redactSensitiveInputs(zodError) },
+    );
+    this.name = 'ConfigError';
   }
 }
 
 /**
- * Singleton configuration instance
- * Validates environment variables on first import
+ * Load and validate environment configuration.
+ *
+ * Pure: it only reads the given environment and has no side effects, so it can
+ * be called with a plain object in tests instead of mutating `process.env`.
+ * @param {NodeJS.ProcessEnv} env - The environment to validate (defaults to `process.env`)
+ * @returns {Config} Validated configuration object
+ * @throws {ConfigError} If the environment is invalid
+ * @example
+ * ```typescript
+ * const config = loadConfig({ NODE_ENV: 'production', LOG_OUTPUT: 'stderr' });
+ * ```
  */
-export const config = loadConfig();
+export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
+  // reportInput makes Zod attach the offending value to each issue so
+  // formatZodError can show it (masked for secrets)
+  const result = ConfigSchema.safeParse(env, { reportInput: true });
+  if (!result.success) {
+    throw new ConfigError(result.error);
+  }
+  return result.data;
+}
+
+/**
+ * Singleton configuration instance, validated from `process.env` on first import.
+ * Importing this module with an invalid environment throws a {@link ConfigError},
+ * so the application fails to start with a clear message.
+ */
+export const config: Config = loadConfig();
 
 /**
  * Type-safe configuration getter

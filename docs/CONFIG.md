@@ -2,7 +2,7 @@
 
 This guide explains how to use and extend the type-safe environment configuration system provided by the starter template.
 
-> **Important**: Configuration is mandatory. The application validates all environment variables at startup and will exit with clear error messages if configuration is invalid or missing.
+> **Important**: Configuration is mandatory. The application validates all environment variables at startup and throws a `ConfigError` with a clear message if configuration is invalid or missing, so the process fails to start.
 
 ## Overview
 
@@ -67,7 +67,7 @@ This table lists all available environment variables, their types, requirements,
 | `DEBUG`       | `string`  | Optional | -                | Debug namespaces to enable (e.g., `app:*`, `express:*`)                 |
 | `FORCE_COLOR` | `boolean` | Optional | -                | Force colored output in terminals (`true`/`false`, `1`/`0`, `yes`/`no`) |
 
-\* `LOG_LEVEL` defaults to `info` in production, `debug` in development
+\* `LOG_LEVEL` defaults to `info` in production, `silent` in test, `debug` in development and staging
 
 ### File Logging (when LOG_OUTPUT=file)
 
@@ -111,7 +111,7 @@ To add your own environment variables:
 1. **Update the schema in `src/config.ts`:**
 
    ```typescript
-   const ConfigSchema = z.object({
+   const EnvSchema = z.object({
      // ... existing configuration ...
 
      // Add your custom variables
@@ -277,6 +277,28 @@ Other errors:
 
 The configuration module provides helper functions for common tasks:
 
+### `loadConfig(env?)`
+
+Validate an environment object and return a typed `Config`. It defaults to `process.env`
+and has no side effects: nothing is logged and the process is never exited. The exported
+`config` singleton is simply `loadConfig()` evaluated on first import.
+
+```typescript
+import { loadConfig, ConfigError } from './config.js';
+
+const config = loadConfig({ NODE_ENV: 'production', LOG_OUTPUT: 'stderr' });
+
+try {
+  loadConfig({ NODE_ENV: 'nope' });
+} catch (error) {
+  if (error instanceof ConfigError) {
+    console.error(error.message); // lists every invalid variable, secrets masked
+  }
+}
+```
+
+`ConfigError` carries the formatted report in `message` and the original `ZodError` in `cause`.
+
 ### `getConfig(key)`
 
 Type-safe configuration getter:
@@ -315,7 +337,7 @@ console.log('Loaded configuration keys:', getConfigKeys());
 
 ### 1. **Fail Fast**
 
-Configuration is validated at application startup. Invalid configuration causes immediate exit with clear error messages.
+Configuration is validated at application startup. Invalid configuration throws a `ConfigError` while `src/config.ts` is imported, so the process fails to start with a clear error message.
 
 ### 2. **Use TypeScript**
 
@@ -445,25 +467,22 @@ Example GitHub Actions:
 
 ### Unit Tests
 
-Test configuration with different environment setups:
+Test configuration with different environment setups by passing a plain object to
+`loadConfig`; there is no need to touch `process.env` or reset modules:
 
 ```typescript
+import { loadConfig, ConfigError } from './config.js';
+
 describe('Config', () => {
-  const originalEnv = process.env;
-
-  beforeEach(() => {
-    vi.resetModules();
-    process.env = { ...originalEnv };
-  });
-
-  it('should load production config', async () => {
-    process.env.NODE_ENV = 'production';
-    process.env.API_KEY = 'test-api-key';
-
-    const { config } = await import('./config.js');
+  it('should load production config', () => {
+    const config = loadConfig({ NODE_ENV: 'production', API_KEY: 'test-api-key' });
 
     expect(config.NODE_ENV).toBe('production');
     expect(config.LOG_LEVEL).toBe('info'); // production default
+  });
+
+  it('should reject invalid values', () => {
+    expect(() => loadConfig({ NODE_ENV: 'nope' })).toThrow(ConfigError);
   });
 });
 ```

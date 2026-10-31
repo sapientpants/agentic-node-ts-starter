@@ -294,11 +294,38 @@ How switching behaves:
 - `switchLogOutput` throws if the mode is unknown or its configuration is invalid (for
   example a `LOG_FILE_PATH` that fails validation or an invalid syslog host). The
   current destination stays active in that case.
+- An unknown `LOG_OUTPUT` value is rejected when the configuration is loaded
+  (`ConfigError` from `src/config.ts`); the logger only ever sees validated values.
 - `getLoggerOutputMode()` always reports the destination that is actually in use. If
-  `LOG_OUTPUT` is unknown or fails validation at startup, the logger falls back to
-  stdout, logs the reason, and `getLoggerOutputMode()` returns `'stdout'`.
+  the configured destination cannot be opened at startup (for example an invalid
+  `LOG_FILE_PATH` or syslog host), the logger falls back to stdout, logs the reason,
+  and `getLoggerOutputMode()` returns `'stdout'`.
 - Under `NODE_ENV=test` no transport worker is started: `file` and `syslog` are
   recorded as the mode but output stays silent.
+
+### Creating Additional Loggers
+
+The exported `logger`, `switchLogOutput`, `getLoggerOutputMode` and `createChildLogger`
+are thin wrappers around a default instance built from the validated application
+configuration. `createLogger` builds an independent instance from any `Config` (or the
+logging subset of it), which is how the tests exercise every output mode without
+touching `process.env` or re-importing the module:
+
+```typescript
+import { loadConfig } from './config.js';
+import { createLogger } from './logger.js';
+
+const audit = createLogger(
+  loadConfig({ NODE_ENV: 'production', LOG_OUTPUT: 'file', LOG_FILE_PATH: './logs/audit.log' }),
+);
+
+audit.logger.info('Written to the audit file');
+audit.switchLogOutput('stderr'); // Only affects this instance
+```
+
+Neither `loadConfig` nor `createLogger` logs anything on its own. The startup line
+("Configuration loaded successfully", with environment, log level and output) is
+emitted by the entry point, `src/index.ts`.
 
 ### Using with Different Architectures
 
@@ -486,7 +513,7 @@ LOG_FILE_MAX_FILES=5
 
 ```bash
 # Verify logs are going where expected
-LOG_OUTPUT=stderr npm start 2>&1 | grep "Logger initialized"
+LOG_OUTPUT=stderr npm start 2>&1 | grep "Configuration loaded"
 ```
 
 ## Troubleshooting

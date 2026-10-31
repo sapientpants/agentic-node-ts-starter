@@ -1,32 +1,41 @@
 /**
  * Tests for logger infrastructure - Template code.
  * These tests verify the production-ready logger and can be kept/customized.
+ *
+ * Loggers for specific environments are built with `createLogger(loadConfig(env))`
+ * from a plain environment object; `process.env` and the module registry are left alone.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import type { Logger } from '../src/logger.js';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { loadConfig } from '../src/config.js';
+import {
+  createChildLogger,
+  createLogger,
+  getLoggerOutputMode,
+  logger,
+  switchLogOutput,
+  withTraceContext,
+  type Logger,
+  type LoggerInstance,
+} from '../src/logger.js';
 
-// Store original env
-const originalEnv = process.env;
+/**
+ * Build a logger for the given environment, recorded so its transport is closed afterwards
+ * @param {NodeJS.ProcessEnv} env - The environment variables to validate
+ * @returns {LoggerInstance} The logger instance
+ */
+const instances: LoggerInstance[] = [];
+const createTestLogger = (env: NodeJS.ProcessEnv): LoggerInstance => {
+  const instance = createLogger(loadConfig(env));
+  instances.push(instance);
+  return instance;
+};
 
 describe('Logger', () => {
-  let logger: Logger;
-  let createChildLogger: (name: string, context?: Record<string, unknown>) => Logger;
-  let withTraceContext: (logger: Logger, traceId?: string, spanId?: string) => Logger;
-
-  beforeEach(async () => {
-    vi.resetModules();
-    process.env = { ...originalEnv };
-    // Import fresh module for each test
-    const loggerModule = await import('../src/logger.js');
-    logger = loggerModule.logger;
-    createChildLogger = loggerModule.createChildLogger;
-    withTraceContext = loggerModule.withTraceContext;
-  });
-
   afterEach(() => {
-    process.env = originalEnv;
-    vi.clearAllMocks();
+    // Switching to the null output closes any transport worker the test opened
+    for (const instance of instances.splice(0)) instance.switchLogOutput('null');
+    vi.restoreAllMocks();
   });
 
   describe('logger instance', () => {
@@ -70,6 +79,22 @@ describe('Logger', () => {
       const contextLogger = childLogger.withContext({ additional: 'data' });
       expect(contextLogger).toBeDefined();
     });
+
+    it('should include the module name and context in child output', () => {
+      const outputs: string[] = [];
+      vi.spyOn(process.stdout, 'write').mockImplementation((chunk) => {
+        outputs.push(String(chunk));
+        return true;
+      });
+      const instance = createTestLogger({ NODE_ENV: 'production' });
+
+      instance.createChildLogger('billing', { tenant: 'acme' }).info('child output');
+
+      const output = outputs.join('');
+      expect(output).toContain('"module":"billing"');
+      expect(output).toContain('"tenant":"acme"');
+      expect(output).toContain('child output');
+    });
   });
 
   describe('withTraceContext', () => {
@@ -99,92 +124,66 @@ describe('Logger', () => {
       expect(() => logger.info('test')).not.toThrow();
     });
 
-    it('should respect LOG_LEVEL environment variable', () => {
-      // Set LOG_LEVEL and verify logger still functions
-      const originalLogLevel = process.env.LOG_LEVEL;
-      process.env.LOG_LEVEL = 'error';
-
-      // Logger should still work with different log level
-      expect(() => logger.error('test error')).not.toThrow();
-      expect(() => logger.info('test info')).not.toThrow();
-
-      // Restore original
-      if (originalLogLevel !== undefined) {
-        process.env.LOG_LEVEL = originalLogLevel;
-      } else {
-        delete process.env.LOG_LEVEL;
-      }
+    it('should respect an explicit LOG_LEVEL', () => {
+      const { logger: errorLogger } = createTestLogger({ NODE_ENV: 'test', LOG_LEVEL: 'error' });
+      expect(errorLogger.level).toBe('error');
+      expect(() => errorLogger.error('test error')).not.toThrow();
+      expect(() => errorLogger.info('test info')).not.toThrow();
     });
 
-    it('should use development configuration when NODE_ENV is development', async () => {
-      process.env.NODE_ENV = 'development';
-      vi.resetModules();
-      const { logger: devLogger } = await import('../src/logger.js');
+    it('should use development configuration when NODE_ENV is development', () => {
+      const { logger: devLogger } = createTestLogger({ NODE_ENV: 'development' });
       expect(devLogger).toBeDefined();
       expect(() => devLogger.info('dev test')).not.toThrow();
       // Development config should have pretty-print transport
       expect(() => devLogger.debug('debug test')).not.toThrow();
     });
 
-    it('should use production configuration when NODE_ENV is production', async () => {
-      process.env.NODE_ENV = 'production';
+    it('should use production configuration when NODE_ENV is production', () => {
       process.env.CORRELATION_ID = 'test-correlation';
-      vi.resetModules();
-      const { logger: prodLogger } = await import('../src/logger.js');
-      expect(prodLogger).toBeDefined();
-      expect(() => prodLogger.info('prod test')).not.toThrow();
-      // Production should support correlation ID mixin
-      expect(() => prodLogger.error(new Error('test'), 'error')).not.toThrow();
+      vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+      try {
+        const { logger: prodLogger } = createTestLogger({ NODE_ENV: 'production' });
+        expect(prodLogger).toBeDefined();
+        expect(() => prodLogger.info('prod test')).not.toThrow();
+        // Production should support correlation ID mixin
+        expect(() => prodLogger.error(new Error('test'), 'error')).not.toThrow();
+      } finally {
+        delete process.env.CORRELATION_ID;
+      }
     });
 
-    it('should default to development when NODE_ENV is not set', async () => {
-      delete process.env.NODE_ENV;
-      vi.resetModules();
-      const { logger: defaultLogger } = await import('../src/logger.js');
+    it('should default to development when NODE_ENV is not set', () => {
+      const { logger: defaultLogger } = createTestLogger({});
       expect(defaultLogger).toBeDefined();
+      expect(defaultLogger.level).toBe('debug');
       expect(() => defaultLogger.debug('default test')).not.toThrow();
     });
 
-    it('should handle startup logging in non-test environments', async () => {
-      process.env.NODE_ENV = 'production';
-      vi.resetModules();
-
-      // Production mode will log startup message
-      const { logger: prodLogger } = await import('../src/logger.js');
-
-      // Verify logger was initialized without errors
-      expect(prodLogger).toBeDefined();
+    it('should use info level in production by default', () => {
+      const { logger: prodLogger } = createTestLogger({ NODE_ENV: 'production' });
       expect(prodLogger.level).toBe('info');
     });
 
-    it('should use info level in production by default', async () => {
-      process.env.NODE_ENV = 'production';
-      delete process.env.LOG_LEVEL;
-      vi.resetModules();
-
-      const { logger: prodLogger } = await import('../src/logger.js');
-      expect(prodLogger).toBeDefined();
-      expect(prodLogger.level).toBe('info');
-    });
-
-    it('should use debug level in non-production by default', async () => {
-      process.env.NODE_ENV = 'development';
-      delete process.env.LOG_LEVEL;
-      vi.resetModules();
-
-      const { logger: devLogger } = await import('../src/logger.js');
-      expect(devLogger).toBeDefined();
+    it('should use debug level in non-production by default', () => {
+      const { logger: devLogger } = createTestLogger({ NODE_ENV: 'development' });
       expect(devLogger.level).toBe('debug');
     });
 
-    it('should use silent level in test when LOG_LEVEL not set', async () => {
-      process.env.NODE_ENV = 'test';
-      delete process.env.LOG_LEVEL;
-      vi.resetModules();
-
-      const { logger: testLogger } = await import('../src/logger.js');
-      expect(testLogger).toBeDefined();
+    it('should use silent level in test when LOG_LEVEL not set', () => {
+      const { logger: testLogger } = createTestLogger({ NODE_ENV: 'test' });
       expect(testLogger.level).toBe('silent');
+    });
+
+    it('should not log anything on creation', () => {
+      const stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+      const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+
+      createTestLogger({ NODE_ENV: 'production' });
+      createTestLogger({ NODE_ENV: 'production', LOG_OUTPUT: 'stderr' });
+
+      expect(stdoutSpy).not.toHaveBeenCalled();
+      expect(stderrSpy).not.toHaveBeenCalled();
     });
   });
 
@@ -228,16 +227,32 @@ describe('Logger', () => {
   });
 
   describe('logger configuration', () => {
-    it('should have required methods for redaction', () => {
-      // Verify the logger is configured but don't test the actual redaction
-      // as that would require inspecting the output
-      const testData = {
-        password: 'secret',
-        token: 'bearer-token',
-        api_key: 'key123',
-        safe: 'visible',
-      };
-      expect(() => logger.info(testData, 'test redaction')).not.toThrow();
+    /**
+     * Capture everything a production logger writes to stdout
+     * @returns {{ prodLogger: Logger, output: () => string }} The logger and its captured output
+     */
+    const captureProductionOutput = (): { prodLogger: Logger; output: () => string } => {
+      const outputs: string[] = [];
+      vi.spyOn(process.stdout, 'write').mockImplementation((chunk) => {
+        outputs.push(String(chunk));
+        return true;
+      });
+      const { logger: prodLogger } = createTestLogger({ NODE_ENV: 'production' });
+      return { prodLogger, output: () => outputs.join('') };
+    };
+
+    it('should redact top-level sensitive fields', () => {
+      const { prodLogger, output } = captureProductionOutput();
+
+      prodLogger.info(
+        { password: 'secret', token: 'bearer-token', api_key: 'key123', safe: 'visible' },
+        'test redaction',
+      );
+
+      expect(output()).toContain('"safe":"visible"');
+      expect(output()).not.toContain('secret');
+      expect(output()).not.toContain('bearer-token');
+      expect(output()).not.toContain('key123');
     });
 
     it('should handle various data types in context', () => {
@@ -248,48 +263,60 @@ describe('Logger', () => {
       expect(() => logger.info({ nested: { deep: 'value' } }, 'nested context')).not.toThrow();
     });
 
-    it('should handle nested sensitive data redaction', () => {
-      const nestedData = {
-        user: {
-          password: 'secret',
-          token: 'bearer-token',
-        },
-        safe: 'visible',
-      };
-      expect(() => logger.info(nestedData, 'nested redaction')).not.toThrow();
+    it('should redact nested sensitive fields', () => {
+      const { prodLogger, output } = captureProductionOutput();
+
+      prodLogger.info(
+        { user: { password: 'secret', token: 'bearer-token' }, safe: 'visible' },
+        'nested redaction',
+      );
+
+      expect(output()).toContain('"safe":"visible"');
+      expect(output()).not.toContain('secret');
+      expect(output()).not.toContain('bearer-token');
     });
 
-    it('should configure production logger with mixin and formatters', async () => {
-      process.env.NODE_ENV = 'production';
+    it('should configure production logger with mixin and formatters', () => {
       process.env.CORRELATION_ID = 'test-123';
-      vi.resetModules();
+      try {
+        const { prodLogger, output } = captureProductionOutput();
 
-      const { logger: prodLogger } = await import('../src/logger.js');
+        prodLogger.info({ action: 'test' }, 'production log');
 
-      // Verify production logger works with correlation ID
-      expect(() => prodLogger.info({ action: 'test' }, 'production log')).not.toThrow();
-      expect(() => prodLogger.error(new Error('test error'), 'error log')).not.toThrow();
+        expect(output()).toContain('"correlationId":"test-123"');
+        expect(output()).toContain('"level":"info"');
+        expect(() => prodLogger.error(new Error('test error'), 'error log')).not.toThrow();
+      } finally {
+        delete process.env.CORRELATION_ID;
+      }
     });
 
-    it('should handle all redacted field patterns', () => {
-      const sensitiveData = {
-        authorization: 'Bearer token',
-        apiKey: 'key-123',
-        nested: {
-          password: 'secret',
-          token: 'token-456',
-          secret: 'hidden',
-          api_key: 'api-789',
+    it('should redact all configured field patterns', () => {
+      const { prodLogger, output } = captureProductionOutput();
+
+      prodLogger.info(
+        {
+          authorization: 'Bearer token',
+          apiKey: 'key-123',
+          nested: { password: 'secret', token: 'token-456', secret: 'hidden', api_key: 'api-789' },
         },
-      };
-      expect(() => logger.info(sensitiveData, 'all patterns')).not.toThrow();
+        'all patterns',
+      );
+
+      for (const leaked of [
+        'Bearer token',
+        'key-123',
+        'secret',
+        'token-456',
+        'hidden',
+        'api-789',
+      ]) {
+        expect(output()).not.toContain(leaked);
+      }
     });
 
-    it('should handle logger in unknown environment', async () => {
-      process.env.NODE_ENV = 'staging';
-      vi.resetModules();
-
-      const { logger: stagingLogger } = await import('../src/logger.js');
+    it('should handle logger in unknown environment', () => {
+      const { logger: stagingLogger } = createTestLogger({ NODE_ENV: 'staging' });
       expect(stagingLogger).toBeDefined();
       // Should default to production-like config
       expect(() => stagingLogger.info('staging test')).not.toThrow();
@@ -297,24 +324,16 @@ describe('Logger', () => {
   });
 
   describe('production configuration specifics', () => {
-    it('should apply formatters in production', async () => {
-      process.env.NODE_ENV = 'production';
-      vi.resetModules();
-
+    it('should apply formatters in production', () => {
       // Capture output to verify formatting
       const outputs: string[] = [];
-      const originalWrite = process.stdout.write.bind(process.stdout);
-      process.stdout.write = (chunk: string | Uint8Array): boolean => {
-        if (typeof chunk === 'string') {
-          outputs.push(chunk);
-        }
+      vi.spyOn(process.stdout, 'write').mockImplementation((chunk) => {
+        outputs.push(String(chunk));
         return true;
-      };
+      });
 
-      const { logger: prodLogger } = await import('../src/logger.js');
+      const { logger: prodLogger } = createTestLogger({ NODE_ENV: 'production' });
       prodLogger.info({ test: 'data' }, 'formatted message');
-
-      process.stdout.write = originalWrite;
 
       // Should have written JSON output
       expect(outputs.length).toBeGreaterThan(0);
@@ -322,106 +341,56 @@ describe('Logger', () => {
       expect(output).toContain('formatted message');
     });
 
-    it('should not crash without CORRELATION_ID in production', async () => {
-      process.env.NODE_ENV = 'production';
+    it('should not crash without CORRELATION_ID in production', () => {
       delete process.env.CORRELATION_ID;
-      vi.resetModules();
 
-      const { logger: prodLogger } = await import('../src/logger.js');
+      const { logger: prodLogger } = createTestLogger({ NODE_ENV: 'production' });
       expect(() => prodLogger.info('no correlation id')).not.toThrow();
     });
   });
 
   describe('switchLogOutput', () => {
-    it('should switch logger output to stdout', async () => {
-      const { switchLogOutput, getLoggerOutputMode } = await import('../src/logger.js');
-
+    it('should switch logger output to stdout', () => {
       switchLogOutput('stdout');
       expect(getLoggerOutputMode()).toBe('stdout');
     });
 
-    it('should switch logger output to stderr', async () => {
-      const { switchLogOutput, getLoggerOutputMode } = await import('../src/logger.js');
-
+    it('should switch logger output to stderr', () => {
       switchLogOutput('stderr');
       expect(getLoggerOutputMode()).toBe('stderr');
     });
 
-    it('should switch logger output to null', async () => {
-      const { switchLogOutput, getLoggerOutputMode } = await import('../src/logger.js');
-
+    it('should switch logger output to null', () => {
       switchLogOutput('null');
       expect(getLoggerOutputMode()).toBe('null');
     });
 
-    it('should handle cleanup errors when switching from file output', async () => {
-      // Mock console.warn to capture cleanup warnings
-      // eslint-disable-next-line no-console
-      const originalWarn = console.warn;
-      const warnings: unknown[] = [];
-      // eslint-disable-next-line no-console
-      console.warn = (...args: unknown[]) => {
-        warnings.push(args);
-      };
+    it('should switch away from file output again', () => {
+      const instance = createTestLogger({ NODE_ENV: 'test', LOG_FILE_PATH: '/tmp/test.log' });
 
-      try {
-        vi.resetModules();
-        const { switchLogOutput, getLoggerOutputMode } = await import('../src/logger.js');
+      // Under NODE_ENV=test the file mode is recorded without starting a transport
+      instance.switchLogOutput('file');
+      expect(instance.getLoggerOutputMode()).toBe('file');
 
-        // First switch to file output (if supported)
-        try {
-          process.env.LOG_FILE_PATH = '/tmp/test.log';
-          switchLogOutput('file');
-        } catch {
-          // File output might not be available in test environment, skip this test
-          // eslint-disable-next-line no-console
-          console.warn = originalWarn;
-          return;
-        }
-
-        // Now switch away from file to trigger cleanup
-        switchLogOutput('stdout');
-        expect(getLoggerOutputMode()).toBe('stdout');
-
-        // The cleanup should have attempted to close the file stream
-        // Even if cleanup fails, the switch should succeed
-      } finally {
-        // eslint-disable-next-line no-console
-        console.warn = originalWarn;
-        delete process.env.LOG_FILE_PATH;
-      }
+      instance.switchLogOutput('stdout');
+      expect(instance.getLoggerOutputMode()).toBe('stdout');
     });
 
-    it('should create logger without destination when destination is null', async () => {
-      // Test the branch where destination is falsy in createLogger
-      vi.resetModules();
-      process.env.LOG_OUTPUT = 'stdout';
+    it('should create logger with stdout destination', () => {
+      const { logger: stdoutLogger } = createTestLogger({ NODE_ENV: 'test', LOG_OUTPUT: 'stdout' });
 
-      const { logger } = await import('../src/logger.js');
-
-      // Logger should still work even when created without explicit destination
-      expect(() => logger.info('test')).not.toThrow();
-      expect(logger).toBeDefined();
-      expect(logger.info).toBeDefined();
+      expect(() => stdoutLogger.info('test')).not.toThrow();
+      expect(stdoutLogger.info).toBeDefined();
     });
 
-    it('should create logger with stderr destination', async () => {
-      // Test the branch where destination is pino.destination(2) for stderr
-      vi.resetModules();
-      process.env.LOG_OUTPUT = 'stderr';
-      process.env.NODE_ENV = 'test';
+    it('should create logger with stderr destination', () => {
+      const instance = createTestLogger({ NODE_ENV: 'test', LOG_OUTPUT: 'stderr' });
 
-      const { logger } = await import('../src/logger.js');
-
-      // Logger should be created with stderr destination
-      expect(logger).toBeDefined();
-      expect(() => logger.info('test to stderr')).not.toThrow();
+      expect(instance.getLoggerOutputMode()).toBe('stderr');
+      expect(() => instance.logger.info('test to stderr')).not.toThrow();
     });
 
-    it('should handle switchLogOutput with various modes including null', async () => {
-      vi.resetModules();
-      const { switchLogOutput, getLoggerOutputMode } = await import('../src/logger.js');
-
+    it('should handle switchLogOutput with various modes including null', () => {
       // Test switching through different modes to cover all branches
       switchLogOutput('stdout');
       expect(getLoggerOutputMode()).toBe('stdout');
@@ -435,6 +404,17 @@ describe('Logger', () => {
       // Switch back to stdout
       switchLogOutput('stdout');
       expect(getLoggerOutputMode()).toBe('stdout');
+    });
+
+    it('should keep independent instances independent', () => {
+      const first = createTestLogger({ NODE_ENV: 'test', LOG_OUTPUT: 'stdout' });
+      const second = createTestLogger({ NODE_ENV: 'test', LOG_OUTPUT: 'stderr' });
+
+      first.switchLogOutput('null');
+
+      expect(first.getLoggerOutputMode()).toBe('null');
+      expect(second.getLoggerOutputMode()).toBe('stderr');
+      expect(getLoggerOutputMode()).not.toBe('null');
     });
   });
 });
