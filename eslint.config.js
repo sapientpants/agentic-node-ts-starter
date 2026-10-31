@@ -173,9 +173,9 @@ export default [
       'jsdoc/require-returns-description': 'warn',
     },
   },
-  // Allow barrel files for index.ts entry points and legitimate re-exports
+  // Allow barrel files for index.ts entry points only
   {
-    files: ['**/index.ts', '**/logger.ts'],
+    files: ['**/index.ts'],
     rules: {
       'no-barrel-files/no-barrel-files': 'off',
     },

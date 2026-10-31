@@ -323,16 +323,6 @@ if (hasConfig('DEBUG')) {
 }
 ```
 
-### `getConfigKeys()`
-
-Get all configuration keys (useful for debugging):
-
-```typescript
-import { getConfigKeys } from './config.js';
-
-console.log('Loaded configuration keys:', getConfigKeys());
-```
-
 ## Best Practices
 
 ### 1. **Fail Fast**
