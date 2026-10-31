@@ -3,11 +3,20 @@
  * Provides security validation for file paths and network hosts.
  */
 
-import { normalize, isAbsolute } from 'node:path';
+import path from 'node:path';
 import { isIP } from 'node:net';
+import { fallbackLogger } from './logger-fallback.js';
 
 // Path validation constants
 const MAX_PATH_LENGTH = 4096; // Maximum allowed path length
+
+// System directories that must never receive log files, per platform.
+// Each entry is compared as a whole directory, so `/etcetera/app.log` is not
+// mistaken for a path under `/etc`.
+const RESTRICTED_DIRECTORIES: Record<'posix' | 'win32', readonly string[]> = {
+  posix: ['/etc', '/usr', '/bin', '/sbin', '/boot', '/dev', '/proc', '/sys', '/root'],
+  win32: [String.raw`C:\Windows`, String.raw`C:\Program Files`],
+};
 
 // Network validation constants
 const MAX_HOSTNAME_LENGTH = 255; // Maximum hostname length per RFC 1123
@@ -21,59 +30,98 @@ const MAX_FILE_MODE = 0o777; // Maximum allowed file permissions
 const OTHER_USERS_PERMISSION_MASK = 0o077; // Mask for checking other users/groups permissions
 
 /**
- * Validates a log file path to prevent security issues
- * @param {string} path - The file path to validate
- * @throws {Error} if the path is invalid or potentially dangerous
+ * Options that pin down the environment a log path is validated against.
+ * They default to the current process and exist so that platform-specific
+ * behavior can be exercised deterministically.
  */
-export function validateLogPath(path: string): void {
-  if (!path || typeof path !== 'string') {
-    throw new Error('Log file path must be a non-empty string');
-  }
+export interface LogPathValidationOptions {
+  /** Platform whose path rules and restricted directories apply (default: `process.platform`) */
+  platform?: NodeJS.Platform;
+  /** Working directory relative paths are resolved against (default: `process.cwd()`) */
+  cwd?: string;
+}
 
-  // Normalize the path to resolve . and .. segments
-  const normalizedPath = normalize(path);
+/**
+ * Whether `candidate` is `directory` itself or located somewhere below it
+ * @param {string} candidate - An absolute, normalized path
+ * @param {string} directory - An absolute, normalized directory path
+ * @param {string} separator - The platform path separator
+ * @returns {boolean} true when the candidate is inside the directory
+ */
+const isWithinDirectory = (candidate: string, directory: string, separator: string): boolean =>
+  candidate === directory || candidate.startsWith(directory + separator);
 
-  // Check for path traversal attempts
-  if (path.includes('..')) {
+/**
+ * Throws if any segment of the raw path is a parent directory reference.
+ * Only whole `..` segments count, so file names such as `app..log` are fine.
+ * @param {string} logPath - The raw, unresolved path
+ * @throws {Error} if the path contains a `..` segment
+ */
+const assertNoParentReferences = (logPath: string): void => {
+  const segments = logPath.split(/[/\\]/);
+  if (segments.includes('..')) {
     throw new Error('Log file path cannot contain parent directory references (..)');
   }
+};
 
-  // Define restricted system directories
-  const restrictedPaths = [
-    '/etc',
-    '/usr',
-    '/bin',
-    '/sbin',
-    '/boot',
-    '/dev',
-    '/proc',
-    '/sys',
-    '/root',
-    String.raw`C:\Windows`,
-    String.raw`C:\Program Files`,
-  ];
-
-  // Check if path starts with any restricted directory
-  const absolutePath = isAbsolute(normalizedPath)
-    ? normalizedPath
-    : normalize(`/${normalizedPath}`);
-  for (const restricted of restrictedPaths) {
-    // Handle both Unix and Windows paths
-    const normalizedRestricted = normalize(restricted);
-    if (absolutePath.startsWith(normalizedRestricted)) {
+/**
+ * Throws if the resolved path lies inside a restricted system directory.
+ * Anything inside the working directory is allowed: the operator chose to run
+ * the application there (e.g. a container whose working directory is `/usr/src/app`).
+ * @param {string} resolvedPath - The absolute path to check
+ * @param {string} cwd - The working directory the path was resolved against
+ * @param {NodeJS.Platform} platform - The platform whose rules apply
+ * @throws {Error} if the path is inside a restricted directory
+ */
+const assertNotRestricted = (
+  resolvedPath: string,
+  cwd: string,
+  platform: NodeJS.Platform,
+): void => {
+  const isWindows = platform === 'win32';
+  const pathApi = isWindows ? path.win32 : path.posix;
+  // Windows file systems are case-insensitive, so compare in lower case there
+  const canonical = isWindows ? resolvedPath.toLowerCase() : resolvedPath;
+  const canonicalCwd = isWindows ? pathApi.resolve(cwd).toLowerCase() : pathApi.resolve(cwd);
+  if (isWithinDirectory(canonical, canonicalCwd, pathApi.sep)) {
+    return;
+  }
+  for (const restricted of RESTRICTED_DIRECTORIES[isWindows ? 'win32' : 'posix']) {
+    const canonicalRestricted = isWindows ? restricted.toLowerCase() : restricted;
+    if (isWithinDirectory(canonical, canonicalRestricted, pathApi.sep)) {
       throw new Error(`Log file path cannot be in restricted directory: ${restricted}`);
     }
   }
+};
 
-  // Check for null bytes (security issue)
-  if (path.includes('\0')) {
+/**
+ * Validates a log file path to prevent security issues.
+ * Relative paths are resolved against the working directory before the
+ * restricted-directory check, so `etc/app.log` is a file below the working
+ * directory rather than `/etc/app.log`.
+ * @param {string} logPath - The file path to validate
+ * @param {LogPathValidationOptions} [options] - Platform and working directory overrides
+ * @throws {Error} if the path is invalid or potentially dangerous
+ */
+export function validateLogPath(logPath: string, options: LogPathValidationOptions = {}): void {
+  if (!logPath || typeof logPath !== 'string') {
+    throw new Error('Log file path must be a non-empty string');
+  }
+
+  // Cheap checks on the raw string first (security issue / buffer overflow guard)
+  if (logPath.includes('\0')) {
     throw new Error('Log file path cannot contain null bytes');
   }
-
-  // Check path length (prevent buffer overflow attacks)
-  if (path.length > MAX_PATH_LENGTH) {
+  if (logPath.length > MAX_PATH_LENGTH) {
     throw new Error(`Log file path is too long (max ${MAX_PATH_LENGTH} characters)`);
   }
+
+  assertNoParentReferences(logPath);
+
+  const platform = options.platform ?? process.platform;
+  const cwd = options.cwd ?? process.cwd();
+  const pathApi = platform === 'win32' ? path.win32 : path.posix;
+  assertNotRestricted(pathApi.resolve(cwd, logPath), cwd, platform);
 }
 
 /**
@@ -108,8 +156,8 @@ export function validateSyslogHost(host: string): void {
   // Check for localhost variants (might want to restrict in production)
   const localhostVariants = ['localhost', '127.0.0.1', '::1', '0.0.0.0'];
   if (process.env.NODE_ENV === 'production' && localhostVariants.includes(host.toLowerCase())) {
-    // Log warning but don't throw - this is a soft restriction
-    process.stderr.write('Warning: Using localhost for syslog in production is not recommended\n');
+    // Warn but don't throw - this is a soft restriction
+    fallbackLogger.warn({ host }, 'Using localhost for syslog in production is not recommended');
   }
 }
 
@@ -133,8 +181,9 @@ export function validateSyslogPort(port: number | undefined): void {
 
   // Warn about privileged ports
   if (port < PRIVILEGED_PORT_THRESHOLD && process.env.NODE_ENV === 'production') {
-    process.stderr.write(
-      `Warning: Using privileged port ${port} for syslog may require elevated permissions\n`,
+    fallbackLogger.warn(
+      { port },
+      `Using privileged port ${port} for syslog may require elevated permissions`,
     );
   }
 }
@@ -153,15 +202,19 @@ export function validateFileMode(mode: number | string | undefined): number {
   const numericMode = typeof mode === 'string' ? Number.parseInt(mode, 8) : mode;
 
   if (Number.isNaN(numericMode) || numericMode < 0 || numericMode > MAX_FILE_MODE) {
-    process.stderr.write(
-      `Invalid file mode ${mode}, using default ${DEFAULT_FILE_MODE.toString(8)}\n`,
+    fallbackLogger.warn(
+      { mode },
+      `Invalid file mode ${mode}, using default ${DEFAULT_FILE_MODE.toString(8)}`,
     );
     return DEFAULT_FILE_MODE;
   }
 
   // Warn if permissions are too open
   if ((numericMode & OTHER_USERS_PERMISSION_MASK) !== 0) {
-    process.stderr.write('Warning: Log file permissions allow access to other users/groups\n');
+    fallbackLogger.warn(
+      { mode: numericMode.toString(8) },
+      'Log file permissions allow access to other users/groups',
+    );
   }
 
   return numericMode;

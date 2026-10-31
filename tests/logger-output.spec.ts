@@ -218,11 +218,12 @@ describe('Logger Output Configuration', () => {
     });
 
     it('should fall back to non-rotated file output when LOG_FILE_MAX_SIZE is invalid', () => {
-      const stderrOutput = captureStream('stderr');
+      // The warning goes through the fallback logger (pino JSON on stdout)
+      const stdoutOutput = captureStream('stdout');
 
       const { logger, getLoggerOutputMode } = createFileLogger({ LOG_FILE_MAX_SIZE: 'not-a-size' });
 
-      expect(stderrOutput()).toContain('Invalid LOG_FILE_MAX_SIZE "not-a-size"');
+      expect(stdoutOutput()).toContain('Invalid LOG_FILE_MAX_SIZE \\"not-a-size\\"');
       expect(getLoggerOutputMode()).toBe('file');
       expect(logger).toBeDefined();
     });
@@ -532,12 +533,12 @@ describe('Logger Output Configuration', () => {
     });
 
     it('should validate file permissions and use secure defaults', () => {
-      const stderrOutput = captureStream('stderr');
+      const stdoutOutput = captureStream('stdout');
 
       createFileLogger({ LOG_FILE_PERMISSIONS: '644' }); // Should warn about being too open
 
-      // Should warn about overly permissive permissions via process.stderr.write
-      expect(stderrOutput()).toContain('allow access to other users');
+      // Should warn about overly permissive permissions through the fallback logger
+      expect(stdoutOutput()).toContain('allow access to other users');
     });
 
     it('should handle directory creation failure gracefully', () => {

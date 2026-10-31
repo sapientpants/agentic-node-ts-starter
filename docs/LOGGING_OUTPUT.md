@@ -155,7 +155,7 @@ LOG_FILE_PERMISSIONS=640         # Unix file permissions (octal)
 trailing `B` and whitespace before the unit are optional, and decimals are allowed
 (`10M`, `10MB`, `100 KB`, `1.5g`). The value is converted to a byte count before it is
 passed to pino-roll, which only understands single-letter units. An invalid value
-disables rotation and prints a warning to stderr.
+disables rotation and emits a warning through the fallback logger (JSON on stdout).
 
 #### Security Features
 
@@ -634,13 +634,22 @@ logger.info({
 
 **Path Validation** (implemented in `src/logger-validation.ts`):
 
-| Validation          | Description                        | Example Blocked       |
-| ------------------- | ---------------------------------- | --------------------- |
-| Directory Traversal | Blocks `../` patterns              | `../../../etc/passwd` |
-| System Directories  | Prevents writing to system paths   | `/etc/`, `/usr/bin/`  |
-| Null Bytes          | Rejects paths with null characters | `file\0.log`          |
-| Path Length         | Limits to 4096 characters          | Extremely long paths  |
-| Special Characters  | Blocks control characters          | Paths with `\n`, `\r` |
+| Validation          | Description                                      | Example Blocked       |
+| ------------------- | ------------------------------------------------ | --------------------- |
+| Directory Traversal | Blocks `..` path segments (`app..log` is fine)   | `../../../etc/passwd` |
+| System Directories  | Rejects absolute paths inside system directories | `/etc/app.log`        |
+| Null Bytes          | Rejects paths with null characters               | `file\0.log`          |
+| Path Length         | Limits to 4096 characters                        | Extremely long paths  |
+
+Relative paths are resolved against the working directory, so `etc/app.log` is
+`./etc/app.log` and not `/etc/app.log`. Only whole directories count as restricted
+(`/etcetera/app.log` is allowed), and anything inside the working directory is always
+allowed, even when the application runs from e.g. `/usr/src/app` in a container. On
+Windows the restricted directories are `C:\Windows` and `C:\Program Files`.
+
+All validation warnings (privileged ports, localhost in production, permissive or
+invalid file modes, invalid rotation sizes) go through the fallback logger in
+`src/logger-fallback.ts`, which writes structured JSON to stdout.
 
 **File Permissions**:
 

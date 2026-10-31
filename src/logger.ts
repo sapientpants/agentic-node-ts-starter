@@ -15,6 +15,7 @@ import pino, { type Logger as PinoLogger, type LoggerOptions, type DestinationSt
 import { chmodSync, existsSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { config, type Config } from './config.js';
+import { fallbackLogger } from './logger-fallback.js';
 import {
   validateLogPath,
   validateSyslogHost,
@@ -31,21 +32,6 @@ const DEFAULT_LOG_FILE_PATH = './logs/app.log';
 const DEFAULT_SYSLOG_HOST = 'localhost';
 const DEFAULT_SYSLOG_PORT = 514;
 const FALLBACK_TO_STDOUT_MESSAGE = 'Falling back to stdout';
-
-/**
- * Fallback logger for initialization errors
- * Used when the main logger configuration fails. It writes through
- * `process.stdout.write` looked up at call time, so output is never lost to a
- * stream that was replaced (e.g. by a test spy) after this module was loaded.
- */
-const fallbackLogger = pino(
-  { level: 'warn', timestamp: pino.stdTimeFunctions.isoTime },
-  {
-    write: (chunk: string): void => {
-      process.stdout.write(chunk);
-    },
-  },
-);
 
 /**
  * The subset of the validated configuration that drives the logger
@@ -127,8 +113,9 @@ const getFileTransportConfig = (loggerConfig: LoggerConfig, fileMode: number) =>
   const maxSize = parseSizeToBytes(rawMaxSize);
 
   if (rawMaxSize !== undefined && rawMaxSize !== '' && maxSize === undefined) {
-    process.stderr.write(
-      `Invalid LOG_FILE_MAX_SIZE "${rawMaxSize}" (expected e.g. 10M, 100KB, 1.5G), disabling log rotation\n`,
+    fallbackLogger.warn(
+      { maxSize: rawMaxSize },
+      `Invalid LOG_FILE_MAX_SIZE "${rawMaxSize}" (expected e.g. 10M, 100KB, 1.5G), disabling log rotation`,
     );
   }
 
