@@ -42,6 +42,9 @@ describe('Logger Validation', () => {
       expect(() => validateLogPath('/var/log/../../../etc/passwd')).toThrow(
         'cannot contain parent directory references',
       );
+      expect(() => validateLogPath('logs\\..\\app.log')).toThrow(
+        'cannot contain parent directory references',
+      );
     });
 
     it('should reject paths in restricted directories', () => {
@@ -51,12 +54,40 @@ describe('Logger Validation', () => {
       );
       expect(() => validateLogPath('/boot/app.log')).toThrow('cannot be in restricted directory');
       expect(() => validateLogPath('/root/app.log')).toThrow('cannot be in restricted directory');
-      // Windows path format test - only test if on Windows
-      if (process.platform === 'win32') {
-        expect(() => validateLogPath('C:\\Windows\\System32\\app.log')).toThrow(
-          'cannot be in restricted directory',
-        );
-      }
+      expect(() => validateLogPath('/etc')).toThrow('cannot be in restricted directory');
+    });
+
+    it('should only treat whole directories as restricted', () => {
+      expect(() => validateLogPath('/etcetera/logs/app.log')).not.toThrow();
+      expect(() => validateLogPath('/binaries/app.log')).not.toThrow();
+      expect(() => validateLogPath('/rooted/app.log')).not.toThrow();
+    });
+
+    it('should allow paths inside the working directory even under a restricted root', () => {
+      expect(() => validateLogPath('logs/app.log', { cwd: '/usr/src/app' })).not.toThrow();
+      expect(() =>
+        validateLogPath('/usr/src/app/logs/app.log', { cwd: '/usr/src/app' }),
+      ).not.toThrow();
+      expect(() => validateLogPath('/usr/src/other/app.log', { cwd: '/usr/src/app' })).toThrow(
+        'cannot be in restricted directory',
+      );
+    });
+
+    it('should reject Windows system directories when validating for win32', () => {
+      const win32 = { platform: 'win32' as const, cwd: String.raw`C:\app` };
+      expect(() => validateLogPath(String.raw`C:\Windows\System32\app.log`, win32)).toThrow(
+        'cannot be in restricted directory',
+      );
+      expect(() => validateLogPath(String.raw`c:\windows\app.log`, win32)).toThrow(
+        'cannot be in restricted directory',
+      );
+      expect(() => validateLogPath(String.raw`C:\Program Files\App\app.log`, win32)).toThrow(
+        'cannot be in restricted directory',
+      );
+      expect(() => validateLogPath(String.raw`C:\WindowsLogs\app.log`, win32)).not.toThrow();
+      expect(() => validateLogPath(String.raw`C:\Users\me\app.log`, win32)).not.toThrow();
+      expect(() => validateLogPath(String.raw`logs\app.log`, win32)).not.toThrow();
+      expect(() => validateLogPath('/etc/app.log', win32)).not.toThrow();
     });
 
     it('should reject paths with null bytes', () => {
@@ -104,15 +135,18 @@ describe('Logger Validation', () => {
 
     it('should warn about localhost in production', () => {
       const originalEnv = process.env.NODE_ENV;
+      const stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
       const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
       process.env.NODE_ENV = 'production';
 
       validateSyslogHost('localhost');
-      expect(stderrSpy).toHaveBeenCalledWith(
+      expect(stdoutSpy).toHaveBeenCalledWith(
         expect.stringContaining('localhost for syslog in production'),
       );
+      expect(stderrSpy).not.toHaveBeenCalled();
 
       process.env.NODE_ENV = originalEnv;
+      stdoutSpy.mockRestore();
       stderrSpy.mockRestore();
     });
 
@@ -152,13 +186,16 @@ describe('Logger Validation', () => {
 
     it('should warn about privileged ports in production', () => {
       const originalEnv = process.env.NODE_ENV;
+      const stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
       const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
       process.env.NODE_ENV = 'production';
 
       validateSyslogPort(80);
-      expect(stderrSpy).toHaveBeenCalledWith(expect.stringContaining('privileged port'));
+      expect(stdoutSpy).toHaveBeenCalledWith(expect.stringContaining('privileged port'));
+      expect(stderrSpy).not.toHaveBeenCalled();
 
       process.env.NODE_ENV = originalEnv;
+      stdoutSpy.mockRestore();
       stderrSpy.mockRestore();
     });
   });
@@ -176,20 +213,35 @@ describe('Logger Validation', () => {
       expect(validateFileMode(undefined)).toBe(0o640);
     });
 
-    it('should warn about overly permissive modes', () => {
+    it('should warn about overly permissive modes through the fallback logger', () => {
+      const stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
       const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
 
       validateFileMode(0o666);
-      expect(stderrSpy).toHaveBeenCalledWith(
+      expect(stdoutSpy).toHaveBeenCalledWith(
         expect.stringContaining('allow access to other users'),
       );
 
-      stderrSpy.mockClear();
+      stdoutSpy.mockClear();
       validateFileMode(0o777);
-      expect(stderrSpy).toHaveBeenCalledWith(
+      expect(stdoutSpy).toHaveBeenCalledWith(
         expect.stringContaining('allow access to other users'),
       );
+      expect(stderrSpy).not.toHaveBeenCalled();
 
+      stdoutSpy.mockRestore();
+      stderrSpy.mockRestore();
+    });
+
+    it('should warn about invalid modes through the fallback logger', () => {
+      const stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+      const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+
+      expect(validateFileMode('invalid')).toBe(0o640);
+      expect(stdoutSpy).toHaveBeenCalledWith(expect.stringContaining('Invalid file mode'));
+      expect(stderrSpy).not.toHaveBeenCalled();
+
+      stdoutSpy.mockRestore();
       stderrSpy.mockRestore();
     });
 
