@@ -1,5 +1,13 @@
 # agentic-node-ts-starter
 
+## 0.27.7
+
+### Patch Changes
+
+- [#207](https://github.com/sapientpants/agentic-node-ts-starter/pull/207) [`68a62f8`](https://github.com/sapientpants/agentic-node-ts-starter/commit/68a62f88bcfb9fd7215aa45e00e54eb06accfd2f) - Fix `switchLogOutput` so that it reaches child loggers, closes the previous transport, and reports the effective output mode.
+
+  The root logger now writes through a single delegating stream, so the exported `logger` and every child created from it (including the `config` module logger created at import time) follow a runtime switch. The previous file, syslog, or pretty-print transport worker is closed once the new destination is active. `switchLogOutput` throws on an unknown mode or invalid configuration and keeps the current destination; at startup an invalid `LOG_OUTPUT` still falls back to stdout, and `getLoggerOutputMode()` now returns the destination actually in use. Dead `currentLoggerInstance` / `currentFileStream` state is removed.
+
 ## 0.27.6
 
 ### Patch Changes
