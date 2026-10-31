@@ -271,6 +271,16 @@ describe('Debug Utils', () => {
       const obj = { name: 'test' };
       expect(() => inspect(obj)).not.toThrow();
     });
+
+    it('should tolerate circular references', () => {
+      const obj: { self?: unknown } = {};
+      obj.self = obj;
+      expect(() => inspect(obj, 'circular')).not.toThrow();
+    });
+
+    it('should tolerate BigInt values', () => {
+      expect(() => inspect({ big: 1n }, 'bigint')).not.toThrow();
+    });
   });
 
   describe('assert', () => {

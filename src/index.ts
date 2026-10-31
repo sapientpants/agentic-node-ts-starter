@@ -39,13 +39,8 @@ export function add(a: number, b: number): number {
 
 // Example of a zod-validated function input
 export const CreateUser = z.object({
-  id: z
-    .string()
-    .regex(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
-      'Invalid UUID format',
-    ),
-  email: z.string().regex(/^[\w.%+-]+@[\w.-]+\.[a-z]{2,}$/i, 'Invalid email format'),
+  id: z.uuid('Invalid UUID format'),
+  email: z.email('Invalid email format'),
   age: z.number().int().min(13),
 });
 export type CreateUser = z.infer<typeof CreateUser>;
