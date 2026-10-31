@@ -674,6 +674,10 @@ export const logger: Logger = defaultInstance.logger;
 /**
  * Switch logger output to a different destination at runtime.
  *
+ * Template API: the template itself never switches output, so this has no
+ * production caller here. It is kept as a documented feature for applications
+ * built on the template (see docs/LOGGING_OUTPUT.md).
+ *
  * Dynamically changes where log messages are written without restarting the application.
  * This is useful for debugging, testing, or changing log destinations based on runtime conditions.
  *
@@ -682,6 +686,7 @@ export const logger: Logger = defaultInstance.logger;
  * transport (file, syslog, pretty-printer) is closed once the new one is active.
  * If the new destination cannot be opened, an error is thrown and the current
  * destination stays active.
+ * @public
  * @param {string} outputMode - The destination to switch to. Valid values:
  *   - `'stdout'` - Standard output (console)
  *   - `'stderr'` - Standard error stream
@@ -750,6 +755,9 @@ export const createChildLogger: (name: string, context?: LogContext) => Logger =
 /**
  * OpenTelemetry integration helper
  *
+ * Template API: kept as the documented bridge for applications that add
+ * tracing (see docs/OBSERVABILITY.md); the template itself has no caller.
+ *
  * This function provides a bridge for future OpenTelemetry integration.
  * Once OpenTelemetry is implemented, this will automatically extract
  * trace context from the active span.
@@ -761,6 +769,7 @@ export const createChildLogger: (name: string, context?: LogContext) => Logger =
  * const spanContext = span?.spanContext();
  * const tracedLogger = withTraceContext(logger, spanContext?.traceId, spanContext?.spanId);
  * ```
+ * @public
  * @param {Logger} log - The logger instance to enhance with trace context
  * @param {string | undefined} traceId - The trace ID from OpenTelemetry context
  * @param {string | undefined} spanId - The span ID from OpenTelemetry context
@@ -778,6 +787,3 @@ export const withTraceContext = (log: Logger, traceId?: string, spanId?: string)
     // - baggage: propagation.getBaggage(context.active())
   });
 };
-
-// Export Pino types for use in application
-export type { LoggerOptions } from 'pino';

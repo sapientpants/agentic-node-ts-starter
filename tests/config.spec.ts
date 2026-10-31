@@ -8,17 +8,48 @@
 
 import { describe, it, expect, vi } from 'vitest';
 import { z } from 'zod';
-import {
-  ConfigError,
-  config,
-  getConfig,
-  getConfigKeys,
-  hasConfig,
-  loadConfig,
-  __testExports,
-} from '../src/config.js';
+import { ConfigError, config, getConfig, hasConfig, loadConfig } from '../src/config.js';
 
-const { ConfigSchema, formatZodError, maskSensitiveValue } = __testExports;
+/**
+ * Format a Zod error the way loadConfig reports it: the module keeps its
+ * formatter private, so tests read the ConfigError message instead.
+ * @param {z.ZodError} error - The validation error to format
+ * @returns {string} The formatted report (without the header and tip lines)
+ */
+const formatZodError = (error: z.ZodError): string => {
+  const sections = new ConfigError(error).message.split('\n\n');
+  return sections.slice(1, -1).join('\n\n');
+};
+
+/**
+ * Run loadConfig on an invalid environment and return the error message
+ * @param {NodeJS.ProcessEnv} env - The environment to validate
+ * @returns {string} The ConfigError message
+ */
+const loadErrorMessage = (env: NodeJS.ProcessEnv): string => {
+  try {
+    loadConfig(env);
+  } catch (error) {
+    if (error instanceof ConfigError) return error.message;
+    throw error;
+  }
+  throw new Error('expected loadConfig to throw');
+};
+
+/**
+ * Report a single issue for `key` with the given raw input and return the
+ * "(received: ...)" fragment of the message, or '' when none is shown
+ * @param {string} key - The variable name of the issue
+ * @param {unknown} input - The raw input attached to the issue
+ * @returns {string} The displayed received value
+ */
+const receivedValue = (key: string, input: unknown): string => {
+  const error = {
+    issues: [{ code: 'custom', path: [key], message: 'bad', input }],
+  } as unknown as z.ZodError;
+  const match = /\(received: "(.*)"\)/s.exec(formatZodError(error));
+  return match?.[1] ?? '';
+};
 
 describe('Configuration', () => {
   describe('successful configuration loading', () => {
@@ -232,17 +263,15 @@ describe('Configuration', () => {
 
       const formatted = formatZodError(mockError);
       expect(formatted).toBe('Invalid configuration');
+      expect(new ConfigError(mockError).message).toContain('.env.example');
     });
 
-    it('should show received values for real schema errors when parsing with reportInput', () => {
-      const result = ConfigSchema.safeParse(
-        { NODE_ENV: 'nope', TIMEOUT_MS: 'thirty', LOG_LEVEL: 'verbose' },
-        { reportInput: true },
-      );
-      expect(result.success).toBe(false);
-      if (result.success) return;
-
-      const formatted = formatZodError(result.error);
+    it('should show received values for real schema errors (loadConfig parses with reportInput)', () => {
+      const formatted = loadErrorMessage({
+        NODE_ENV: 'nope',
+        TIMEOUT_MS: 'thirty',
+        LOG_LEVEL: 'verbose',
+      });
       expect(formatted).toContain('NODE_ENV:');
       expect(formatted).toContain('(received: "nope")');
       expect(formatted).toContain('(received: "thirty")');
@@ -250,7 +279,8 @@ describe('Configuration', () => {
     });
 
     it('should omit received values when parsing without reportInput', () => {
-      const result = ConfigSchema.safeParse({ NODE_ENV: 'nope' });
+      const schema = z.object({ NODE_ENV: z.enum(['development', 'production']) });
+      const result = schema.safeParse({ NODE_ENV: 'nope' });
       expect(result.success).toBe(false);
       if (result.success) return;
 
@@ -293,27 +323,28 @@ describe('Configuration', () => {
 
   describe('sensitive value masking', () => {
     it('should fully redact sensitive values', () => {
-      expect(maskSensitiveValue('PASSWORD', 'my-secret-password')).toBe('***');
-      expect(maskSensitiveValue('TOKEN', 'sk-1234567890abcdef')).toBe('***');
-      expect(maskSensitiveValue('SECRET', 'abc')).toBe('***');
-      expect(maskSensitiveValue('encryption_key', 'lowercase-key')).toBe('***');
-      expect(maskSensitiveValue('NORMAL_VAR', 'visible')).toBe('visible');
+      expect(receivedValue('PASSWORD', 'my-secret-password')).toBe('***');
+      expect(receivedValue('TOKEN', 'sk-1234567890abcdef')).toBe('***');
+      expect(receivedValue('SECRET', 'abc')).toBe('***');
+      expect(receivedValue('encryption_key', 'lowercase-key')).toBe('***');
+      expect(receivedValue('NORMAL_VAR', 'visible')).toBe('visible');
     });
 
     it('should not redact undefined and null values', () => {
-      expect(maskSensitiveValue('PASSWORD', undefined)).toBe('undefined');
-      expect(maskSensitiveValue('SECRET', null)).toBe('null');
+      // An undefined input is not displayed at all; null is shown as-is
+      expect(receivedValue('PASSWORD', undefined)).toBe('');
+      expect(receivedValue('SECRET', null)).toBe('null');
     });
 
     it('should stringify non-string values', () => {
-      expect(maskSensitiveValue('COUNT', 42)).toBe('42');
-      expect(maskSensitiveValue('RATIO', 3.14)).toBe('3.14');
-      expect(maskSensitiveValue('ENABLED', true)).toBe('true');
-      expect(maskSensitiveValue('ID', BigInt(12345))).toBe('12345');
-      expect(maskSensitiveValue('SOME_SYMBOL', Symbol('test'))).toBe('Symbol(test)');
-      expect(maskSensitiveValue('DATA', { key: 'value' })).toBe('{"key":"value"}');
-      expect(maskSensitiveValue('LIST', [1, 2])).toBe('[1,2]');
-      expect(maskSensitiveValue('CALLBACK', function testFunc() {})).toContain('testFunc');
+      expect(receivedValue('COUNT', 42)).toBe('42');
+      expect(receivedValue('RATIO', 3.14)).toBe('3.14');
+      expect(receivedValue('ENABLED', true)).toBe('true');
+      expect(receivedValue('ID', BigInt(12345))).toBe('12345');
+      expect(receivedValue('SOME_SYMBOL', Symbol('test'))).toBe('Symbol(test)');
+      expect(receivedValue('DATA', { key: 'value' })).toBe('{"key":"value"}');
+      expect(receivedValue('LIST', [1, 2])).toBe('[1,2]');
+      expect(receivedValue('CALLBACK', function testFunc() {})).toContain('testFunc');
     });
   });
 
@@ -334,16 +365,6 @@ describe('Configuration', () => {
       expect(hasConfig('NODE_ENV')).toBe(true); // Has default value
       expect(hasConfig('LOG_OUTPUT')).toBe(true); // Has default value
       expect(hasConfig('LOG_FILE_PATH')).toBe(config.LOG_FILE_PATH !== undefined);
-    });
-
-    it('should provide getConfigKeys helper', () => {
-      const keys = getConfigKeys();
-
-      expect(keys).toBeInstanceOf(Array);
-      expect(keys).toContain('NODE_ENV');
-      expect(keys).toContain('ENABLE_METRICS');
-      expect(keys).toContain('LOG_LEVEL');
-      expect(keys.length).toBeGreaterThanOrEqual(5);
     });
   });
 

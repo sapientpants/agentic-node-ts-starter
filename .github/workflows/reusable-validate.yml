@@ -180,6 +180,9 @@ jobs:
       - name: Check code duplication
         run: pnpm duplication
 
+      - name: Check dead code
+        run: pnpm dead-code
+
       - name: Generate full metrics report
         if: always()
         run: |

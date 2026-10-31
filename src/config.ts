@@ -323,6 +323,11 @@ export const config: Config = loadConfig();
 
 /**
  * Type-safe configuration getter
+ *
+ * Template API: the template itself reads `config` directly, so this has no
+ * production caller here. It is kept as a documented helper for applications
+ * built on the template (see docs/CONFIG.md).
+ * @public
  * @param {K} key - Configuration key to retrieve
  * @returns {Config[K]} The configuration value for the specified key
  * @example
@@ -338,6 +343,10 @@ export function getConfig<K extends keyof Config>(key: K): Config[K] {
 
 /**
  * Check if a configuration value is defined (for optional configs)
+ *
+ * Template API: kept as a documented helper for applications built on the
+ * template (see docs/CONFIG.md); the template itself has no caller.
+ * @public
  * @param {K} key - Configuration key to check
  * @returns {boolean} true if the configuration value is defined
  * @example
@@ -351,20 +360,3 @@ export function hasConfig<K extends keyof Config>(key: K): boolean {
   // eslint-disable-next-line security/detect-object-injection -- key is type-safe
   return config[key] !== undefined;
 }
-
-/**
- * Get all configuration keys (useful for debugging)
- * @returns {Array<keyof Config>} Array of configuration keys
- */
-export function getConfigKeys(): Array<keyof Config> {
-  return Object.keys(config) as Array<keyof Config>;
-}
-
-/**
- * Export schema for testing purposes
- */
-export const __testExports = {
-  ConfigSchema,
-  formatZodError,
-  maskSensitiveValue,
-};
