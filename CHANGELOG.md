@@ -1,5 +1,18 @@
 # agentic-node-ts-starter
 
+## 0.29.2
+
+### Patch Changes
+
+- [#211](https://github.com/sapientpants/agentic-node-ts-starter/pull/211) [`26f2f4b`](https://github.com/sapientpants/agentic-node-ts-starter/commit/26f2f4b2dca31aa051002bcc87c83c85e0aa147b) - Prune redundant quality tooling and make the pre-commit hook fast and offline (#197).
+
+  - The husky pre-commit hook now runs `validate-branch-name` and `lint-staged` (Prettier, ESLint, markdownlint, yamllint, cspell on staged files) instead of the full gate.
+  - The full gate is renamed from `pnpm precommit` to `pnpm verify`, no longer needs the network, and CI now also runs spelling, YAML, and Markdown linting.
+  - Removed `madge`, `depcheck`, and `license-checker` and their scripts; dependency-cruiser covers circular imports and Knip covers unused dependencies.
+  - Removed duplicate and placeholder scripts (`coverage:report`, `metrics`, `help`, `doctor`, `lint-staged`).
+  - All dependencies are pinned to exact versions; the policy is documented in `AGENTS.md` and ADR-0018.
+  - Dropped the `DOM` lib from `tsconfig.json` and switched the ESLint config type to `Linter.Config`.
+
 ## 0.29.1
 
 ### Patch Changes
