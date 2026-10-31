@@ -11,6 +11,10 @@
  * - Code duplication (from reports/jscpd/html/jscpd-report.json)
  * - Mutation testing score (from reports/stryker-incremental.json, if available)
  *
+ * Thresholds are read from the config files that enforce them (vitest.config.ts,
+ * .jscpd.json, stryker.config.json, eslint.config.js) rather than hard-coded here,
+ * so quality-metrics.json cannot drift from what the toolchain actually checks.
+ *
  * Usage:
  *   node scripts/extract-quality-metrics.js
  */
@@ -159,6 +163,83 @@ function extractMutationMetrics() {
 }
 
 /**
+ * Coverage thresholds enforced by `pnpm test:coverage`. Node strips the type
+ * annotations from vitest.config.ts natively, so it is imported as-is.
+ */
+async function loadCoverageThresholds() {
+  const { default: vitestConfig } = await import('../vitest.config.ts');
+  const thresholds = vitestConfig.test?.coverage?.thresholds;
+  if (!thresholds) {
+    throw new Error('vitest.config.ts does not define test.coverage.thresholds');
+  }
+  const { lines, statements, functions, branches } = thresholds;
+  return { lines, statements, functions, branches };
+}
+
+/**
+ * Duplication threshold enforced by `pnpm duplication` (jscpd).
+ */
+function loadDuplicationThreshold() {
+  const jscpd = readJsonFile(join(projectRoot, '.jscpd.json'));
+  if (typeof jscpd?.threshold !== 'number') {
+    throw new Error('.jscpd.json does not define a numeric threshold');
+  }
+  return { percentage: jscpd.threshold };
+}
+
+/**
+ * Mutation score thresholds from stryker.config.json: `high` is the target score,
+ * `break` is the score below which `pnpm mutation-test` fails.
+ */
+function loadMutationThresholds() {
+  const stryker = readJsonFile(join(projectRoot, 'stryker.config.json'));
+  const thresholds = stryker?.thresholds;
+  if (typeof thresholds?.high !== 'number' || typeof thresholds?.break !== 'number') {
+    throw new Error(
+      'stryker.config.json does not define numeric thresholds.high and thresholds.break',
+    );
+  }
+  return { score: thresholds.high, break: thresholds.break };
+}
+
+/**
+ * ESLint limit rules are configured as `['error', 10]` or `['error', { max: 10 }]`.
+ */
+function ruleLimit(rule) {
+  const option = Array.isArray(rule) ? rule[1] : undefined;
+  if (typeof option === 'number') {
+    return option;
+  }
+  if (typeof option?.max === 'number') {
+    return option.max;
+  }
+  throw new Error(`Cannot read a numeric limit from ESLint rule ${JSON.stringify(rule)}`);
+}
+
+/**
+ * Complexity limits enforced by `pnpm lint` on production code (the `src/` block of
+ * eslint.config.js; test files have their own relaxed block).
+ */
+async function loadComplexityThresholds() {
+  const { default: eslintConfig } = await import('../eslint.config.js');
+  const block = eslintConfig.find(
+    (config) =>
+      config.rules?.complexity !== undefined &&
+      (config.files ?? []).some((pattern) => pattern.startsWith('src/')),
+  );
+  if (!block) {
+    throw new Error('eslint.config.js has no src/ block with a complexity rule');
+  }
+  return {
+    cyclomatic: ruleLimit(block.rules.complexity),
+    maxLines: ruleLimit(block.rules['max-lines-per-function']),
+    maxParams: ruleLimit(block.rules['max-params']),
+    maxDepth: ruleLimit(block.rules['max-depth']),
+    maxStatements: ruleLimit(block.rules['max-statements']),
+  };
+}
+
+/**
  * Read package.json once and extract version info
  */
 function getPackageInfo() {
@@ -173,12 +254,18 @@ function getPackageInfo() {
 /**
  * Main extraction function
  */
-function extractMetrics() {
+async function extractMetrics() {
   const timestamp = new Date().toISOString();
   const coverage = extractCoverageMetrics();
   const duplication = extractDuplicationMetrics();
   const mutation = extractMutationMetrics();
   const packageInfo = getPackageInfo();
+  const thresholds = {
+    coverage: await loadCoverageThresholds(),
+    duplication: loadDuplicationThreshold(),
+    mutation: loadMutationThresholds(),
+    complexity: await loadComplexityThresholds(),
+  };
 
   const metrics = {
     schemaVersion: '1.0.0',
@@ -190,21 +277,14 @@ function extractMetrics() {
       statements: coverage.statements,
       functions: coverage.functions,
       branches: coverage.branches,
-      threshold: {
-        lines: 90,
-        statements: 90,
-        functions: 90,
-        branches: 80,
-      },
+      threshold: thresholds.coverage,
     },
     duplication: {
       percentage: duplication.percentage,
       lines: duplication.lines,
       tokens: duplication.tokens,
       clones: duplication.clones,
-      threshold: {
-        percentage: 2,
-      },
+      threshold: thresholds.duplication,
     },
     mutation: {
       score: mutation.mutationScore,
@@ -216,20 +296,11 @@ function extractMetrics() {
       runtimeErrors: mutation.runtimeErrors,
       compileErrors: mutation.compileErrors,
       totalMutants: mutation.totalMutants,
-      threshold: {
-        score: 90,
-      },
+      threshold: thresholds.mutation,
     },
     complexity: {
-      // These would need to be extracted from ESLint output
-      // For now, we'll note the thresholds
-      threshold: {
-        cyclomatic: 10,
-        maxLines: 50,
-        maxParams: 4,
-        maxDepth: 3,
-        maxStatements: 15,
-      },
+      // Measured values would need ESLint output; only the enforced limits are recorded.
+      threshold: thresholds.complexity,
     },
   };
 
@@ -239,10 +310,10 @@ function extractMetrics() {
 /**
  * Main function
  */
-function main() {
+async function main() {
   console.log('Extracting quality metrics...');
 
-  const metrics = extractMetrics();
+  const metrics = await extractMetrics();
 
   const outputPath = join(projectRoot, 'quality-metrics.json');
   writeFileSync(outputPath, JSON.stringify(metrics, null, 2) + '\n');
@@ -260,4 +331,4 @@ function main() {
   );
 }
 
-main();
+await main();

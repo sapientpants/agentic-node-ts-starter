@@ -44,7 +44,7 @@ A **batteries-included** TypeScript starter template with comprehensive testing,
 ## 🛠️ Tech Stack
 
 **Core:** Node.js 26 • TypeScript ^6.0.3 (strict, NodeNext ES modules) • pnpm 11.27.1 (pinned via mise)  
-**Testing:** Vitest + V8 coverage • fast-check property testing • lines/functions/statements ≥90%, branches ≥80%  
+**Testing:** Vitest + V8 coverage • fast-check property testing • lines/functions/statements ≥90%, branches ≥84%  
 **Quality:** ESLint 9 • Prettier • Husky • Commitlint  
 **Security:** CodeQL • OSV Scanner • SBOM • SLSA attestations  
 **CI/CD:** GitHub Actions • Changesets • Automated releases

@@ -17,7 +17,7 @@ Compact guidance for AI agents working in this repository.
 
 ## Quality gates (enforced in CI and `pnpm verify`; docs sometimes lag — trust the config files)
 
-- Coverage (`vitest.config.ts`): lines/functions/statements ≥90, branches ≥80.
+- Coverage (`vitest.config.ts`): lines/functions/statements ≥90, branches ≥84.
 - Complexity (ESLint, type-aware): complexity ≤10, ≤50 lines/function, ≤4 params, max-depth 3, and **min** `max-statements: 15`. Test files are relaxed (complexity ≤15, lines ≤600).
 - No barrel files (`no-barrel-files`): re-exporting from modules is a lint error except in `index.ts`. Import direct paths.
 - Unused exports/deps/imports fail the build via Knip (`pnpm dead-code`, run before tests in `pnpm verify` and CI). `knip --production` also runs there and reports exports that only tests import, so keep code reachable from the production entries in `knip.json` (`src/index.ts`, `src/dev/`) or tag intentional template API with a `@public` JSDoc tag and say why. Do not add test-only exports (no `__testExports`); test through the public surface.

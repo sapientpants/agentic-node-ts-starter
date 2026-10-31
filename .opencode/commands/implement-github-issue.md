@@ -57,7 +57,7 @@ Required test coverage:
 - **Unit tests** in `tests/*.spec.ts`
 - **Property-based tests** in `tests/*.property.spec.ts` (fast-check) for core invariants
 - Test both success and failure cases
-- Keep coverage at lines/functions/statements ≥90%, branches ≥80%
+- Keep coverage at lines/functions/statements ≥90%, branches ≥84%
 
 ### 7. Verify Quality
 

@@ -44,7 +44,7 @@ pnpm ci:local:fast   # Fast local mirror of CI validation
 pnpm verify          # Full gate: linters, deps, dead code, test:coverage (offline)
 ```
 
-- Coverage must hold: lines/functions/statements ≥90%, branches ≥80%
+- Coverage must hold: lines/functions/statements ≥90%, branches ≥84%
 - Major bumps that break APIs: fix affected code/tests, then re-run until green
 - If the build fails, bisect: revert individual packages until it passes, and document the pinned stragglers in the PR
 
@@ -93,7 +93,7 @@ Dependency set with <N> outdated packages.
 ## Other information
 
 - Verified with pnpm ci:local + pnpm verify
-- Coverage thresholds hold (≥90% lines/functions/statements, ≥80% branches)
+- Coverage thresholds hold (≥90% lines/functions/statements, ≥84% branches)
 - pnpm audit --audit-level critical: clean
 - Changeset: <empty|patch|minor|major>" \
   --assignee @me

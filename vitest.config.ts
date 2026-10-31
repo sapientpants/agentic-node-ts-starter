@@ -72,7 +72,7 @@ export default defineConfig({
         '**/*.example.ts', // Example files - not part of production code
       ],
       thresholds: {
-        branches: 84, // Current: 84.95%, Goal: 90% - see PR#160 for plan
+        branches: 84, // Goal: 90% - see PR#160 for plan. Docs and quality-metrics.json read this value.
         functions: 90,
         lines: 90,
         statements: 90,
