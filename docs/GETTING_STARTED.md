@@ -127,9 +127,10 @@ Edit `package.json`:
 >   - `tests/logger.spec.ts` - Logger tests
 >   - `tests/logger-validation.spec.ts` - Logger validation tests
 >   - `tests/logger-output.spec.ts` - Logger output configuration tests
->   - `tests/container-scan.spec.ts` - Container security tests
->   - `tests/documentation.spec.ts` - Documentation validation tests
 >   - All configuration files (TypeScript, ESLint, Prettier, etc.)
+> - **🧭 Template Self-Checks**: Tests that verify the shape of this repository rather than application code. Delete them unless you intend to keep the files they check:
+>   - `tests/documentation.spec.ts` - Asserts that the template's docs exist and that scripts print `--help` output
+>   - `tests/container-scan.spec.ts` - Asserts that `.trivyignore` and the container-scan scripts are present
 >
 > All example files have clear header comments marked with "EXAMPLE CODE" to identify them.
 
@@ -141,6 +142,9 @@ rm src/index.ts \
    src/health.example.ts \
    tests/index.spec.ts \
    tests/add.property.spec.ts
+
+# Optional: drop the template self-checks if you are not keeping the docs/scripts they verify
+rm tests/documentation.spec.ts tests/container-scan.spec.ts
 
 # Create your own entry point
 echo "console.log('Hello from my app!');" > src/index.ts

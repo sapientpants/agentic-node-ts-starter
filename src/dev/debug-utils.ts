@@ -8,6 +8,7 @@
 
 import { createChildLogger } from '../logger.js';
 import { performance } from 'node:perf_hooks';
+import { inspect as inspectValue } from 'node:util';
 
 const logger = createChildLogger('debug-utils');
 
@@ -145,7 +146,10 @@ export function logMemoryUsage(label: string = 'memory-check'): void {
 }
 
 /**
- * Deep object inspection for debugging
+ * Deep object inspection for debugging.
+ *
+ * Uses `util.inspect` rather than `JSON.stringify` so that `maxDepth` is honoured and
+ * circular references, BigInt values, functions and symbols are rendered instead of throwing.
  * @param {unknown} obj - The object to inspect
  * @param {string} [label] - The label for the inspection (default: 'inspect')
  * @param {number} [maxDepth] - The maximum depth for nested objects (default: 3)
@@ -157,7 +161,7 @@ export function inspect(obj: unknown, label: string = 'inspect', maxDepth: numbe
   logger.debug(
     {
       label,
-      object: JSON.stringify(obj, null, 2),
+      object: inspectValue(obj, { depth: maxDepth }),
       type: typeof obj,
       max_depth: maxDepth,
     },
