@@ -1,5 +1,14 @@
 # agentic-node-ts-starter
 
+## 0.29.3
+
+### Patch Changes
+
+- [#212](https://github.com/sapientpants/agentic-node-ts-starter/pull/212) [`5837eea`](https://github.com/sapientpants/agentic-node-ts-starter/commit/5837eea331ea557dcbb0545b81cb537631a2b71a) - fix: read quality thresholds from their config files and correct documented coverage numbers
+
+  - `scripts/extract-quality-metrics.js` now reads coverage, duplication, mutation, and complexity thresholds from `vitest.config.ts`, `.jscpd.json`, `stryker.config.json`, and `eslint.config.js` instead of hard-coding them, so `quality-metrics.json` cannot drift again.
+  - Documentation, workflow comments, and agent command prompts now state the enforced branch coverage threshold (84%) rather than 80%.
+
 ## 0.29.2
 
 ### Patch Changes
