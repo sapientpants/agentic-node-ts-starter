@@ -1,160 +1,170 @@
 /**
  * Tests for environment configuration - Template infrastructure.
  * These tests verify the configuration loader and can be kept/customized.
+ *
+ * `loadConfig` is pure, so every test hands it a plain environment object
+ * instead of mutating `process.env` and re-importing the module.
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { z } from 'zod';
+import {
+  ConfigError,
+  config,
+  getConfig,
+  getConfigKeys,
+  hasConfig,
+  loadConfig,
+  __testExports,
+} from '../src/config.js';
+
+const { ConfigSchema, formatZodError, maskSensitiveValue } = __testExports;
 
 describe('Configuration', () => {
-  // Store original env
-  const originalEnv = process.env;
-  // eslint-disable-next-line @typescript-eslint/unbound-method
-  const originalExit = process.exit;
-  // eslint-disable-next-line no-console
-  const originalConsoleError = console.error;
-
-  beforeEach(() => {
-    // Reset modules before each test
-    vi.resetModules();
-    // Create a fresh copy of env for each test
-    process.env = { ...originalEnv };
-    // Mock process.exit
-    process.exit = vi.fn() as never;
-    // Mock console.error to suppress output during tests
-    // eslint-disable-next-line no-console
-    console.error = vi.fn();
-  });
-
-  afterEach(() => {
-    // Restore original env and functions
-    process.env = originalEnv;
-    process.exit = originalExit;
-    // eslint-disable-next-line no-console
-    console.error = originalConsoleError;
-    vi.clearAllMocks();
-  });
-
   describe('successful configuration loading', () => {
-    it('should load configuration with all required fields', async () => {
-      process.env.NODE_ENV = 'test';
+    it('should load configuration with all required fields', () => {
+      const loaded = loadConfig({ NODE_ENV: 'test' });
 
-      const { config } = await import('../src/config.js');
-
-      expect(config).toBeDefined();
-      expect(config.NODE_ENV).toBe('test');
-      expect(config.APP_NAME).toBe('agentic-node-ts-starter');
+      expect(loaded.NODE_ENV).toBe('test');
+      expect(loaded.APP_NAME).toBe('agentic-node-ts-starter');
     });
 
-    it('should parse boolean environment variables correctly', async () => {
-      process.env.ENABLE_METRICS = 'true';
-      process.env.FORCE_COLOR = 'false';
+    it('should parse boolean environment variables correctly', () => {
+      const loaded = loadConfig({ ENABLE_METRICS: 'true', FORCE_COLOR: 'false' });
 
-      const { config } = await import('../src/config.js');
-
-      expect(config.ENABLE_METRICS).toBe(true);
-      expect(config.FORCE_COLOR).toBe(false);
+      expect(loaded.ENABLE_METRICS).toBe(true);
+      expect(loaded.FORCE_COLOR).toBe(false);
     });
 
-    it('should accept various boolean formats', async () => {
-      // Test 'yes'
-      process.env.ENABLE_METRICS = 'yes';
-      let module = await import('../src/config.js');
-      expect(module.config.ENABLE_METRICS).toBe(true);
-
-      // Reset and test '1'
-      vi.resetModules();
-      process.env.ENABLE_METRICS = '1';
-      module = await import('../src/config.js');
-      expect(module.config.ENABLE_METRICS).toBe(true);
-
-      // Reset and test 'no'
-      vi.resetModules();
-      process.env.ENABLE_METRICS = 'no';
-      module = await import('../src/config.js');
-      expect(module.config.ENABLE_METRICS).toBe(false);
-
-      // Reset and test '0'
-      vi.resetModules();
-      process.env.ENABLE_METRICS = '0';
-      module = await import('../src/config.js');
-      expect(module.config.ENABLE_METRICS).toBe(false);
+    it('should accept various boolean formats', () => {
+      expect(loadConfig({ ENABLE_METRICS: 'yes' }).ENABLE_METRICS).toBe(true);
+      expect(loadConfig({ ENABLE_METRICS: '1' }).ENABLE_METRICS).toBe(true);
+      expect(loadConfig({ ENABLE_METRICS: 'no' }).ENABLE_METRICS).toBe(false);
+      expect(loadConfig({ ENABLE_METRICS: '0' }).ENABLE_METRICS).toBe(false);
     });
 
-    it('should accept valid NODE_ENV values', async () => {
+    it('should accept valid NODE_ENV values', () => {
       const validEnvs = ['development', 'production', 'test', 'staging'];
 
       for (const env of validEnvs) {
-        vi.resetModules();
-        process.env.NODE_ENV = env;
-        const { config } = await import('../src/config.js');
-        expect(config.NODE_ENV).toBe(env);
+        expect(loadConfig({ NODE_ENV: env }).NODE_ENV).toBe(env);
       }
     });
 
-    it('should handle optional fields correctly', async () => {
-      process.env.NODE_ENV = 'test';
-      // Don't set optional fields
+    it('should handle optional fields correctly', () => {
+      const loaded = loadConfig({ NODE_ENV: 'test' });
 
-      const { config } = await import('../src/config.js');
+      expect(loaded.DEBUG).toBeUndefined();
+      expect(loaded.FORCE_COLOR).toBeUndefined();
+      expect(loaded.LOG_FILE_PATH).toBeUndefined();
+    });
 
-      // Check that optional fields can be undefined
-      expect(config.DEBUG).toBeUndefined();
-      expect(config.FORCE_COLOR).toBeUndefined();
+    it('should parse the logging variables', () => {
+      const loaded = loadConfig({
+        LOG_OUTPUT: 'syslog',
+        LOG_SYSLOG_HOST: 'syslog.example.com',
+        LOG_SYSLOG_PORT: '1514',
+        LOG_SYSLOG_PROTOCOL: 'tcp',
+        LOG_FILE_MAX_FILES: '7',
+      });
+
+      expect(loaded.LOG_OUTPUT).toBe('syslog');
+      expect(loaded.LOG_SYSLOG_HOST).toBe('syslog.example.com');
+      expect(loaded.LOG_SYSLOG_PORT).toBe(1514);
+      expect(loaded.LOG_SYSLOG_PROTOCOL).toBe('tcp');
+      expect(loaded.LOG_FILE_MAX_FILES).toBe(7);
+    });
+
+    it('should read process.env when called without arguments', () => {
+      const loaded = loadConfig();
+
+      expect(loaded).toEqual(config);
+      expect(loaded).not.toBe(config);
+    });
+
+    it('should not mutate the environment it is given', () => {
+      const env = { NODE_ENV: 'production', ENABLE_METRICS: 'true' };
+      const snapshot = { ...env };
+
+      loadConfig(env);
+
+      expect(env).toEqual(snapshot);
     });
   });
 
   describe('default values', () => {
-    it('should use default values when env vars not set', async () => {
-      process.env.NODE_ENV = 'test';
+    it('should use default values when env vars not set', () => {
+      const loaded = loadConfig({ NODE_ENV: 'test' });
 
-      const { config } = await import('../src/config.js');
-
-      expect(config.ENABLE_METRICS).toBe(false);
-      expect(config.TIMEOUT_MS).toBe(30000);
-      expect(config.APP_NAME).toBe('agentic-node-ts-starter');
+      expect(loaded.ENABLE_METRICS).toBe(false);
+      expect(loaded.TIMEOUT_MS).toBe(30000);
+      expect(loaded.APP_NAME).toBe('agentic-node-ts-starter');
+      expect(loaded.LOG_OUTPUT).toBe('stdout');
     });
 
-    it('should use environment-specific defaults for LOG_LEVEL', async () => {
-      // Test production default
-      process.env.NODE_ENV = 'production';
-      let module = await import('../src/config.js');
-      expect(module.config.LOG_LEVEL).toBe('info');
+    it('should default NODE_ENV to development', () => {
+      expect(loadConfig({}).NODE_ENV).toBe('development');
+    });
 
-      // Test development default
-      vi.resetModules();
-      process.env.NODE_ENV = 'development';
-      module = await import('../src/config.js');
-      expect(module.config.LOG_LEVEL).toBe('debug');
-
-      // Test explicit override
-      vi.resetModules();
-      process.env.NODE_ENV = 'production';
-      process.env.LOG_LEVEL = 'error';
-      module = await import('../src/config.js');
-      expect(module.config.LOG_LEVEL).toBe('error');
+    it('should use environment-specific defaults for LOG_LEVEL', () => {
+      expect(loadConfig({ NODE_ENV: 'production' }).LOG_LEVEL).toBe('info');
+      expect(loadConfig({ NODE_ENV: 'development' }).LOG_LEVEL).toBe('debug');
+      expect(loadConfig({ NODE_ENV: 'staging' }).LOG_LEVEL).toBe('debug');
+      expect(loadConfig({ NODE_ENV: 'test' }).LOG_LEVEL).toBe('silent');
+      expect(loadConfig({ NODE_ENV: 'production', LOG_LEVEL: 'error' }).LOG_LEVEL).toBe('error');
+      expect(loadConfig({ NODE_ENV: 'test', LOG_LEVEL: 'debug' }).LOG_LEVEL).toBe('debug');
     });
   });
 
   describe('validation errors', () => {
-    it('should exit process on invalid NODE_ENV', async () => {
-      process.env.NODE_ENV = 'invalid';
-
-      await expect(import('../src/config.js')).rejects.toThrow();
+    it('should throw a ConfigError on invalid NODE_ENV', () => {
+      expect(() => loadConfig({ NODE_ENV: 'invalid' })).toThrow(ConfigError);
     });
 
-    it('should exit process on invalid boolean format', async () => {
-      process.env.ENABLE_METRICS = 'maybe';
+    it('should throw a ConfigError on invalid boolean format', () => {
+      expect(() => loadConfig({ ENABLE_METRICS: 'maybe' })).toThrow(ConfigError);
+    });
 
-      await expect(import('../src/config.js')).rejects.toThrow();
+    it('should throw a ConfigError on unknown LOG_OUTPUT', () => {
+      expect(() => loadConfig({ LOG_OUTPUT: 'invalid-mode' })).toThrow(ConfigError);
+    });
+
+    it('should describe every invalid variable in the error message', () => {
+      let error: unknown;
+      try {
+        loadConfig({ NODE_ENV: 'nope', TIMEOUT_MS: 'thirty', API_TOKEN_UNUSED: 'ignored' });
+      } catch (caught) {
+        error = caught;
+      }
+
+      expect(error).toBeInstanceOf(ConfigError);
+      if (!(error instanceof ConfigError)) return;
+      expect(error.name).toBe('ConfigError');
+      expect(error.message).toContain('Invalid environment configuration');
+      expect(error.message).toContain('NODE_ENV:');
+      expect(error.message).toContain('(received: "nope")');
+      expect(error.message).toContain('TIMEOUT_MS:');
+      expect(error.message).toContain('(received: "thirty")');
+      expect(error.message).toContain('.env.example');
+      expect(error.cause).toBeInstanceOf(z.ZodError);
+    });
+
+    it('should not call process.exit', () => {
+      const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {
+        throw new Error('process.exit called');
+      });
+
+      try {
+        expect(() => loadConfig({ NODE_ENV: 'invalid' })).toThrow(ConfigError);
+        expect(exitSpy).not.toHaveBeenCalled();
+      } finally {
+        exitSpy.mockRestore();
+      }
     });
   });
 
   describe('error formatting', () => {
-    it('should format missing required variable errors', async () => {
-      const { __testExports } = await import('../src/config.js');
-      const { formatZodError } = __testExports;
-
+    it('should format missing required variable errors', () => {
       // Zod 4 invalid_type issues carry `input`, not `received`
       const mockError = {
         issues: [
@@ -174,10 +184,7 @@ describe('Configuration', () => {
       expect(formatted).not.toContain('received:');
     });
 
-    it('should format invalid format errors', async () => {
-      const { __testExports } = await import('../src/config.js');
-      const { formatZodError } = __testExports;
-
+    it('should format invalid format errors', () => {
       const mockError = {
         issues: [
           {
@@ -194,10 +201,7 @@ describe('Configuration', () => {
       expect(formatted).toContain('SOME_FIELD: Expected string, received number (received: "123")');
     });
 
-    it('should handle empty error list', async () => {
-      const { __testExports } = await import('../src/config.js');
-      const { formatZodError } = __testExports;
-
+    it('should handle empty error list', () => {
       const mockError = {
         issues: [],
       } as unknown as z.ZodError;
@@ -206,10 +210,7 @@ describe('Configuration', () => {
       expect(formatted).toBe('Invalid configuration');
     });
 
-    it('should show received values for real schema errors when parsing with reportInput', async () => {
-      const { __testExports } = await import('../src/config.js');
-      const { ConfigSchema, formatZodError } = __testExports;
-
+    it('should show received values for real schema errors when parsing with reportInput', () => {
       const result = ConfigSchema.safeParse(
         { NODE_ENV: 'nope', TIMEOUT_MS: 'thirty', LOG_LEVEL: 'verbose' },
         { reportInput: true },
@@ -224,10 +225,7 @@ describe('Configuration', () => {
       expect(formatted).toContain('(received: "verbose")');
     });
 
-    it('should omit received values when parsing without reportInput', async () => {
-      const { __testExports } = await import('../src/config.js');
-      const { ConfigSchema, formatZodError } = __testExports;
-
+    it('should omit received values when parsing without reportInput', () => {
       const result = ConfigSchema.safeParse({ NODE_ENV: 'nope' });
       expect(result.success).toBe(false);
       if (result.success) return;
@@ -237,10 +235,7 @@ describe('Configuration', () => {
       expect(formatted).not.toContain('received:');
     });
 
-    it('should not report wrong-type values as missing when parsing without reportInput', async () => {
-      const { __testExports } = await import('../src/config.js');
-      const { formatZodError } = __testExports;
-
+    it('should not report wrong-type values as missing when parsing without reportInput', () => {
       const schema = z.object({ MISSING_FIELD: z.string(), WRONG_TYPE: z.string() });
       const result = schema.safeParse({ WRONG_TYPE: 123 });
       expect(result.success).toBe(false);
@@ -254,10 +249,7 @@ describe('Configuration', () => {
       expect(formatted).not.toContain('MISSING_FIELD: Required but not provided');
     });
 
-    it('should redact sensitive values for real schema errors', async () => {
-      const { __testExports } = await import('../src/config.js');
-      const { formatZodError } = __testExports;
-
+    it('should redact sensitive values for real schema errors', () => {
       const schema = z.object({ API_TOKEN: z.string().min(32), DB_PASSWORD: z.enum(['a']) });
       const result = schema.safeParse(
         { API_TOKEN: 'sk-super-secret-value', DB_PASSWORD: 'hunter2' },
@@ -276,10 +268,7 @@ describe('Configuration', () => {
   });
 
   describe('sensitive value masking', () => {
-    it('should fully redact sensitive values', async () => {
-      const { __testExports } = await import('../src/config.js');
-      const { maskSensitiveValue } = __testExports;
-
+    it('should fully redact sensitive values', () => {
       expect(maskSensitiveValue('PASSWORD', 'my-secret-password')).toBe('***');
       expect(maskSensitiveValue('TOKEN', 'sk-1234567890abcdef')).toBe('***');
       expect(maskSensitiveValue('SECRET', 'abc')).toBe('***');
@@ -287,18 +276,12 @@ describe('Configuration', () => {
       expect(maskSensitiveValue('NORMAL_VAR', 'visible')).toBe('visible');
     });
 
-    it('should not redact undefined and null values', async () => {
-      const { __testExports } = await import('../src/config.js');
-      const { maskSensitiveValue } = __testExports;
-
+    it('should not redact undefined and null values', () => {
       expect(maskSensitiveValue('PASSWORD', undefined)).toBe('undefined');
       expect(maskSensitiveValue('SECRET', null)).toBe('null');
     });
 
-    it('should stringify non-string values', async () => {
-      const { __testExports } = await import('../src/config.js');
-      const { maskSensitiveValue } = __testExports;
-
+    it('should stringify non-string values', () => {
       expect(maskSensitiveValue('COUNT', 42)).toBe('42');
       expect(maskSensitiveValue('RATIO', 3.14)).toBe('3.14');
       expect(maskSensitiveValue('ENABLED', true)).toBe('true');
@@ -310,93 +293,73 @@ describe('Configuration', () => {
     });
   });
 
-  describe('config helper functions', () => {
-    it('should provide getConfig helper', async () => {
-      process.env.ENABLE_METRICS = 'true';
-      process.env.LOG_LEVEL = 'warn';
-
-      const { getConfig } = await import('../src/config.js');
-
-      expect(getConfig('LOG_LEVEL')).toBe('warn');
-      expect(getConfig('ENABLE_METRICS')).toBe(true);
-      expect(getConfig('NODE_ENV')).toBe('test');
+  describe('singleton and helper functions', () => {
+    it('should expose the configuration loaded from process.env', () => {
+      expect(config.NODE_ENV).toBe('test');
+      expect(config.LOG_LEVEL).toBeDefined();
+      expect(config.LOG_OUTPUT).toBeDefined();
     });
 
-    it('should provide hasConfig helper', async () => {
-      process.env.DEBUG = 'app:*';
-      // Don't set FORCE_COLOR
+    it('should provide getConfig helper', () => {
+      expect(getConfig('NODE_ENV')).toBe(config.NODE_ENV);
+      expect(getConfig('ENABLE_METRICS')).toBe(config.ENABLE_METRICS);
+      expect(getConfig('LOG_LEVEL')).toBe(config.LOG_LEVEL);
+    });
 
-      const { hasConfig } = await import('../src/config.js');
-
-      expect(hasConfig('DEBUG')).toBe(true);
-      expect(hasConfig('FORCE_COLOR')).toBe(false);
+    it('should provide hasConfig helper', () => {
       expect(hasConfig('NODE_ENV')).toBe(true); // Has default value
+      expect(hasConfig('LOG_OUTPUT')).toBe(true); // Has default value
+      expect(hasConfig('LOG_FILE_PATH')).toBe(config.LOG_FILE_PATH !== undefined);
     });
 
-    it('should provide getConfigKeys helper', async () => {
-      const { getConfigKeys } = await import('../src/config.js');
-
+    it('should provide getConfigKeys helper', () => {
       const keys = getConfigKeys();
 
       expect(keys).toBeInstanceOf(Array);
       expect(keys).toContain('NODE_ENV');
       expect(keys).toContain('ENABLE_METRICS');
+      expect(keys).toContain('LOG_LEVEL');
       expect(keys.length).toBeGreaterThanOrEqual(5);
     });
   });
 
-  describe('TypeScript type inference', () => {
-    it('should export Config type', async () => {
-      const module = await import('../src/config.js');
-
-      // This test primarily ensures the module exports the type
-      // Actual type checking happens at compile time
-      expect(module).toHaveProperty('config');
-      expect(module).toHaveProperty('getConfig');
-      expect(module).toHaveProperty('hasConfig');
-    });
-  });
-
   describe('real-world scenarios', () => {
-    it('should handle typical production configuration', async () => {
-      process.env.NODE_ENV = 'production';
-      process.env.ENABLE_METRICS = 'true';
-      process.env.LOG_LEVEL = 'warn';
-      process.env.TIMEOUT_MS = '60000';
+    it('should handle typical production configuration', () => {
+      const loaded = loadConfig({
+        NODE_ENV: 'production',
+        ENABLE_METRICS: 'true',
+        LOG_LEVEL: 'warn',
+        TIMEOUT_MS: '60000',
+      });
 
-      const { config } = await import('../src/config.js');
-
-      expect(config.NODE_ENV).toBe('production');
-      expect(config.ENABLE_METRICS).toBe(true);
-      expect(config.LOG_LEVEL).toBe('warn');
-      expect(config.TIMEOUT_MS).toBe(60000);
+      expect(loaded.NODE_ENV).toBe('production');
+      expect(loaded.ENABLE_METRICS).toBe(true);
+      expect(loaded.LOG_LEVEL).toBe('warn');
+      expect(loaded.TIMEOUT_MS).toBe(60000);
     });
 
-    it('should handle typical development configuration', async () => {
-      process.env.NODE_ENV = 'development';
-      process.env.ENABLE_METRICS = 'false';
-      process.env.DEBUG = 'app:*';
-      process.env.FORCE_COLOR = 'true';
+    it('should handle typical development configuration', () => {
+      const loaded = loadConfig({
+        NODE_ENV: 'development',
+        ENABLE_METRICS: 'false',
+        DEBUG: 'app:*',
+        FORCE_COLOR: 'true',
+      });
 
-      const { config } = await import('../src/config.js');
-
-      expect(config.NODE_ENV).toBe('development');
-      expect(config.ENABLE_METRICS).toBe(false);
-      expect(config.DEBUG).toBe('app:*');
-      expect(config.FORCE_COLOR).toBe(true);
-      expect(config.LOG_LEVEL).toBe('debug'); // Default for development
+      expect(loaded.NODE_ENV).toBe('development');
+      expect(loaded.ENABLE_METRICS).toBe(false);
+      expect(loaded.DEBUG).toBe('app:*');
+      expect(loaded.FORCE_COLOR).toBe(true);
+      expect(loaded.LOG_LEVEL).toBe('debug'); // Default for development
     });
 
-    it('should handle minimal configuration', async () => {
+    it('should handle minimal configuration', () => {
       // Only set NODE_ENV, everything else uses defaults
-      process.env.NODE_ENV = 'test';
+      const loaded = loadConfig({ NODE_ENV: 'test' });
 
-      const { config } = await import('../src/config.js');
-
-      expect(config).toBeDefined();
-      expect(config.NODE_ENV).toBe('test');
-      expect(config.APP_NAME).toBe('agentic-node-ts-starter');
-      expect(config.ENABLE_METRICS).toBe(false); // Default
+      expect(loaded.NODE_ENV).toBe('test');
+      expect(loaded.APP_NAME).toBe('agentic-node-ts-starter');
+      expect(loaded.ENABLE_METRICS).toBe(false); // Default
     });
   });
 });

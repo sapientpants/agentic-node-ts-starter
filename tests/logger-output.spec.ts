@@ -1,119 +1,136 @@
 /**
  * Tests for configurable logging output destinations.
  * Verifies that logging works correctly with various output destinations.
+ *
+ * Each test builds its own logger with `createLogger(loadConfig(env))` from a plain
+ * environment object; `process.env` is only touched for runtime-only variables.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { mkdirSync, rmSync, existsSync, readFileSync, readdirSync, statSync } from 'fs';
-import { join } from 'path';
-import { randomUUID } from 'crypto';
-import type { Logger } from '../src/logger.js';
-
-// Store original env
-const originalEnv = process.env;
+import { mkdirSync, rmSync, existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { join } from 'node:path';
+import { randomUUID } from 'node:crypto';
+import { ConfigError, loadConfig } from '../src/config.js';
+import { createLogger, type LoggerInstance } from '../src/logger.js';
 
 describe('Logger Output Configuration', () => {
-  let logger: Logger;
-  let switchLogOutput: (outputMode: string) => void;
-  let getLoggerOutputMode: () => string;
-  let createChildLogger: (name: string, context?: Record<string, unknown>) => Logger;
-
   // Each test gets its own directory to avoid conflicts
   let testLogDir: string;
   let testLogFile: string;
+  const instances: LoggerInstance[] = [];
+
+  /**
+   * Build a logger from the given environment, recorded so its transport is closed afterwards
+   * @param {NodeJS.ProcessEnv} env - The environment variables to validate
+   * @returns {LoggerInstance} The logger instance
+   */
+  const createTestLogger = (env: NodeJS.ProcessEnv): LoggerInstance => {
+    const instance = createLogger(loadConfig(env));
+    instances.push(instance);
+    return instance;
+  };
+
+  /**
+   * Build a development logger writing to the test log file without rotation
+   * @param {NodeJS.ProcessEnv} env - Additional environment variables
+   * @returns {LoggerInstance} The logger instance
+   */
+  const createFileLogger = (env: NodeJS.ProcessEnv = {}): LoggerInstance =>
+    createTestLogger({
+      NODE_ENV: 'development',
+      LOG_OUTPUT: 'file',
+      LOG_FILE_PATH: testLogFile,
+      ...env,
+    });
+
+  /**
+   * Poll until a condition holds or the attempts run out
+   * @param {() => boolean} condition - The condition to wait for
+   * @param {number} attempts - Maximum number of attempts
+   * @param {number} delayMs - Delay between attempts in milliseconds
+   * @returns {Promise<void>} Resolves when the condition holds or the attempts are exhausted
+   */
+  const waitFor = async (condition: () => boolean, attempts = 40, delayMs = 50): Promise<void> => {
+    for (let attempt = 0; attempt < attempts && !condition(); attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  };
+
+  /**
+   * Capture everything written to a process stream
+   * @param {'stdout' | 'stderr'} streamName - The stream to capture
+   * @returns {() => string} Returns everything captured so far
+   */
+  const captureStream = (streamName: 'stdout' | 'stderr'): (() => string) => {
+    const spy = vi.spyOn(process[streamName], 'write').mockImplementation(() => true);
+    return () => spy.mock.calls.map((call) => String(call[0])).join('');
+  };
 
   beforeEach(() => {
-    vi.resetModules();
-    process.env = { ...originalEnv, NODE_ENV: 'test' };
-
     // Create a unique directory for this specific test
     const testId = randomUUID();
     testLogDir = join(process.cwd(), 'test-logs', testId);
     testLogFile = join(testLogDir, 'test.log');
 
-    // Ensure parent test-logs directory exists first
-    const parentDir = join(process.cwd(), 'test-logs');
-    if (!existsSync(parentDir)) {
-      mkdirSync(parentDir, { recursive: true });
-    }
-
-    // Create test log directory
-    if (!existsSync(testLogDir)) {
-      mkdirSync(testLogDir, { recursive: true });
-    }
+    mkdirSync(testLogDir, { recursive: true });
   });
 
   afterEach(async () => {
-    process.env = originalEnv;
-    vi.clearAllMocks();
+    // Switching to the null output closes any transport worker the test opened.
+    // Syslog is left alone: closing a transport whose host is unreachable blocks
+    // until pino's flush timeout expires.
+    for (const instance of instances.splice(0)) {
+      if (instance.getLoggerOutputMode() !== 'syslog') instance.switchLogOutput('null');
+    }
+    vi.restoreAllMocks();
 
-    // Add a longer delay to let any async file operations complete
+    // Add a delay to let any async file operations complete
     // This is especially important for pino-roll which has background operations
     await new Promise((resolve) => setTimeout(resolve, 100));
 
-    // Clean up test log directory with error handling
-    if (existsSync(testLogDir)) {
-      try {
-        rmSync(testLogDir, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
-      } catch (error) {
-        // Ignore ENOENT errors as they're expected if the directory was already removed
-        // Also ignore EBUSY and ENOTEMPTY errors from async operations still in progress
-        if (error && typeof error === 'object' && 'code' in error) {
-          const code = (error as { code?: string }).code;
-          if (code !== 'ENOENT' && code !== 'EBUSY' && code !== 'ENOTEMPTY') {
-            // Silently ignore - tests should still pass
-          }
-        }
-      }
+    // Clean up test log directory; async operations may still hold files, so tolerate failures
+    try {
+      rmSync(testLogDir, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+    } catch {
+      // Ignore errors - directory may still have async operations
     }
 
     // Clean up the parent test-logs directory if it's empty
-    const parentTestLogDir = join(process.cwd(), 'test-logs');
-    if (existsSync(parentTestLogDir)) {
-      try {
-        rmSync(parentTestLogDir, { recursive: true, force: true });
-      } catch {
-        // Ignore errors - directory may still have async operations
-      }
+    try {
+      rmSync(join(process.cwd(), 'test-logs'), { recursive: true, force: true });
+    } catch {
+      // Ignore errors - directory may still have async operations
     }
   });
 
   describe('Output Mode Detection', () => {
-    it('should default to stdout when LOG_OUTPUT not configured', async () => {
-      const loggerModule = await import('../src/logger.js');
-      getLoggerOutputMode = loggerModule.getLoggerOutputMode;
+    it('should default to stdout when LOG_OUTPUT not configured', () => {
+      const { getLoggerOutputMode } = createTestLogger({ NODE_ENV: 'test' });
 
       expect(getLoggerOutputMode()).toBe('stdout');
     });
 
-    it('should use stderr when LOG_OUTPUT=stderr', async () => {
-      process.env.LOG_OUTPUT = 'stderr';
-      const loggerModule = await import('../src/logger.js');
-      getLoggerOutputMode = loggerModule.getLoggerOutputMode;
+    it('should use stderr when LOG_OUTPUT=stderr', () => {
+      const { getLoggerOutputMode } = createTestLogger({ NODE_ENV: 'test', LOG_OUTPUT: 'stderr' });
 
       expect(getLoggerOutputMode()).toBe('stderr');
     });
 
-    it('should support all defined output modes', async () => {
+    it('should support all defined output modes', () => {
       const modes = ['stdout', 'stderr', 'file', 'syslog', 'null'];
 
       for (const mode of modes) {
-        vi.resetModules();
-        process.env = { ...originalEnv, NODE_ENV: 'test', LOG_OUTPUT: mode };
-        const loggerModule = await import('../src/logger.js');
-        const outputMode = loggerModule.getLoggerOutputMode();
-        expect(outputMode).toBe(mode);
+        const { getLoggerOutputMode } = createTestLogger({ NODE_ENV: 'test', LOG_OUTPUT: mode });
+        expect(getLoggerOutputMode()).toBe(mode);
       }
     });
   });
 
   describe('Programmatic Output Switching', () => {
-    it('should switch output mode programmatically', async () => {
-      process.env.NODE_ENV = 'development';
-      const loggerModule = await import('../src/logger.js');
-      logger = loggerModule.logger;
-      switchLogOutput = loggerModule.switchLogOutput;
-      getLoggerOutputMode = loggerModule.getLoggerOutputMode;
+    it('should switch output mode programmatically', () => {
+      const { switchLogOutput, getLoggerOutputMode } = createTestLogger({
+        NODE_ENV: 'development',
+      });
 
       expect(getLoggerOutputMode()).toBe('stdout');
 
@@ -122,10 +139,8 @@ describe('Logger Output Configuration', () => {
       expect(getLoggerOutputMode()).toBe('stderr');
     });
 
-    it('should handle switching to same output mode gracefully', async () => {
-      const loggerModule = await import('../src/logger.js');
-      switchLogOutput = loggerModule.switchLogOutput;
-      getLoggerOutputMode = loggerModule.getLoggerOutputMode;
+    it('should handle switching to same output mode gracefully', () => {
+      const { switchLogOutput, getLoggerOutputMode } = createTestLogger({ NODE_ENV: 'test' });
 
       switchLogOutput('stderr');
       expect(getLoggerOutputMode()).toBe('stderr');
@@ -135,11 +150,11 @@ describe('Logger Output Configuration', () => {
       expect(getLoggerOutputMode()).toBe('stderr');
     });
 
-    it('should support switching between different modes', async () => {
-      process.env.NODE_ENV = 'development';
-      const loggerModule = await import('../src/logger.js');
-      switchLogOutput = loggerModule.switchLogOutput;
-      getLoggerOutputMode = loggerModule.getLoggerOutputMode;
+    it('should support switching between different modes', () => {
+      const { switchLogOutput, getLoggerOutputMode } = createTestLogger({
+        NODE_ENV: 'development',
+        LOG_FILE_PATH: testLogFile,
+      });
 
       switchLogOutput('stderr');
       expect(getLoggerOutputMode()).toBe('stderr');
@@ -154,66 +169,28 @@ describe('Logger Output Configuration', () => {
 
   describe('File Output Mode', () => {
     it('should write logs to file when LOG_OUTPUT=file', async () => {
-      process.env.LOG_OUTPUT = 'file';
-      process.env.LOG_FILE_PATH = testLogFile;
-      process.env.NODE_ENV = 'development';
-      // Disable file rotation for this test to make it more predictable
-      delete process.env.LOG_FILE_MAX_SIZE;
-      delete process.env.LOG_FILE_MAX_FILES;
+      const { logger } = createFileLogger();
 
-      const loggerModule = await import('../src/logger.js');
-      logger = loggerModule.logger;
-
-      // Log a message
       logger.info('Test message for file output');
 
       // Wait for file to be created and content to be written
       // with a retry mechanism for CI environments
-      let attempts = 0;
-      const maxAttempts = 40; // Increased for CI
-      const retryDelay = 100; // Increased delay
       let content = '';
+      await waitFor(
+        () => {
+          content = existsSync(testLogFile) ? readFileSync(testLogFile, 'utf-8') : '';
+          return content.includes('Test message for file output');
+        },
+        40,
+        100,
+      );
 
-      while (attempts < maxAttempts) {
-        if (existsSync(testLogFile)) {
-          content = readFileSync(testLogFile, 'utf-8');
-          if (content.includes('Test message for file output')) {
-            break;
-          }
-        }
-        await new Promise((resolve) => setTimeout(resolve, retryDelay));
-        attempts++;
-      }
-
-      // Check if log file was created
       expect(existsSync(testLogFile)).toBe(true);
-
-      // Read and verify content
       expect(content).toContain('Test message for file output');
     });
 
-    it('should respect LOG_FILE_MAX_SIZE configuration', async () => {
-      process.env.LOG_OUTPUT = 'file';
-      process.env.LOG_FILE_PATH = testLogFile;
-      // Don't actually set LOG_FILE_MAX_SIZE to avoid pino-roll async issues
-      // Just test that the configuration is accepted
-      process.env.NODE_ENV = 'development';
-
-      const loggerModule = await import('../src/logger.js');
-      logger = loggerModule.logger;
-
-      // Configuration should be accepted without errors
-      expect(logger).toBeDefined();
-    });
-
     it('should write logs through pino-roll when LOG_FILE_MAX_SIZE uses a two-letter unit (10MB)', async () => {
-      process.env.LOG_OUTPUT = 'file';
-      process.env.LOG_FILE_PATH = testLogFile;
-      process.env.LOG_FILE_MAX_SIZE = '10MB';
-      process.env.NODE_ENV = 'development';
-
-      const loggerModule = await import('../src/logger.js');
-      logger = loggerModule.logger;
+      const { logger } = createFileLogger({ LOG_FILE_MAX_SIZE: '10MB', LOG_FILE_MAX_FILES: '3' });
 
       // pino-roll rejects "10MB" verbatim; the logger must normalize it to bytes
       // before handing it to the transport, otherwise the worker thread crashes.
@@ -222,81 +199,43 @@ describe('Logger Output Configuration', () => {
       // pino-roll appends a sequence number / date to the configured file name,
       // so look for any file in the test directory containing our message.
       let content = '';
-      for (let attempt = 0; attempt < 40 && !content; attempt++) {
-        const files = existsSync(testLogDir) ? readdirSync(testLogDir) : [];
-        for (const file of files) {
-          const fileContent = readFileSync(join(testLogDir, file), 'utf-8');
-          if (fileContent.includes('Test message with 10MB rotation size')) {
-            content = fileContent;
-            break;
-          }
-        }
-        if (!content) await new Promise((resolve) => setTimeout(resolve, 100));
-      }
+      await waitFor(
+        () => {
+          const files = existsSync(testLogDir) ? readdirSync(testLogDir) : [];
+          content =
+            files
+              .map((file) => readFileSync(join(testLogDir, file), 'utf-8'))
+              .find((fileContent) =>
+                fileContent.includes('Test message with 10MB rotation size'),
+              ) ?? '';
+          return content !== '';
+        },
+        40,
+        100,
+      );
 
       expect(content).toContain('Test message with 10MB rotation size');
     });
 
-    it('should fall back to non-rotated file output when LOG_FILE_MAX_SIZE is invalid', async () => {
-      process.env.LOG_OUTPUT = 'file';
-      process.env.LOG_FILE_PATH = testLogFile;
-      process.env.LOG_FILE_MAX_SIZE = 'not-a-size';
-      process.env.NODE_ENV = 'development';
-      const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    it('should fall back to non-rotated file output when LOG_FILE_MAX_SIZE is invalid', () => {
+      const stderrOutput = captureStream('stderr');
 
-      const loggerModule = await import('../src/logger.js');
-      logger = loggerModule.logger;
+      const { logger, getLoggerOutputMode } = createFileLogger({ LOG_FILE_MAX_SIZE: 'not-a-size' });
 
-      expect(stderrSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Invalid LOG_FILE_MAX_SIZE "not-a-size"'),
-      );
-      expect(logger).toBeDefined();
-      stderrSpy.mockRestore();
-    });
-
-    it('should respect LOG_FILE_MAX_FILES configuration', async () => {
-      process.env.LOG_OUTPUT = 'file';
-      process.env.LOG_FILE_PATH = testLogFile;
-      // Don't set rotation config to avoid pino-roll async issues
-      process.env.NODE_ENV = 'development';
-
-      const loggerModule = await import('../src/logger.js');
-      logger = loggerModule.logger;
-
-      // Configuration should be accepted without errors
+      expect(stderrOutput()).toContain('Invalid LOG_FILE_MAX_SIZE "not-a-size"');
+      expect(getLoggerOutputMode()).toBe('file');
       expect(logger).toBeDefined();
     });
 
     it('should create log directory if it does not exist', async () => {
       const nestedLogDir = join(testLogDir, 'nested', 'deep');
       const nestedLogPath = join(nestedLogDir, 'test.log');
-      process.env.LOG_OUTPUT = 'file';
-      process.env.LOG_FILE_PATH = nestedLogPath;
-      process.env.NODE_ENV = 'development';
-      // Disable file rotation for predictability
-      delete process.env.LOG_FILE_MAX_SIZE;
-      delete process.env.LOG_FILE_MAX_FILES;
 
-      const loggerModule = await import('../src/logger.js');
-      logger = loggerModule.logger;
-
-      // Log a message
+      const { logger } = createFileLogger({ LOG_FILE_PATH: nestedLogPath });
       logger.info('Test nested directory creation');
 
-      // Wait for directory to be created with retry mechanism
-      let attempts = 0;
-      const maxAttempts = 20;
-      const retryDelay = 50;
+      await waitFor(() => existsSync(nestedLogDir), 20);
 
-      while (attempts < maxAttempts) {
-        if (existsSync(nestedLogDir)) {
-          break;
-        }
-        await new Promise((resolve) => setTimeout(resolve, retryDelay));
-        attempts++;
-      }
-
-      // Check if nested directories were created
       expect(existsSync(nestedLogDir)).toBe(true);
     });
 
@@ -305,15 +244,11 @@ describe('Logger Output Configuration', () => {
       async () => {
         const nestedLogDir = join(testLogDir, 'restricted');
         const nestedLogPath = join(nestedLogDir, 'test.log');
-        process.env.LOG_OUTPUT = 'file';
-        process.env.LOG_FILE_PATH = nestedLogPath;
-        process.env.LOG_FILE_PERMISSIONS = '600';
-        process.env.NODE_ENV = 'development';
-        delete process.env.LOG_FILE_MAX_SIZE;
-        delete process.env.LOG_FILE_MAX_FILES;
 
-        const loggerModule = await import('../src/logger.js');
-        logger = loggerModule.logger;
+        const { logger } = createFileLogger({
+          LOG_FILE_PATH: nestedLogPath,
+          LOG_FILE_PERMISSIONS: '600',
+        });
         logger.info('Test file permissions');
 
         // Directory is created synchronously with the derived mode (600 -> 700)
@@ -321,11 +256,7 @@ describe('Logger Output Configuration', () => {
         expect(statSync(nestedLogDir).mode & 0o777).toBe(0o700);
 
         // Wait for the transport worker to create the file
-        let attempts = 0;
-        while (attempts < 40 && !existsSync(nestedLogPath)) {
-          await new Promise((resolve) => setTimeout(resolve, 50));
-          attempts++;
-        }
+        await waitFor(() => existsSync(nestedLogPath));
         expect(existsSync(nestedLogPath)).toBe(true);
         // open() applies the umask, so mask the expected mode the same way
         const umask = process.umask();
@@ -338,24 +269,13 @@ describe('Logger Output Configuration', () => {
       async () => {
         const nestedLogDir = join(testLogDir, 'defaults');
         const nestedLogPath = join(nestedLogDir, 'test.log');
-        process.env.LOG_OUTPUT = 'file';
-        process.env.LOG_FILE_PATH = nestedLogPath;
-        delete process.env.LOG_FILE_PERMISSIONS;
-        process.env.NODE_ENV = 'development';
-        delete process.env.LOG_FILE_MAX_SIZE;
-        delete process.env.LOG_FILE_MAX_FILES;
 
-        const loggerModule = await import('../src/logger.js');
-        logger = loggerModule.logger;
+        const { logger } = createFileLogger({ LOG_FILE_PATH: nestedLogPath });
         logger.info('Test default permissions');
 
         expect(statSync(nestedLogDir).mode & 0o777).toBe(0o750);
 
-        let attempts = 0;
-        while (attempts < 40 && !existsSync(nestedLogPath)) {
-          await new Promise((resolve) => setTimeout(resolve, 50));
-          attempts++;
-        }
+        await waitFor(() => existsSync(nestedLogPath));
         const umask = process.umask();
         expect(statSync(nestedLogPath).mode & 0o777).toBe(0o640 & ~umask);
       },
@@ -363,22 +283,15 @@ describe('Logger Output Configuration', () => {
 
     it.skipIf(process.platform === 'win32')(
       'should apply the derived directory mode to intermediate directories despite the umask',
-      async () => {
+      () => {
         const intermediateDir = join(testLogDir, 'level1');
         const nestedLogDir = join(intermediateDir, 'level2');
         const nestedLogPath = join(nestedLogDir, 'test.log');
-        process.env.LOG_OUTPUT = 'file';
-        process.env.LOG_FILE_PATH = nestedLogPath;
-        // 644 -> directory mode 755; a umask of 027 would otherwise strip it down to 750
-        process.env.LOG_FILE_PERMISSIONS = '644';
-        process.env.NODE_ENV = 'development';
-        delete process.env.LOG_FILE_MAX_SIZE;
-        delete process.env.LOG_FILE_MAX_FILES;
 
+        // 644 -> directory mode 755; a umask of 027 would otherwise strip it down to 750
         const previousUmask = process.umask(0o027);
         try {
-          const loggerModule = await import('../src/logger.js');
-          logger = loggerModule.logger;
+          createFileLogger({ LOG_FILE_PATH: nestedLogPath, LOG_FILE_PERMISSIONS: '644' });
         } finally {
           process.umask(previousUmask);
         }
@@ -388,270 +301,187 @@ describe('Logger Output Configuration', () => {
       },
     );
 
-    it('should keep the permissions of an existing log directory', async () => {
+    it('should keep the permissions of an existing log directory', () => {
       // testLogDir already exists (created in beforeEach with default mode)
       const before = statSync(testLogDir).mode & 0o777;
-      process.env.LOG_OUTPUT = 'file';
-      process.env.LOG_FILE_PATH = testLogFile;
-      process.env.LOG_FILE_PERMISSIONS = '600';
-      process.env.NODE_ENV = 'development';
 
-      const loggerModule = await import('../src/logger.js');
-      logger = loggerModule.logger;
+      createFileLogger({ LOG_FILE_PERMISSIONS: '600' });
 
       expect(statSync(testLogDir).mode & 0o777).toBe(before);
     });
   });
 
   describe('Null Output Mode', () => {
-    it('should disable logging when LOG_OUTPUT=null', async () => {
-      process.env.LOG_OUTPUT = 'null';
-      process.env.NODE_ENV = 'development';
-
-      const loggerModule = await import('../src/logger.js');
-      logger = loggerModule.logger;
+    it('should disable logging when LOG_OUTPUT=null', () => {
+      const { logger } = createTestLogger({ NODE_ENV: 'development', LOG_OUTPUT: 'null' });
 
       // Logger should have silent level
       expect(logger.level).toBe('silent');
     });
 
-    it('should not produce any output in null mode', async () => {
-      process.env.LOG_OUTPUT = 'null';
-      process.env.NODE_ENV = 'development';
+    it('should not produce any output in null mode', () => {
+      const stdoutOutput = captureStream('stdout');
+      const stderrOutput = captureStream('stderr');
 
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-      const loggerModule = await import('../src/logger.js');
-      logger = loggerModule.logger;
-
+      const { logger } = createTestLogger({ NODE_ENV: 'development', LOG_OUTPUT: 'null' });
       logger.info('This should not appear');
       logger.error('This should not appear either');
 
-      expect(consoleSpy).not.toHaveBeenCalled();
-      expect(errorSpy).not.toHaveBeenCalled();
-
-      consoleSpy.mockRestore();
-      errorSpy.mockRestore();
+      expect(stdoutOutput()).toBe('');
+      expect(stderrOutput()).toBe('');
     });
   });
 
   describe('Stderr Output Mode', () => {
-    it('should configure logger for stderr output', async () => {
-      process.env.LOG_OUTPUT = 'stderr';
-      process.env.NODE_ENV = 'development';
-
-      const loggerModule = await import('../src/logger.js');
-      logger = loggerModule.logger;
-      getLoggerOutputMode = loggerModule.getLoggerOutputMode;
+    it('should configure logger for stderr output', () => {
+      const { getLoggerOutputMode } = createTestLogger({
+        NODE_ENV: 'development',
+        LOG_OUTPUT: 'stderr',
+      });
 
       expect(getLoggerOutputMode()).toBe('stderr');
     });
 
-    it('should not use pretty printing in stderr mode', async () => {
-      process.env.LOG_OUTPUT = 'stderr';
-      process.env.NODE_ENV = 'development';
-
-      const loggerModule = await import('../src/logger.js');
-      logger = loggerModule.logger;
+    it('should write raw JSON to stderr even in development', () => {
+      const stderrOutput = captureStream('stderr');
 
       // In stderr mode, even in development, we shouldn't have pretty printing
       // This is to avoid terminal escape sequences when stderr is redirected
-      expect(logger).toBeDefined();
+      const { logger } = createTestLogger({ NODE_ENV: 'development', LOG_OUTPUT: 'stderr' });
+      logger.info({ answer: 42 }, 'stderr message');
+
+      expect(stderrOutput()).toContain('"answer":42');
+      expect(stderrOutput()).toContain('"msg":"stderr message"');
+      expect(stderrOutput()).not.toContain('\u001B[');
     });
   });
 
   describe('Syslog Output Mode', () => {
-    it('should configure logger for syslog output', async () => {
-      process.env.LOG_OUTPUT = 'syslog';
-      process.env.LOG_SYSLOG_HOST = 'syslog.example.com';
-      process.env.LOG_SYSLOG_PORT = '514';
-      process.env.LOG_SYSLOG_PROTOCOL = 'tcp';
-      process.env.NODE_ENV = 'development';
-
-      const loggerModule = await import('../src/logger.js');
-      logger = loggerModule.logger;
-      getLoggerOutputMode = loggerModule.getLoggerOutputMode;
+    it('should configure logger for syslog output', () => {
+      const { getLoggerOutputMode } = createTestLogger({
+        NODE_ENV: 'development',
+        LOG_OUTPUT: 'syslog',
+        LOG_SYSLOG_HOST: 'syslog.example.com',
+        LOG_SYSLOG_PORT: '514',
+        LOG_SYSLOG_PROTOCOL: 'tcp',
+      });
 
       expect(getLoggerOutputMode()).toBe('syslog');
     });
 
-    it('should use default syslog configuration when not specified', async () => {
-      process.env.LOG_OUTPUT = 'syslog';
-      process.env.NODE_ENV = 'development';
-
-      const loggerModule = await import('../src/logger.js');
-      logger = loggerModule.logger;
+    it('should use default syslog configuration when not specified', () => {
+      const { logger, getLoggerOutputMode } = createTestLogger({
+        NODE_ENV: 'development',
+        LOG_OUTPUT: 'syslog',
+      });
 
       // Should use defaults without errors
+      expect(getLoggerOutputMode()).toBe('syslog');
       expect(logger).toBeDefined();
     });
   });
 
   describe('Logger Features with Different Outputs', () => {
-    it('should preserve context functionality with stderr output', async () => {
-      process.env.LOG_OUTPUT = 'stderr';
-      process.env.NODE_ENV = 'development';
-
-      const loggerModule = await import('../src/logger.js');
-      logger = loggerModule.logger;
+    it('should preserve context functionality with stderr output', () => {
+      const { logger } = createTestLogger({ NODE_ENV: 'development', LOG_OUTPUT: 'stderr' });
 
       const contextLogger = logger.withContext({ requestId: '12345' });
       expect(contextLogger).toBeDefined();
       expect(contextLogger.withContext).toBeDefined();
     });
 
-    it('should preserve child logger functionality with file output', async () => {
-      process.env.LOG_OUTPUT = 'file';
-      process.env.LOG_FILE_PATH = testLogFile;
-      process.env.NODE_ENV = 'development';
-
-      const loggerModule = await import('../src/logger.js');
-      createChildLogger = loggerModule.createChildLogger;
+    it('should preserve child logger functionality with file output', () => {
+      const { createChildLogger } = createFileLogger();
 
       const childLogger = createChildLogger('test-module', { foo: 'bar' });
       expect(childLogger).toBeDefined();
       expect(childLogger.withContext).toBeDefined();
     });
 
-    it('should preserve redaction with different outputs', async () => {
-      process.env.LOG_OUTPUT = 'stderr';
-      process.env.NODE_ENV = 'development';
+    it('should preserve redaction with different outputs', () => {
+      const stderrOutput = captureStream('stderr');
+      const { logger } = createTestLogger({ NODE_ENV: 'development', LOG_OUTPUT: 'stderr' });
 
-      const loggerModule = await import('../src/logger.js');
-      logger = loggerModule.logger;
+      logger.info(
+        { username: 'test', password: 'secret123', apiKey: 'key-12345' },
+        'Test redaction',
+      );
 
-      // Logger should still have redaction configured
-      expect(logger).toBeDefined();
-
-      // Test that sensitive fields would be redacted
-      const testData = {
-        username: 'test',
-        password: 'secret123',
-        apiKey: 'key-12345',
-      };
-
-      // Log with sensitive data
-      logger.info(testData, 'Test redaction');
-
-      // Since we're in test mode with silent logger, we can't easily verify
-      // the actual redaction, but we can ensure the logger accepts the data
-      expect(logger).toBeDefined();
+      expect(stderrOutput()).toContain('"username":"test"');
+      expect(stderrOutput()).not.toContain('secret123');
+      expect(stderrOutput()).not.toContain('key-12345');
     });
 
-    it('should maintain correlation ID support with different outputs', async () => {
-      // Ensure directory exists for this test
-      if (!existsSync(testLogDir)) {
-        mkdirSync(testLogDir, { recursive: true });
-      }
-
-      process.env.LOG_OUTPUT = 'file';
-      process.env.LOG_FILE_PATH = testLogFile;
-      process.env.NODE_ENV = 'production';
+    it('should maintain correlation ID support with different outputs', () => {
       process.env.CORRELATION_ID = 'test-correlation-123';
+      const stderrOutput = captureStream('stderr');
+      try {
+        const { logger } = createTestLogger({ NODE_ENV: 'production', LOG_OUTPUT: 'stderr' });
+        logger.info('with correlation id');
 
-      const loggerModule = await import('../src/logger.js');
-      logger = loggerModule.logger;
-
-      // Logger should include correlation ID in production
-      expect(logger).toBeDefined();
-    });
-  });
-
-  describe('Size Parsing', () => {
-    it('should accept file output configuration without rotation', async () => {
-      // Simple test that file output works without rotation configured
-      process.env.LOG_OUTPUT = 'file';
-      process.env.LOG_FILE_PATH = testLogFile;
-      process.env.NODE_ENV = 'development';
-
-      const loggerModule = await import('../src/logger.js');
-      logger = loggerModule.logger;
-
-      // Logger should work without rotation config
-      expect(logger).toBeDefined();
+        expect(stderrOutput()).toContain('"correlationId":"test-correlation-123"');
+      } finally {
+        delete process.env.CORRELATION_ID;
+      }
     });
   });
 
   describe('Error Handling', () => {
-    it('should fall back to stdout and report it when LOG_OUTPUT is unknown', async () => {
-      process.env.LOG_OUTPUT = 'invalid-mode';
-      process.env.NODE_ENV = 'development';
-      const stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
-
-      const loggerModule = await import('../src/logger.js');
-      logger = loggerModule.logger;
-      getLoggerOutputMode = loggerModule.getLoggerOutputMode;
-
-      // The effective mode is reported, not the requested one
-      expect(getLoggerOutputMode()).toBe('stdout');
-      expect(logger).toBeDefined();
-
-      const allOutput = stdoutSpy.mock.calls.map((call) => String(call[0])).join('');
-      expect(allOutput).toContain('Unknown log output mode');
-      expect(allOutput).toContain('Falling back to stdout');
-      stdoutSpy.mockRestore();
+    it('should reject an unknown LOG_OUTPUT when the configuration is loaded', () => {
+      // LOG_OUTPUT is validated once, by the configuration schema; the logger never
+      // sees a value outside the supported set
+      expect(() => loadConfig({ NODE_ENV: 'development', LOG_OUTPUT: 'invalid-mode' })).toThrow(
+        ConfigError,
+      );
     });
 
-    it('should handle missing file path for file output', async () => {
-      process.env.LOG_OUTPUT = 'file';
+    it('should handle missing file path for file output', () => {
       // Not setting LOG_FILE_PATH - should use default
-      process.env.NODE_ENV = 'development';
-
-      const loggerModule = await import('../src/logger.js');
-      logger = loggerModule.logger;
+      const { logger, getLoggerOutputMode } = createTestLogger({
+        NODE_ENV: 'development',
+        LOG_OUTPUT: 'file',
+      });
 
       // Should use default path without errors
+      expect(getLoggerOutputMode()).toBe('file');
       expect(logger).toBeDefined();
     });
   });
 
   describe('Environment Integration', () => {
-    it('should work correctly in production with stderr output', async () => {
-      process.env.NODE_ENV = 'production';
-      process.env.LOG_OUTPUT = 'stderr';
-
-      const loggerModule = await import('../src/logger.js');
-      logger = loggerModule.logger;
-      getLoggerOutputMode = loggerModule.getLoggerOutputMode;
+    it('should work correctly in production with stderr output', () => {
+      const { logger, getLoggerOutputMode } = createTestLogger({
+        NODE_ENV: 'production',
+        LOG_OUTPUT: 'stderr',
+      });
 
       expect(getLoggerOutputMode()).toBe('stderr');
       expect(logger.level).toBe('info'); // Production default
     });
 
-    it('should work correctly in development with file output', async () => {
-      process.env.NODE_ENV = 'development';
-      process.env.LOG_OUTPUT = 'file';
-      process.env.LOG_FILE_PATH = testLogFile;
-
-      const loggerModule = await import('../src/logger.js');
-      logger = loggerModule.logger;
-      getLoggerOutputMode = loggerModule.getLoggerOutputMode;
+    it('should work correctly in development with file output', () => {
+      const { logger, getLoggerOutputMode } = createFileLogger();
 
       expect(getLoggerOutputMode()).toBe('file');
       expect(logger.level).toBe('debug'); // Development default
     });
 
-    it('should respect LOG_LEVEL override with any output', async () => {
-      process.env.NODE_ENV = 'production';
-      process.env.LOG_OUTPUT = 'syslog';
-      process.env.LOG_LEVEL = 'debug';
-
-      const loggerModule = await import('../src/logger.js');
-      logger = loggerModule.logger;
+    it('should respect LOG_LEVEL override with any output', () => {
+      const { logger } = createTestLogger({
+        NODE_ENV: 'production',
+        LOG_OUTPUT: 'syslog',
+        LOG_LEVEL: 'debug',
+      });
 
       expect(logger.level).toBe('debug');
     });
   });
 
   describe('Resource Management and Cleanup', () => {
-    it('should handle multiple rapid output switches gracefully', async () => {
-      process.env.NODE_ENV = 'development';
-
-      const loggerModule = await import('../src/logger.js');
-      logger = loggerModule.logger;
-      switchLogOutput = loggerModule.switchLogOutput;
-      getLoggerOutputMode = loggerModule.getLoggerOutputMode;
+    it('should handle multiple rapid output switches gracefully', () => {
+      const { switchLogOutput, getLoggerOutputMode } = createTestLogger({
+        NODE_ENV: 'development',
+      });
 
       // Rapid switching should not cause issues
       switchLogOutput('stderr');
@@ -667,28 +497,22 @@ describe('Logger Output Configuration', () => {
       expect(getLoggerOutputMode()).toBe('stderr');
     });
 
-    it('should handle invalid file paths gracefully with fallback', async () => {
-      process.env.LOG_OUTPUT = 'file';
-      process.env.LOG_FILE_PATH = '../../../etc/passwd'; // Should be blocked
-      process.env.NODE_ENV = 'development';
-
-      const loggerModule = await import('../src/logger.js');
-      logger = loggerModule.logger;
-      getLoggerOutputMode = loggerModule.getLoggerOutputMode;
+    it('should handle invalid file paths gracefully with fallback', () => {
+      const { logger, getLoggerOutputMode } = createFileLogger({
+        LOG_FILE_PATH: '../../../etc/passwd', // Should be blocked
+      });
 
       // Falls back to stdout due to invalid path and reports the effective mode
       expect(getLoggerOutputMode()).toBe('stdout');
       expect(logger).toBeDefined();
     });
 
-    it('should handle invalid syslog configuration gracefully', async () => {
-      process.env.LOG_OUTPUT = 'syslog';
-      process.env.LOG_SYSLOG_HOST = 'invalid..host'; // Invalid hostname
-      process.env.NODE_ENV = 'development';
-
-      const loggerModule = await import('../src/logger.js');
-      logger = loggerModule.logger;
-      getLoggerOutputMode = loggerModule.getLoggerOutputMode;
+    it('should handle invalid syslog configuration gracefully', () => {
+      const { logger, getLoggerOutputMode } = createTestLogger({
+        NODE_ENV: 'development',
+        LOG_OUTPUT: 'syslog',
+        LOG_SYSLOG_HOST: 'invalid..host', // Invalid hostname
+      });
 
       // Falls back to stdout due to invalid syslog config and reports the effective mode
       expect(getLoggerOutputMode()).toBe('stdout');
@@ -697,63 +521,33 @@ describe('Logger Output Configuration', () => {
   });
 
   describe('Security Validation Integration', () => {
-    it('should prevent path traversal in file logging', async () => {
-      process.env.LOG_OUTPUT = 'file';
-      process.env.LOG_FILE_PATH = '../../sensitive/file.log';
-      process.env.NODE_ENV = 'development';
+    it('should prevent path traversal in file logging', () => {
+      // Capture the fallback logger output (pino JSON on stdout)
+      const stdoutOutput = captureStream('stdout');
 
-      // Mock process.stdout.write to verify fallback logger output (pino)
-      const stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+      createFileLogger({ LOG_FILE_PATH: '../../sensitive/file.log' });
 
-      const loggerModule = await import('../src/logger.js');
-      logger = loggerModule.logger;
-
-      // Should log error via fallback logger (pino JSON format)
-      const calls = stdoutSpy.mock.calls.map((call) => String(call[0]));
-      const allOutput = calls.join('');
-      expect(allOutput).toContain('Invalid log file path');
-      expect(allOutput).toContain('Falling back to stdout');
-
-      stdoutSpy.mockRestore();
+      expect(stdoutOutput()).toContain('Invalid log file path');
+      expect(stdoutOutput()).toContain('Falling back to stdout');
     });
 
-    it('should validate file permissions and use secure defaults', async () => {
-      process.env.LOG_OUTPUT = 'file';
-      process.env.LOG_FILE_PATH = testLogFile;
-      process.env.LOG_FILE_PERMISSIONS = '644'; // Should warn about being too open
-      process.env.NODE_ENV = 'development';
+    it('should validate file permissions and use secure defaults', () => {
+      const stderrOutput = captureStream('stderr');
 
-      const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
-
-      const loggerModule = await import('../src/logger.js');
-      logger = loggerModule.logger;
+      createFileLogger({ LOG_FILE_PERMISSIONS: '644' }); // Should warn about being too open
 
       // Should warn about overly permissive permissions via process.stderr.write
-      expect(stderrSpy).toHaveBeenCalledWith(
-        expect.stringContaining('allow access to other users'),
-      );
-
-      stderrSpy.mockRestore();
+      expect(stderrOutput()).toContain('allow access to other users');
     });
 
-    it('should handle directory creation failure gracefully', async () => {
-      process.env.LOG_OUTPUT = 'file';
-      process.env.LOG_FILE_PATH = '/impossible/path/to/create/log.txt';
-      process.env.NODE_ENV = 'development';
+    it('should handle directory creation failure gracefully', () => {
+      // Capture the fallback logger output (pino JSON on stdout)
+      const stdoutOutput = captureStream('stdout');
 
-      // Mock stdout to capture fallback logger output
-      const stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+      createFileLogger({ LOG_FILE_PATH: '/impossible/path/to/create/log.txt' });
 
-      const loggerModule = await import('../src/logger.js');
-      logger = loggerModule.logger;
-
-      // Should log error via fallback logger when directory creation fails
-      const calls = stdoutSpy.mock.calls.map((call) => String(call[0]));
-      const allOutput = calls.join('');
-      expect(allOutput).toContain('Failed to create log directory');
-      expect(allOutput).toContain('Falling back to stdout');
-
-      stdoutSpy.mockRestore();
+      expect(stdoutOutput()).toContain('Failed to create log directory');
+      expect(stdoutOutput()).toContain('Falling back to stdout');
     });
   });
 });

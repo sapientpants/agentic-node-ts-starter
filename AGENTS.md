@@ -26,6 +26,7 @@ Compact guidance for AI agents working in this repository.
 
 - Unit tests live in `tests/*.spec.ts`; property-based tests (`tests/*.property.spec.ts`) use fast-check (via `fc` from `@fast-check/vitest`).
 - Run single test: `pnpm exec vitest run <file>`; filter by name with `-t "<name>"`. Also `test:watch`, `test:ui`.
+- Config and logger are side-effect-free factories: build fixtures with `loadConfig({ NODE_ENV: 'production', ... })` and `createLogger(config)` from `src/config.js` / `src/logger.js` instead of mutating `process.env` and `vi.resetModules()`.
 
 ## Conventions
 

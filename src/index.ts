@@ -5,14 +5,30 @@
  * This file contains example code demonstrating the template's capabilities.
  * It should be removed or replaced with your actual application code.
  *
+ * The startup log below is the one piece to keep: the entry point is where the
+ * validated configuration and the logger are brought together, so neither
+ * `src/config.ts` nor `src/logger.ts` has to log anything at import time.
+ *
  * See docs/GETTING_STARTED.md#clean-up-example-code for cleanup instructions.
  * ============================================================================
  */
 
 import { z } from 'zod';
-import { createChildLogger } from './logger.js';
+import { config } from './config.js';
+import { createChildLogger, getLoggerOutputMode, logger as rootLogger } from './logger.js';
 
 const logger = createChildLogger('index');
+
+logger.info(
+  {
+    environment: config.NODE_ENV,
+    app: config.APP_NAME,
+    log_level: rootLogger.level,
+    log_output: getLoggerOutputMode(),
+    pid: process.pid,
+  },
+  'Configuration loaded successfully',
+);
 
 export function add(a: number, b: number): number {
   logger.debug({ a, b }, 'Adding two numbers');
