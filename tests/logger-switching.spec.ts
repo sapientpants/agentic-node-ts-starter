@@ -108,6 +108,50 @@ describe('Logger Output Switching', () => {
     }
   });
 
+  it('should survive a transport worker error without crashing the process', async () => {
+    process.env.NODE_ENV = 'development';
+    process.env.LOG_OUTPUT = 'stderr';
+    process.env.LOG_FILE_PATH = testLogFile;
+
+    const streams: Array<ReturnType<typeof PinoModule.transport>> = [];
+    vi.doMock('pino', async (importOriginal) => {
+      const actual = await importOriginal<typeof PinoModule>();
+      const realPino = actual.default;
+      const transport = (...args: Parameters<typeof realPino.transport>) => {
+        const stream = realPino.transport(...args);
+        streams.push(stream);
+        return stream;
+      };
+      const mockedPino = Object.assign(
+        (...args: Parameters<typeof realPino>) => realPino(...args),
+        realPino,
+        { transport },
+      );
+      return { ...actual, default: mockedPino };
+    });
+    const stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+
+    try {
+      const loggerModule = await import('../src/logger.js');
+      switchLogOutput = loggerModule.switchLogOutput;
+      getLoggerOutputMode = loggerModule.getLoggerOutputMode;
+
+      switchLogOutput('file');
+      expect(streams).toHaveLength(1);
+
+      // An unhandled 'error' event would throw ERR_UNHANDLED_ERROR here
+      expect(() => streams[0]?.emit('error', new Error('worker exploded'))).not.toThrow();
+      expect(getLoggerOutputMode()).toBe('file');
+
+      const allOutput = stdoutSpy.mock.calls.map((call) => String(call[0])).join('');
+      expect(allOutput).toContain('Log transport error');
+      expect(allOutput).toContain('worker exploded');
+    } finally {
+      stdoutSpy.mockRestore();
+      vi.doUnmock('pino');
+    }
+  });
+
   it('should throw on an unknown mode and keep the current output', async () => {
     process.env.NODE_ENV = 'development';
     process.env.LOG_OUTPUT = 'stderr';

@@ -398,6 +398,12 @@ const openProcessStream = (fd: 1 | 2, mode: LogOutputMode): LogOutput => {
  */
 const openTransport = (mode: LogOutputMode, transportConfig: TransportConfig): LogOutput => {
   const stream = pino.transport(transportConfig);
+  // A transport worker that fails (unreachable syslog host, read-only log file, a
+  // close that times out) emits 'error'; without a listener Node would crash the
+  // process over a logging problem.
+  stream.on('error', (error: unknown) => {
+    fallbackLogger.warn({ mode, error: describeError(error) }, 'Log transport error');
+  });
   const close = (): void => {
     try {
       stream.end();
