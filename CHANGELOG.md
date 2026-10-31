@@ -1,5 +1,15 @@
 # agentic-node-ts-starter
 
+## 0.29.4
+
+### Patch Changes
+
+- [#213](https://github.com/sapientpants/agentic-node-ts-starter/pull/213) [`07fbd29`](https://github.com/sapientpants/agentic-node-ts-starter/commit/07fbd29e8004a5e7edaa74474aea3ef3626ccb72) - fix: idiomatic zod validators, honour `maxDepth` in `inspect()`, document template self-check tests
+
+  - `src/index.ts` now uses `z.uuid()` and `z.email()` instead of hand-rolled regexes, so the example shows the idiomatic Zod 4 form.
+  - `inspect()` in `src/dev/debug-utils.ts` renders objects with `util.inspect(obj, { depth: maxDepth })`; the depth argument is now honoured and circular references or BigInt values no longer throw.
+  - `docs/GETTING_STARTED.md` lists `tests/documentation.spec.ts` and `tests/container-scan.spec.ts` as template self-checks that consumers can delete.
+
 ## 0.29.3
 
 ### Patch Changes
