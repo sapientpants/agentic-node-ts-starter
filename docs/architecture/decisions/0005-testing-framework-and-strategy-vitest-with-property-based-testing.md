@@ -37,7 +37,7 @@ We chose **Vitest** as our primary test framework with **fast-check** for proper
 
 - **Framework**: Vitest with Node.js environment
 - **Coverage Provider**: V8 (fastest and most accurate)
-- **Coverage Thresholds**: 80% minimum for lines, branches, functions, statements
+- **Coverage Thresholds**: 80% minimum for lines, branches, functions, statements at the time of this decision; the enforced values live in `vitest.config.ts` (currently 90% lines/functions/statements, 84% branches) and are the single source of truth
 - **Property Testing**: fast-check for testing invariants and edge cases
 - **File Organization**: `tests/*.spec.ts` for unit tests, `tests/*.property.spec.ts` for property tests
 - **Watch Mode**: Integrated with development workflow

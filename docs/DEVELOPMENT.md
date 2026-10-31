@@ -31,14 +31,14 @@ pnpm test:watch
 # Single run
 pnpm test
 
-# With coverage (90% lines/functions/statements, 80% branches enforced)
+# With coverage (90% lines/functions/statements, 84% branches enforced)
 pnpm test:coverage
 
 # Coverage in browser
 pnpm coverage:open
 ```
 
-> **📊 Coverage Requirements**: This project enforces **90% minimum coverage** for lines, functions, and statements, and **80% for branches**. The CI pipeline will fail if coverage drops below these thresholds.
+> **📊 Coverage Requirements**: This project enforces **90% minimum coverage** for lines, functions, and statements, and **84% for branches**. The CI pipeline will fail if coverage drops below these thresholds.
 
 ### 🏗️ Building
 

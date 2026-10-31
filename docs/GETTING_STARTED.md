@@ -229,11 +229,11 @@ After customization, run through this checklist to ensure everything is properly
 ```bash
 # 1. Verify all quality checks pass
 pnpm verify
-# This runs: format, linters, typecheck, dependency rules, duplication, dead code, tests, coverage (90% lines/functions/statements, 80% branches)
+# This runs: format, linters, typecheck, dependency rules, duplication, dead code, tests, coverage (90% lines/functions/statements, 84% branches)
 
 # 2. Check test coverage meets requirements
 pnpm test:coverage
-# Should show coverage >= 90% for lines/functions/statements, >= 80% for branches
+# Should show coverage >= 90% for lines/functions/statements, >= 84% for branches
 
 # 3. Ensure TypeScript builds successfully
 pnpm build
