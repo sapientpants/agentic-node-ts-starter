@@ -169,11 +169,15 @@ function extractMutationMetrics() {
 async function loadCoverageThresholds() {
   const { default: vitestConfig } = await import('../vitest.config.ts');
   const thresholds = vitestConfig.test?.coverage?.thresholds;
-  if (!thresholds) {
-    throw new Error('vitest.config.ts does not define test.coverage.thresholds');
+  const { lines, statements, functions, branches } = thresholds ?? {};
+  const result = { lines, statements, functions, branches };
+  const missing = Object.keys(result).filter((key) => typeof result[key] !== 'number');
+  if (missing.length > 0) {
+    throw new Error(
+      `vitest.config.ts test.coverage.thresholds is missing numeric ${missing.join(', ')}`,
+    );
   }
-  const { lines, statements, functions, branches } = thresholds;
-  return { lines, statements, functions, branches };
+  return result;
 }
 
 /**
